@@ -1,0 +1,144 @@
+@import "tailwindcss";
+@import "@fontsource/inter/400.css";
+@import "@fontsource/inter/500.css";
+@import "@fontsource/inter/600.css";
+@import "@fontsource/instrument-serif/400.css";
+@import "@fontsource/instrument-serif/400-italic.css";
+@import "@fontsource/jetbrains-mono/400.css";
+
+@theme {
+  --color-void: #000000;
+  --color-line: #292d30;
+  --color-bone: #f0f0f0;
+  --color-ash: #a1a4a5;
+  --color-smoke: #abafb4;
+  --color-iron: #6e727a;
+  --color-charcoal: #464a4d;
+  --color-lift: #0b0e14;
+  --color-iris: #9281f7;
+  --color-iris-glow: #baa7ff;
+  --color-signal: #3b9eff;
+  --color-sky: #70b8ff;
+  --color-pulse: #3ad389;
+  --color-alarm: #ff9592;
+  --color-amber: #ffca16;
+
+  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-display: "Instrument Serif", "Tiempos Headline", Georgia, serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+
+  --radius-ui: 6px;
+  --radius-card: 16px;
+  --radius-panel: 24px;
+}
+
+:root {
+  color-scheme: dark;
+}
+
+html {
+  background: #000;
+  scroll-behavior: smooth;
+}
+
+body {
+  background: #000;
+  color: var(--color-bone);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+::selection {
+  background: rgba(146, 129, 247, 0.35);
+  color: #fff;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-iris-glow);
+  outline-offset: 2px;
+}
+
+@layer components {
+  .container-x {
+    @apply mx-auto w-full max-w-[1200px] px-4 sm:px-6;
+  }
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-[6px] border border-line px-4 py-2.5 text-sm font-medium text-white transition-colors duration-150 ease-out hover:border-white disabled:cursor-not-allowed disabled:opacity-50;
+  }
+  .btn-solid {
+    @apply inline-flex items-center justify-center gap-2 rounded-[6px] border border-white bg-white px-4 py-2.5 text-sm font-medium text-black transition-colors duration-150 ease-out hover:bg-bone disabled:cursor-not-allowed disabled:opacity-50;
+  }
+  .btn-danger {
+    @apply inline-flex items-center justify-center gap-2 rounded-[6px] border border-alarm/40 px-4 py-2.5 text-sm font-medium text-alarm transition-colors duration-150 hover:border-alarm disabled:opacity-50;
+  }
+  .card {
+    @apply rounded-[16px] border border-line bg-black p-6 sm:p-8;
+  }
+  .pill {
+    @apply inline-flex items-center gap-2 rounded-full border border-line px-3 py-1.5 text-sm text-bone;
+  }
+  .badge {
+    @apply inline-flex items-center gap-1.5 rounded-[6px] border border-line px-2 py-0.5 font-mono text-xs text-ash;
+  }
+  .input {
+    @apply w-full rounded-[6px] border border-line bg-black px-3 py-2.5 text-sm text-white placeholder:text-iron transition-colors focus:border-white focus:outline-none;
+  }
+  .label {
+    @apply mb-1.5 block text-sm font-medium text-bone;
+  }
+  .h-display {
+    @apply font-display text-5xl leading-none tracking-[-0.01em] text-white sm:text-7xl lg:text-[96px];
+  }
+  .h-section {
+    @apply text-4xl font-medium leading-[1.1] tracking-[-0.05em] text-white sm:text-[56px];
+  }
+  .eyebrow {
+    @apply font-mono text-xs uppercase tracking-[0.14em] text-iris-glow;
+  }
+  .link {
+    @apply text-bone underline decoration-line underline-offset-4 transition-colors hover:text-white hover:decoration-white;
+  }
+}
+
+/* Cube 3D du hero (CSS pur, pas de WebGL : plus léger et sans JavaScript) */
+.cube-scene {
+  perspective: 900px;
+}
+.cube {
+  position: relative;
+  width: var(--s);
+  height: var(--s);
+  transform-style: preserve-3d;
+  animation: spin 28s linear infinite;
+}
+.cube > span {
+  position: absolute;
+  inset: 0;
+  border: 1px solid #3a3f43;
+  background: linear-gradient(145deg, #121416 0%, #030303 70%);
+  box-shadow: inset 0 0 60px rgba(255, 255, 255, 0.03);
+}
+.cube > span:nth-child(1) { transform: translateZ(calc(var(--s) / 2)); }
+.cube > span:nth-child(2) { transform: rotateY(180deg) translateZ(calc(var(--s) / 2)); }
+.cube > span:nth-child(3) { transform: rotateY(90deg) translateZ(calc(var(--s) / 2)); }
+.cube > span:nth-child(4) { transform: rotateY(-90deg) translateZ(calc(var(--s) / 2)); }
+.cube > span:nth-child(5) { transform: rotateX(90deg) translateZ(calc(var(--s) / 2)); }
+.cube > span:nth-child(6) { transform: rotateX(-90deg) translateZ(calc(var(--s) / 2)); }
+@keyframes spin {
+  from { transform: rotateX(-24deg) rotateY(0deg); }
+  to { transform: rotateX(-24deg) rotateY(360deg); }
+}
+
+.fade-up {
+  animation: fadeUp 700ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cube, .fade-up { animation: none; }
+  html { scroll-behavior: auto; }
+}
