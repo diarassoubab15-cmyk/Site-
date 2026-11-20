@@ -7,9 +7,10 @@
 import { useSyncExternalStore } from "react";
 import type { PaymentMethodId } from "./payments";
 
-export type OrderStatus = "confirmée" | "expédiée" | "livrée" | "non reçue" | "remboursée";
+export type OrderStatus = "en attente de paiement" | "confirmée" | "expédiée" | "livrée" | "non reçue" | "remboursée" | "annulée";
 export type DemoOrder = {
-  id: string;
+  id: string; // référence affichée (NX-…)
+  uuid?: string; // identifiant en base (mode Supabase)
   product: string;
   productName: string;
   shop: string;
@@ -29,6 +30,7 @@ export type Ticket = {
   subject: string;
   message: string;
   orderId?: string;
+  orderUuid?: string;
   shop?: string;
   status: "ouvert" | "en cours" | "résolu";
   createdAt: string;

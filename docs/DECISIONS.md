@@ -22,8 +22,11 @@
 ## Choix techniques
 - Next.js 15 (App Router, pages pré-rendues pour le SEO), TypeScript 5, Tailwind 4, polices auto-hébergées (@fontsource).
 - Devise : FCFA (XOF). Langue : français.
-- Supabase prévu (schéma dans `supabase/migrations`). En attendant, mode démo via `localStorage`.
+- Supabase branché (migrations, RLS, Server Actions, connexion par code). Sans variables Supabase, le site retombe en mode démo (`localStorage`).
+- Commande en ligne : connexion obligatoire (un code suffit). Question simple au SAV : possible sans compte. Litiges : compte obligatoire.
+- Sécurité vérifiée dans la base elle-même (triggers + RLS), pas seulement dans le site : 14 scénarios d'attaque dans `supabase/tests`.
 - Comme l'argent va au vendeur, NEXORA ne peut pas rembourser elle-même : elle impose le délai et sanctionne. C'est expliqué au client, qui peut choisir le paiement à la livraison.
 
 ## Historique
+- Novembre 2026 : branchement Supabase testé de bout en bout sur un Supabase local (20 vérifications navigateur + 14 attaques SQL).
 - Un premier essai (branche `claude/nexora-marketplace-design-bx4zii`, 3 commits) n'a jamais pu être récupéré : le projet a été refait de zéro sur `claude/nexora-marketplace-design-74sqrs`.

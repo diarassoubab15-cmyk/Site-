@@ -16,7 +16,8 @@ const csp = [
   "form-action 'self'",
   "base-uri 'self'",
   "object-src 'none'",
-  "upgrade-insecure-requests",
+  // Pas d'upgrade si Supabase tourne en local (http) pendant les tests.
+  ...(supabase.startsWith("http://") ? [] : ["upgrade-insecure-requests"]),
 ].join("; ");
 
 const securityHeaders = [

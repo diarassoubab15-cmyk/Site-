@@ -1,37 +1,71 @@
 "use client";
 import Link from "next/link";
-import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { useEffect, useState, useTransition } from "react";
 import type { Product, Shop } from "@/lib/data";
 import { formatPrice } from "@/lib/format";
 import { paymentMethods, type PaymentMethodId } from "@/lib/payments";
 import { today, uid, update, useDemo } from "@/lib/demo-store";
+import { supabaseEnabled } from "@/lib/supabase/env";
+import { supabaseBrowser } from "@/lib/supabase/client";
+import { placeOrder } from "@/app/actions";
+
+type Known = { name: string; city: string } | null;
+
+/** En mode Supabase, lit le profil côté navigateur (la page produit reste en cache pour tous). */
+function useLiveProfile() {
+  const [state, setState] = useState<{ loaded: boolean; loggedIn: boolean; known: Known }>({ loaded: !supabaseEnabled, loggedIn: false, known: null });
+  useEffect(() => {
+    if (!supabaseEnabled) return;
+    const sb = supabaseBrowser();
+    sb.auth.getUser().then(async ({ data }) => {
+      if (!data.user) return setState({ loaded: true, loggedIn: false, known: null });
+      const { data: p } = await sb.from("profiles").select("full_name, phone, city").eq("id", data.user.id).single();
+      const complete = p?.full_name && p?.phone && p?.city;
+      setState({ loaded: true, loggedIn: true, known: complete ? { name: p.full_name!, city: p.city! } : null });
+    });
+  }, []);
+  return state;
+}
 
 export function BuyBox({ product, shop }: { product: Product; shop: Shop }) {
   const demo = useDemo();
+  const live = useLiveProfile();
+  const router = useRouter();
+  const [pending, start] = useTransition();
   const [qty, setQty] = useState(1);
   const [method, setMethod] = useState<PaymentMethodId>(shop.acceptsCashOnDelivery ? "cash_on_delivery" : shop.payments[0]);
   const [form, setForm] = useState({ name: "", phone: "", city: "" });
   const [done, setDone] = useState<string | null>(null);
+  const [error, setError] = useState("");
 
   const wholesale = product.wholesale && qty >= product.wholesale.minQty;
   const unit = wholesale ? product.wholesale!.price : product.price;
   const total = unit * qty;
   const out = product.stock === 0;
   // On ne redemande jamais une information déjà connue : le profil est réutilisé.
-  const needsProfile = !demo.profile;
+  const known: Known = supabaseEnabled ? live.known : demo.profile ? { name: demo.profile.name, city: demo.profile.city } : null;
+  const needsProfile = !known;
 
   function order(e: React.FormEvent) {
     e.preventDefault();
-    const id = uid("NX");
-    update((s) => ({
-      ...s,
-      profile: s.profile ?? { name: form.name.trim(), phone: form.phone.trim(), city: form.city.trim(), email: "", country: "" },
-      orders: [
-        { id, product: product.slug, productName: product.name, shop: shop.name, qty, total, method, status: "confirmée", createdAt: today() },
-        ...s.orders,
-      ],
-    }));
-    setDone(id);
+    setError("");
+    if (!supabaseEnabled) {
+      const id = uid("NX");
+      update((s) => ({
+        ...s,
+        profile: s.profile ?? { name: form.name.trim(), phone: form.phone.trim(), city: form.city.trim(), email: "", country: "" },
+        orders: [{ id, product: product.slug, productName: product.name, shop: shop.name, qty, total, method, status: "confirmée", createdAt: today() }, ...s.orders],
+      }));
+      return setDone(id);
+    }
+    if (!live.loggedIn) return router.push(`/connexion?next=${encodeURIComponent(`/produits/${product.slug}`)}`);
+    start(async () => {
+      const res = await placeOrder({ slug: product.slug, qty, method, shipping: needsProfile ? form : undefined });
+      if (res.ok) setDone(res.data ?? "");
+      else if (res.login) router.push(`/connexion?next=${encodeURIComponent(`/produits/${product.slug}`)}`);
+      else setError(res.error);
+    });
   }
 
   if (done) {
@@ -42,7 +76,7 @@ export function BuyBox({ product, shop }: { product: Product; shop: Shop }) {
         <p className="text-sm text-ash">
           {method === "cash_on_delivery"
             ? "Vous paierez en main propre au livreur, à la réception du colis."
-            : `Vous allez payer avec ${paymentMethods[method].label}. L'argent est versé directement au vendeur.`}{" "}
+            : `Paiement ${paymentMethods[method].label} : vous allez être redirigé vers l'opérateur. L'argent est versé directement au vendeur.`}{" "}
           Si le colis n&apos;arrive pas, signalez-le depuis votre compte : vous serez remboursé ou le vendeur sera sanctionné.
         </p>
         <Link href="/compte" className="btn">Suivre ma commande</Link>
@@ -84,7 +118,7 @@ export function BuyBox({ product, shop }: { product: Product; shop: Shop }) {
         {!shop.acceptsCashOnDelivery && <p className="mt-2 text-xs text-iron">Ce vendeur ne propose pas le paiement à la livraison.</p>}
       </fieldset>
 
-      {needsProfile && !out && (
+      {live.loaded && needsProfile && !out && (!supabaseEnabled || live.loggedIn) && (
         <fieldset className="space-y-3">
           <legend className="label">Livraison <span className="font-normal text-iron">(demandé une seule fois)</span></legend>
           <input required placeholder="Nom complet" autoComplete="name" className="input" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
@@ -92,16 +126,28 @@ export function BuyBox({ product, shop }: { product: Product; shop: Shop }) {
           <input required placeholder="Ville et quartier" autoComplete="address-level2" className="input" value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })} />
         </fieldset>
       )}
-      {!needsProfile && (
-        <p className="text-sm text-ash">Livraison à <span className="text-bone">{demo.profile!.name}</span>, {demo.profile!.city} · <Link href="/compte#profil" className="link">modifier</Link></p>
+      {known && (
+        <p className="text-sm text-ash">Livraison à <span className="text-bone">{known.name}</span>, {known.city} · <Link href="/compte#profil" className="link">modifier</Link></p>
+      )}
+      {supabaseEnabled && live.loaded && !live.loggedIn && !out && (
+        <p className="text-sm text-ash">Connectez-vous en 30 secondes avec un code reçu par e-mail ou SMS pour commander.</p>
       )}
 
       <div className="flex items-center justify-between border-t border-line pt-5">
         <span className="text-sm text-ash">Total</span>
         <span className="font-mono text-lg text-white">{formatPrice(total)}</span>
       </div>
-      <button type="submit" className="btn-solid w-full" disabled={out}>
-        {out ? "Indisponible" : method === "cash_on_delivery" ? "Commander, payer à la livraison" : `Payer avec ${paymentMethods[method].label}`}
+      {error && <p className="text-sm text-alarm" role="alert">{error}</p>}
+      <button type="submit" className="btn-solid w-full" disabled={out || pending || !live.loaded}>
+        {out
+          ? "Indisponible"
+          : pending
+            ? "Envoi…"
+            : supabaseEnabled && live.loaded && !live.loggedIn
+              ? "Se connecter pour commander"
+              : method === "cash_on_delivery"
+                ? "Commander, payer à la livraison"
+                : `Payer avec ${paymentMethods[method].label}`}
       </button>
       <p className="text-xs leading-relaxed text-iron">
         Paiement versé directement à {shop.name}. Protection acheteur : produit non reçu = remboursement ou sanction du vendeur.

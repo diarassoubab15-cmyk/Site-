@@ -8,20 +8,23 @@ import { ProductCard } from "@/components/ProductCard";
 import { ProductThumb } from "@/components/ProductThumb";
 import { ReviewSection } from "@/components/ReviewSection";
 import { Stars } from "@/components/Stars";
-import { getCategory, getProduct, getShop, products, productsByCategory, ratingFor, reviewsFor } from "@/lib/data";
+import { getCategory } from "@/lib/data";
+import { allSlugs, getProductPage } from "@/lib/catalog";
 import { formatDate, formatPrice } from "@/lib/format";
 import { absoluteUrl, site } from "@/lib/site";
 
 type Props = { params: Promise<{ slug: string }> };
 
-export function generateStaticParams() {
-  return products.map((p) => ({ slug: p.slug }));
+export const revalidate = 60;
+
+export async function generateStaticParams() {
+  return (await allSlugs()).products.map((slug) => ({ slug }));
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const p = getProduct((await params).slug);
-  if (!p) return {};
-  const shop = getShop(p.shop);
+  const page = await getProductPage((await params).slug);
+  if (!page) return {};
+  const { product: p, shop } = page;
   const description = `${p.short} ${formatPrice(p.price)} chez ${shop?.name}, vendeur vérifié. Paiement Mobile Money, carte ou à la livraison.`;
   return {
     title: `${p.name} · ${formatPrice(p.price)}`,
@@ -32,13 +35,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 export default async function ProductPage({ params }: Props) {
-  const product = getProduct((await params).slug);
-  if (!product) notFound();
-  const shop = getShop(product.shop)!;
-  const cat = getCategory(product.category)!;
-  const rating = ratingFor(product.slug);
-  const list = reviewsFor(product.slug);
-  const related = productsByCategory(product.category).filter((p) => p.slug !== product.slug).slice(0, 4);
+  const page = await getProductPage((await params).slug);
+  if (!page) notFound();
+  const { product, shop, rating, reviews: list, related } = page;
+  const cat = getCategory(product.category) ?? { slug: product.category, name: product.category };
 
   return (
     <section className="container-x py-16">
@@ -106,7 +106,7 @@ export default async function ProductPage({ params }: Props) {
       {related.length > 0 && (
         <section className="mt-24" aria-labelledby="similaires">
           <h2 id="similaires" className="mb-8 text-2xl font-medium text-white">Dans la même catégorie</h2>
-          <div className="grid grid-cols-2 gap-4 md:grid-cols-4">{related.map((p) => <ProductCard key={p.slug} product={p} />)}</div>
+          <div className="grid grid-cols-2 gap-4 md:grid-cols-4">{related.map((c) => <ProductCard key={c.product.slug} item={c} />)}</div>
         </section>
       )}
 

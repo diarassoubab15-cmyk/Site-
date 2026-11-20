@@ -2,7 +2,8 @@ import Link from "next/link";
 import { Cube } from "@/components/Cube";
 import { ProductCard } from "@/components/ProductCard";
 import { PaymentMethods } from "@/components/PaymentMethods";
-import { categories, products } from "@/lib/data";
+import { categories } from "@/lib/data";
+import { listCards } from "@/lib/catalog";
 import { onlineMethods } from "@/lib/payments";
 
 const promises = [
@@ -53,8 +54,10 @@ const testimonials = [
   { quote: "Un colis n'est jamais arrivé. J'ai signalé le vendeur, le SAV m'a répondu sur WhatsApp en 40 minutes et j'ai été remboursée.", name: "Nadège T.", role: "Cliente à Douala" },
 ];
 
-export default function Home() {
-  const featured = products.filter((p) => p.stock > 0).slice(0, 8);
+export const revalidate = 60;
+
+export default async function Home() {
+  const featured = await listCards({ inStock: true, limit: 8 });
   return (
     <>
       {/* HERO */}
@@ -165,8 +168,8 @@ export default function Home() {
       <section className="container-x py-12" aria-labelledby="selection">
         <h2 id="selection" className="h-section">Sélection du moment</h2>
         <div className="mt-10 grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
-          {featured.map((p) => (
-            <ProductCard key={p.slug} product={p} />
+          {featured.map((c) => (
+            <ProductCard key={c.product.slug} item={c} />
           ))}
         </div>
       </section>

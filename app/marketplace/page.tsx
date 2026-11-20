@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { CatalogView } from "@/components/CatalogView";
-import { searchProducts } from "@/lib/data";
+import { listCards } from "@/lib/catalog";
 
 export const metadata: Metadata = {
   title: "Marketplace : mode, beauté, électronique, épicerie",
@@ -11,7 +11,7 @@ export const metadata: Metadata = {
 
 export default async function Marketplace({ searchParams }: { searchParams: Promise<{ q?: string }> }) {
   const { q = "" } = await searchParams;
-  const items = searchProducts(q);
+  const items = await listCards({ q });
   return (
     <section className="container-x py-16">
       <Breadcrumbs items={[{ name: "Accueil", href: "/" }, { name: "Marketplace", href: "/marketplace" }]} />

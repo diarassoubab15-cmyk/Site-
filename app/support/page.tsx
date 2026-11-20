@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { JsonLd } from "@/components/JsonLd";
 import { SupportForm } from "@/components/SupportForm";
 import { site } from "@/lib/site";
+import { supabaseEnabled } from "@/lib/supabase/env";
+import { loadKnownUser } from "@/lib/server-data";
 
 export const metadata: Metadata = {
   title: "Aide & SAV : une vraie personne répond en moins de 2 h",
@@ -23,6 +25,7 @@ const faq = [
 
 export default async function Support({ searchParams }: { searchParams: Promise<{ boutique?: string }> }) {
   const { boutique } = await searchParams;
+  const known = supabaseEnabled ? await loadKnownUser() : null;
   const wa = `https://wa.me/${site.support.whatsapp.replace(/\D/g, "")}`;
   return (
     <section className="container-x py-16 sm:py-24">
@@ -70,7 +73,7 @@ export default async function Support({ searchParams }: { searchParams: Promise<
         </div>
         <div id="contact" className="scroll-mt-24">
           <span id="signaler" className="block scroll-mt-24" />
-          <SupportForm shop={boutique} />
+          <SupportForm shop={boutique} known={known} />
         </div>
       </div>
       <JsonLd data={{ "@context": "https://schema.org", "@type": "FAQPage", mainEntity: faq.map((f) => ({ "@type": "Question", name: f.q, acceptedAnswer: { "@type": "Answer", text: f.a } })) }} />

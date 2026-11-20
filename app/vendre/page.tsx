@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { SellerApplyForm } from "@/components/SellerApplyForm";
 import { plans } from "@/lib/plans";
+import { supabaseEnabled } from "@/lib/supabase/env";
+import { loadKnownUser } from "@/lib/server-data";
 
 export const metadata: Metadata = {
   title: "Vendre en ligne en Afrique : ouvrir sa boutique",
@@ -18,6 +20,7 @@ const how = [
 export default async function Vendre({ searchParams }: { searchParams: Promise<{ forfait?: string }> }) {
   const { forfait } = await searchParams;
   const initialPlan = plans.some((p) => p.id === forfait) ? forfait! : "pro";
+  const known = supabaseEnabled ? await loadKnownUser() : null;
   return (
     <section className="container-x grid gap-16 py-16 sm:py-24 lg:grid-cols-[1fr_1.1fr]">
       <div>
@@ -32,7 +35,7 @@ export default async function Vendre({ searchParams }: { searchParams: Promise<{
           ))}
         </ol>
       </div>
-      <SellerApplyForm initialPlan={initialPlan} />
+      <SellerApplyForm initialPlan={initialPlan} known={known} />
     </section>
   );
 }

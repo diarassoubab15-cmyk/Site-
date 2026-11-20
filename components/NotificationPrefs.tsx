@@ -1,5 +1,8 @@
 "use client";
+import { useState } from "react";
 import { update, useDemo, type NotificationPrefs as Prefs } from "@/lib/demo-store";
+import { supabaseEnabled } from "@/lib/supabase/env";
+import { savePrefs } from "@/app/actions";
 
 const groups: Record<"client" | "vendeur", { key: keyof Prefs; label: string; hint: string }[]> = {
   client: [
@@ -16,9 +19,23 @@ const groups: Record<"client" | "vendeur", { key: keyof Prefs; label: string; hi
 };
 
 /** Notifications e-mail : peu nombreuses, chacune désactivable. Les e-mails de sécurité (code de connexion) restent toujours actifs. */
-export function NotificationPrefs({ role }: { role: "client" | "vendeur" }) {
-  const { prefs } = useDemo();
+export function NotificationPrefs({ role, initial }: { role: "client" | "vendeur"; initial?: Prefs }) {
+  const demo = useDemo();
+  const [livePrefs, setLivePrefs] = useState<Prefs | undefined>(initial);
+  const [saved, setSaved] = useState<"" | "ok" | "err">("");
+  const prefs = supabaseEnabled && livePrefs ? livePrefs : demo.prefs;
   const allOff = groups[role].every((g) => !prefs[g.key]);
+
+  function set(changes: Partial<Prefs>) {
+    if (!supabaseEnabled) return update((s) => ({ ...s, prefs: { ...s.prefs, ...changes } }));
+    const before = prefs;
+    setLivePrefs({ ...prefs, ...changes });
+    savePrefs(changes).then((r) => {
+      if (r.ok) setSaved("ok");
+      else { setLivePrefs(before); setSaved("err"); }
+    });
+  }
+
   return (
     <div className="space-y-1">
       {groups[role].map((g) => (
@@ -28,15 +45,17 @@ export function NotificationPrefs({ role }: { role: "client" | "vendeur" }) {
             <span className="block text-xs text-iron">{g.hint}</span>
           </span>
           <span className="relative inline-flex">
-            <input type="checkbox" role="switch" className="peer sr-only" checked={prefs[g.key]} onChange={(e) => update((s) => ({ ...s, prefs: { ...s.prefs, [g.key]: e.target.checked } }))} />
+            <input type="checkbox" role="switch" className="peer sr-only" checked={prefs[g.key]} onChange={(e) => set({ [g.key]: e.target.checked })} />
             <span className="h-6 w-10 rounded-full border border-line bg-black transition-colors peer-checked:border-iris peer-checked:bg-iris/30 peer-focus-visible:outline-2 peer-focus-visible:outline-iris-glow" />
             <span className="absolute left-1 top-1 h-4 w-4 rounded-full bg-iron transition-transform peer-checked:translate-x-4 peer-checked:bg-white" />
           </span>
         </label>
       ))}
-      <button type="button" className="mt-2 text-xs text-ash hover:text-white" onClick={() => update((s) => ({ ...s, prefs: { ...s.prefs, ...Object.fromEntries(groups[role].map((g) => [g.key, allOff])) } }))}>
+      <button type="button" className="mt-2 text-xs text-ash hover:text-white" onClick={() => set(Object.fromEntries(groups[role].map((g) => [g.key, allOff])))}>
         {allOff ? "Tout réactiver" : "Tout désactiver"}
       </button>
+      {saved === "ok" && <p className="text-xs text-pulse" role="status">Préférences enregistrées.</p>}
+      {saved === "err" && <p className="text-xs text-alarm" role="alert">Enregistrement impossible, réessayez.</p>}
       <p className="pt-2 text-xs text-iron">Les codes de connexion et alertes de sécurité restent toujours envoyés.</p>
     </div>
   );

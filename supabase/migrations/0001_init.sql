@@ -27,6 +27,11 @@ create table profiles (
 -- Un seul administrateur possible sur toute la plateforme.
 create unique index one_admin_only on profiles ((role)) where role = 'admin';
 
+-- Vrai quand la requête vient d'un utilisateur du site (navigateur), faux pour
+-- l'éditeur SQL du propriétaire et le serveur (clé service_role).
+create or replace function is_end_user() returns boolean
+language sql stable set search_path = public as $$ select current_user in ('anon', 'authenticated') $$;
+
 create or replace function is_admin() returns boolean
 language sql stable security definer set search_path = public as $$
   select exists (select 1 from profiles where id = auth.uid() and role = 'admin');
@@ -44,9 +49,9 @@ create trigger on_auth_user_created after insert on auth.users
 
 -- Un utilisateur ne peut pas changer son propre rôle.
 create or replace function protect_role() returns trigger
-language plpgsql as $$
+language plpgsql set search_path = public as $$
 begin
-  if new.role is distinct from old.role and not is_admin() then
+  if new.role is distinct from old.role and is_end_user() and not is_admin() then
     raise exception 'Seul l''administrateur peut modifier un rôle';
   end if;
   return new;
@@ -73,13 +78,13 @@ create table shops (
 
 -- Seul l'administrateur peut autoriser / suspendre. Le vendeur ne peut que fermer.
 create or replace function protect_shop_status() returns trigger
-language plpgsql as $$
+language plpgsql set search_path = public as $$
 begin
-  if new.owner_id is distinct from old.owner_id then
+  if new.owner_id is distinct from old.owner_id and is_end_user() then
     raise exception 'Le propriétaire d''une boutique ne peut pas être changé';
   end if;
   if new.status is distinct from old.status then
-    if not is_admin() and not (new.status = 'closed' and old.owner_id = auth.uid()) then
+    if is_end_user() and not is_admin() and not (new.status = 'closed' and old.owner_id = auth.uid()) then
       raise exception 'Statut de boutique modifiable uniquement par l''administrateur';
     end if;
     new.status_changed_at := now();
@@ -153,6 +158,49 @@ create table orders (
 create index orders_buyer_idx on orders (buyer_id);
 create index orders_shop_idx on orders (shop_id);
 
+-- Le total est TOUJOURS recalculé par la base à partir du prix réel (jamais celui du navigateur).
+create or replace function prepare_order() returns trigger
+language plpgsql security definer set search_path = public as $$
+declare p products%rowtype;
+begin
+  select * into p from products where id = new.product_id and shop_id = new.shop_id and published;
+  if not found then raise exception 'Produit indisponible'; end if;
+  if p.stock < new.qty then raise exception 'Stock insuffisant'; end if;
+  new.total := new.qty * case when p.wholesale_min is not null and new.qty >= p.wholesale_min
+                               then p.wholesale_price else p.price end;
+  -- Paiement à la livraison : confirmée tout de suite. En ligne : attend la confirmation du prestataire.
+  new.status := case when new.method = 'cash_on_delivery' then 'confirmed' else 'pending_payment' end;
+  update products set stock = stock - new.qty where id = p.id;
+  return new;
+end $$;
+create trigger orders_prepare before insert on orders
+  for each row execute function prepare_order();
+
+-- Qui peut faire quoi sur une commande existante.
+create or replace function guard_order_update() returns trigger
+language plpgsql set search_path = public as $$
+declare is_buyer boolean := old.buyer_id = auth.uid();
+        is_seller boolean := exists (select 1 from shops where id = old.shop_id and owner_id = auth.uid());
+begin
+  new.updated_at := now();
+  if not is_end_user() or is_admin() then return new; end if;
+  if (new.buyer_id, new.shop_id, new.product_id, new.qty, new.total, new.method, new.shipping_name, new.shipping_phone, new.shipping_city, new.created_at)
+     is distinct from
+     (old.buyer_id, old.shop_id, old.product_id, old.qty, old.total, old.method, old.shipping_name, old.shipping_phone, old.shipping_city, old.created_at) then
+    raise exception 'Seul le statut d''une commande peut être modifié';
+  end if;
+  if new.status = old.status then return new; end if;
+  -- L'acheteur : « J'ai reçu » ou « Pas reçu », une fois la commande confirmée ou expédiée.
+  if is_buyer and old.status in ('confirmed', 'shipped') and new.status in ('delivered', 'not_received') then return new; end if;
+  -- Le vendeur : expédier, annuler avant expédition, rembourser.
+  if is_seller and (
+       (old.status = 'confirmed' and new.status in ('shipped', 'cancelled'))
+    or (old.status in ('confirmed', 'shipped', 'delivered', 'not_received') and new.status = 'refunded')) then return new; end if;
+  raise exception 'Changement de statut non autorisé (% → %)', old.status, new.status;
+end $$;
+create trigger orders_guard before update on orders
+  for each row execute function guard_order_update();
+
 -- ------------------------------------------------------------------ avis (achat vérifié uniquement)
 create table reviews (
   id           uuid primary key default gen_random_uuid(),
@@ -176,9 +224,18 @@ create table tickets (
   message     text not null check (char_length(message) between 5 and 2000),
   status      ticket_status not null default 'open',
   -- Délai laissé au vendeur pour rembourser avant arbitrage de l'administrateur.
-  seller_deadline timestamptz generated always as (case when kind = 'refund' then created_at + interval '72 hours' end) stored,
+  seller_deadline timestamptz,
   created_at  timestamptz not null default now()
 );
+
+create or replace function set_ticket_deadline() returns trigger
+language plpgsql set search_path = public as $$
+begin
+  new.seller_deadline := case when new.kind = 'refund' then new.created_at + interval '72 hours' end;
+  return new;
+end $$;
+create trigger tickets_deadline before insert on tickets
+  for each row execute function set_ticket_deadline();
 
 -- ------------------------------------------------------------------ préférences e-mail
 create table notification_preferences (

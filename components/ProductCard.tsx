@@ -1,12 +1,11 @@
 import Link from "next/link";
-import { getShop, ratingFor, type Product } from "@/lib/data";
+import type { CardItem } from "@/lib/catalog";
 import { formatPrice } from "@/lib/format";
 import { ProductThumb } from "./ProductThumb";
 import { Stars } from "./Stars";
 
-export function ProductCard({ product }: { product: Product }) {
-  const shop = getShop(product.shop);
-  const rating = ratingFor(product.slug);
+export function ProductCard({ item }: { item: CardItem }) {
+  const { product, shop, rating } = item;
   return (
     <article className="group relative flex flex-col gap-4 rounded-[16px] border border-line p-3 transition-colors duration-150 hover:border-iron">
       <ProductThumb product={product} />

@@ -2,7 +2,8 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { CatalogView } from "@/components/CatalogView";
-import { categories, getCategory, searchProducts } from "@/lib/data";
+import { categories, getCategory } from "@/lib/data";
+import { listCards } from "@/lib/catalog";
 
 type Props = { params: Promise<{ category: string }>; searchParams: Promise<{ q?: string }> };
 
@@ -20,7 +21,7 @@ export default async function CategoryPage({ params, searchParams }: Props) {
   const cat = getCategory((await params).category);
   if (!cat) notFound();
   const { q = "" } = await searchParams;
-  const items = searchProducts(q, cat.slug);
+  const items = await listCards({ q, category: cat.slug });
   return (
     <section className="container-x py-16">
       <Breadcrumbs items={[{ name: "Accueil", href: "/" }, { name: "Marketplace", href: "/marketplace" }, { name: cat.name, href: `/marketplace/${cat.slug}` }]} />

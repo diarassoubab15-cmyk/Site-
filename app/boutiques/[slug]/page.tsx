@@ -6,27 +6,29 @@ import { JsonLd } from "@/components/JsonLd";
 import { PaymentMethods } from "@/components/PaymentMethods";
 import { ProductCard } from "@/components/ProductCard";
 import { Stars } from "@/components/Stars";
-import { getShop, productsByShop, shopRating, shops } from "@/lib/data";
+import { allSlugs, getShopPage } from "@/lib/catalog";
 import { formatDate } from "@/lib/format";
 import { absoluteUrl } from "@/lib/site";
 
 type Props = { params: Promise<{ slug: string }> };
 
-export function generateStaticParams() {
-  return shops.map((s) => ({ slug: s.slug }));
+export const revalidate = 60;
+
+export async function generateStaticParams() {
+  return (await allSlugs()).shops.map((slug) => ({ slug }));
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const shop = getShop((await params).slug);
-  if (!shop) return {};
+  const page = await getShopPage((await params).slug);
+  if (!page) return {};
+  const { shop } = page;
   return { title: `${shop.name}, boutique à ${shop.city}`, description: shop.description, alternates: { canonical: `/boutiques/${shop.slug}` } };
 }
 
 export default async function ShopPage({ params }: Props) {
-  const shop = getShop((await params).slug);
-  if (!shop) notFound();
-  const items = productsByShop(shop.slug);
-  const rating = shopRating(shop.slug);
+  const page = await getShopPage((await params).slug);
+  if (!page) notFound();
+  const { shop, cards: items, rating } = page;
   return (
     <section className="container-x py-16">
       <Breadcrumbs items={[{ name: "Accueil", href: "/" }, { name: "Boutiques", href: "/marketplace" }, { name: shop.name, href: `/boutiques/${shop.slug}` }]} />
@@ -48,7 +50,7 @@ export default async function ShopPage({ params }: Props) {
       </div>
       <h2 className="mb-8 mt-16 text-2xl font-medium text-white">Produits ({items.length})</h2>
       <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
-        {items.map((p) => <ProductCard key={p.slug} product={p} />)}
+        {items.map((c) => <ProductCard key={c.product.slug} item={c} />)}
       </div>
       <JsonLd
         data={{

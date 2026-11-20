@@ -1,17 +1,24 @@
 "use client";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useEffect, useState, useTransition } from "react";
 import { categories } from "@/lib/data";
 import { plans } from "@/lib/plans";
 import { paymentMethods, type PaymentMethodId } from "@/lib/payments";
 import { today, uid, update, useDemo } from "@/lib/demo-store";
+import { supabaseEnabled } from "@/lib/supabase/env";
+import { applySeller } from "@/app/actions";
+import type { KnownUser } from "@/lib/server-data";
 
 const steps = ["Boutique", "Vous", "Encaissement", "Forfait"] as const;
 const payoutChoices: (PaymentMethodId | "bank")[] = ["orange_money", "wave", "mtn_momo", "moov_money", "bank"];
 const payoutLabel = (m: PaymentMethodId | "bank") => (m === "bank" ? "Compte bancaire" : paymentMethods[m].label);
 
-export function SellerApplyForm({ initialPlan }: { initialPlan: string }) {
+export function SellerApplyForm({ initialPlan, known }: { initialPlan: string; known?: KnownUser | null }) {
   const demo = useDemo();
+  const router = useRouter();
+  const [pending, start] = useTransition();
+  const [error, setError] = useState("");
   const [step, setStep] = useState(0);
   const d = demo.onboardingDraft;
   // Le brouillon est sauvegardé à chaque saisie : quitter la page ne fait rien perdre,
@@ -24,7 +31,16 @@ export function SellerApplyForm({ initialPlan }: { initialPlan: string }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const myShop = demo.sellers.find((x) => x.id === demo.myShopId);
+  const myShop = supabaseEnabled ? (known?.shopStatus ? { status: known.shopStatus } : null) : demo.sellers.find((x) => x.id === demo.myShopId);
+  if (supabaseEnabled && !known) {
+    return (
+      <div className="card space-y-4">
+        <p className="text-white">Connectez-vous pour demander l&apos;ouverture de votre boutique.</p>
+        <p className="text-sm text-ash">Un code reçu par e-mail ou SMS suffit. Vos réponses seront reprises ensuite.</p>
+        <a href="/connexion?next=/vendre" className="btn-solid">Se connecter</a>
+      </div>
+    );
+  }
   if (myShop) {
     return (
       <div className="card space-y-4" role="status">
@@ -42,7 +58,21 @@ export function SellerApplyForm({ initialPlan }: { initialPlan: string }) {
 
   function next(e: React.FormEvent) {
     e.preventDefault();
+    setError("");
     if (step < steps.length - 1) return setStep(step + 1);
+    if (supabaseEnabled) {
+      start(async () => {
+        const r = await applySeller({
+          shopName: val("shopName"), category: val("category"), city: val("city", p?.city), country: val("country", p?.country),
+          owner: val("owner", p?.name), email: val("email", p?.email), phone: val("phone", p?.phone),
+          payoutMethod: val("payoutMethod", "orange_money"), payoutAccount: val("payoutAccount"), cod: val("cod", "1") === "1", plan: val("plan", "pro"),
+        });
+        if (!r.ok) return setError(r.error);
+        update((s) => ({ ...s, onboardingDraft: {} }));
+        router.refresh();
+      });
+      return;
+    }
     const method = val("payoutMethod", "orange_money") as PaymentMethodId | "bank";
     const account = val("payoutAccount");
     const shopId = uid("S");
@@ -57,7 +87,7 @@ export function SellerApplyForm({ initialPlan }: { initialPlan: string }) {
     }));
   }
 
-  const p = demo.profile;
+  const p = supabaseEnabled ? known : demo.profile;
   return (
     <form onSubmit={next} className="card space-y-6">
       <ol className="flex flex-wrap gap-2 font-mono text-xs" aria-label="Étapes">
@@ -124,8 +154,9 @@ export function SellerApplyForm({ initialPlan }: { initialPlan: string }) {
 
       <div className="flex justify-between gap-3 border-t border-line pt-5">
         <button type="button" className="btn" onClick={() => setStep(Math.max(0, step - 1))} disabled={step === 0}>Retour</button>
-        <button type="submit" className="btn-solid">{step === steps.length - 1 ? "Envoyer ma demande" : "Continuer"}</button>
+        <button type="submit" className="btn-solid" disabled={pending}>{pending ? "Envoi…" : step === steps.length - 1 ? "Envoyer ma demande" : "Continuer"}</button>
       </div>
+      {error && <p className="text-sm text-alarm" role="alert">{error}</p>}
       <p className="font-mono text-xs text-iron">brouillon enregistré automatiquement</p>
     </form>
   );

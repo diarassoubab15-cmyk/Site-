@@ -1,14 +1,18 @@
 import type { MetadataRoute } from "next";
-import { categories, products, shops } from "@/lib/data";
+import { categories } from "@/lib/data";
+import { allSlugs } from "@/lib/catalog";
 import { absoluteUrl } from "@/lib/site";
 
-export default function sitemap(): MetadataRoute.Sitemap {
+export const revalidate = 3600;
+
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+  const { products, shops } = await allSlugs();
   const now = new Date();
   const statics = ["/", "/marketplace", "/vendre", "/tarifs", "/securite", "/support", "/confidentialite", "/conditions"];
   return [
     ...statics.map((p) => ({ url: absoluteUrl(p), lastModified: now, changeFrequency: "weekly" as const, priority: p === "/" ? 1 : 0.7 })),
     ...categories.map((c) => ({ url: absoluteUrl(`/marketplace/${c.slug}`), lastModified: now, changeFrequency: "daily" as const, priority: 0.8 })),
-    ...products.map((p) => ({ url: absoluteUrl(`/produits/${p.slug}`), lastModified: now, changeFrequency: "daily" as const, priority: 0.9 })),
-    ...shops.map((s) => ({ url: absoluteUrl(`/boutiques/${s.slug}`), lastModified: now, changeFrequency: "weekly" as const, priority: 0.6 })),
+    ...products.map((slug) => ({ url: absoluteUrl(`/produits/${slug}`), lastModified: now, changeFrequency: "daily" as const, priority: 0.9 })),
+    ...shops.map((slug) => ({ url: absoluteUrl(`/boutiques/${slug}`), lastModified: now, changeFrequency: "weekly" as const, priority: 0.6 })),
   ];
 }

@@ -1,8 +1,9 @@
 import Link from "next/link";
-import { categories, type Product } from "@/lib/data";
+import { categories } from "@/lib/data";
+import type { CardItem } from "@/lib/catalog";
 import { ProductCard } from "./ProductCard";
 
-export function CatalogView({ items, active, q }: { items: Product[]; active?: string; q?: string }) {
+export function CatalogView({ items, active, q }: { items: CardItem[]; active?: string; q?: string }) {
   return (
     <>
       {/* Recherche en GET : chaque résultat a une URL partageable */}
@@ -21,7 +22,7 @@ export function CatalogView({ items, active, q }: { items: Product[]; active?: s
       </nav>
       {items.length ? (
         <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
-          {items.map((p) => <ProductCard key={p.slug} product={p} />)}
+          {items.map((c) => <ProductCard key={c.product.slug} item={c} />)}
         </div>
       ) : (
         <div className="card text-center">
