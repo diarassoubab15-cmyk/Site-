@@ -46,8 +46,22 @@ export function SubscriptionPanel({
   const [payerPhone, setPayerPhone] = useState(ownerPhone);
 
   const open = payment && ["contact", "paiement", "déclaré"].includes(payment.status) ? payment : null;
-  const until = subscription?.until ? new Date(subscription.until) : null;
-  const activeNow = !!subscription?.active && (!until || until > new Date());
+  // Couverture : abonnement payé, prolongé par les mois offerts qui s'enchaînent.
+  const rewards = supabaseEnabled ? live?.rewards ?? [] : demo.rewards.filter((r) => r.shopId === shop.id && !r.revoked);
+  const paidOpenEnded = !!subscription?.active && !subscription.until && !live?.coveredUntil;
+  let covered: Date | null = supabaseEnabled && live?.coveredUntil ? new Date(live.coveredUntil) : null;
+  if (!supabaseEnabled) {
+    let e = Math.max(Date.now(), subscription?.active && subscription.until ? new Date(subscription.until).getTime() : 0);
+    [...rewards].filter((r) => r.freeMonths > 0).sort((a, b) => a.startsOn!.localeCompare(b.startsOn!)).forEach((r) => {
+      const s = new Date(r.startsOn!).getTime(), f = new Date(r.endsOn!).getTime();
+      if (s <= e && f > e) e = f;
+    });
+    covered = new Date(e);
+  }
+  const until = paidOpenEnded ? null : covered;
+  const activeNow = paidOpenEnded || (!!until && until.getTime() > Date.now() + 60_000);
+  const freeNow = rewards.some((r) => r.freeMonths > 0 && new Date(r.startsOn!) <= new Date() && new Date(r.endsOn!) > new Date());
+  const upcomingFree = rewards.filter((r) => r.freeMonths > 0 && new Date(r.startsOn!) > new Date());
   const daysLeft = until ? Math.ceil((until.getTime() - Date.now()) / 86400000) : null;
   const canRenew = !activeNow || (daysLeft !== null && daysLeft <= 7);
 
@@ -97,16 +111,21 @@ export function SubscriptionPanel({
           <span className={`h-2 w-2 rounded-full ${activeNow ? "bg-pulse" : "bg-amber"}`} aria-hidden="true" />
           {activeNow ? (
             <span className="text-bone">
-              {planName(subscription!.plan)} actif{until ? ` jusqu'au ${formatDate(until.toISOString())}` : ""} · votre boutique est visible
+              {freeNow ? "Mois offert en cours" : `${planName(subscription?.plan ?? shop.plan ?? "pro")} actif`}{until ? ` · couvert jusqu'au ${formatDate(until.toISOString())}` : ""} · votre boutique est visible
             </span>
-          ) : until ? (
-            <span className="text-amber">Expiré le {formatDate(until.toISOString())} : votre boutique n&apos;est plus visible</span>
+          ) : subscription?.until ? (
+            <span className="text-amber">Expiré le {formatDate(subscription.until)} : votre boutique n&apos;est plus visible</span>
           ) : (
             <span className="text-amber">Pas encore payé : votre boutique n&apos;est pas visible des clients</span>
           )}
         </p>
       </div>
 
+      {upcomingFree.length > 0 && (
+        <p className="text-sm text-amber">
+          🎁 {upcomingFree.map((r) => `${r.freeMonths} mois offert${r.freeMonths > 1 ? "s" : ""} à partir du ${formatDate(r.startsOn!)}`).join(" · ")} : rien à payer pour cette période.
+        </p>
+      )}
       {error && <p className="rounded-[6px] border border-alarm/40 px-4 py-3 text-sm text-alarm" role="alert">{error}</p>}
       {payment?.status === "refusé" && payment.adminNote && !open && (
         <p className="rounded-[6px] border border-line px-4 py-3 text-sm text-ash">Dernière demande {payment.ref} : {payment.adminNote}.</p>

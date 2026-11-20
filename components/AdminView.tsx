@@ -9,6 +9,7 @@ import type { LiveAdmin } from "@/lib/views";
 import { adminResolveTicket, adminSetShopStatus } from "@/app/actions";
 import { CountUp } from "./CountUp";
 import { AdminPayments } from "./AdminPayments";
+import { AdminRewards } from "./AdminRewards";
 
 const tabs: { id: SellerStatus | "tous"; label: string }[] = [
   { id: "en attente", label: "À vérifier" },
@@ -85,6 +86,8 @@ export function AdminView({ live }: { live?: LiveAdmin | null }) {
       </div>
 
       <AdminPayments live={live?.payments} />
+
+      <AdminRewards live={live?.rewards} sellers={sellers} />
 
       <section className="card" aria-labelledby="vendeurs">
         <h2 id="vendeurs" className="text-xl font-medium text-white">Vendeurs</h2>

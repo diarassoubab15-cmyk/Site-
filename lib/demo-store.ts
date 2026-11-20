@@ -75,6 +75,7 @@ export type DemoState = {
   myShopId: string | null;
   subscription: { plan: string; annual: boolean; active: boolean; until?: string } | null;
   subPayments: DemoSubPayment[];
+  rewards: import("./rewards").RewardView[];
   onboardingDraft: Record<string, string>;
 };
 
@@ -107,6 +108,7 @@ const initial: DemoState = {
   myShopId: null,
   subscription: null,
   subPayments: [],
+  rewards: [],
   onboardingDraft: {},
 };
 

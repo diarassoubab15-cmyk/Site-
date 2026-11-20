@@ -121,7 +121,7 @@ export async function getShopPage(slug: string) {
   if (!supabaseEnabled) {
     const shop = demo.getShop(slug);
     if (!shop) return null;
-    return { shop, cards: demo.productsByShop(slug).map(demoCard), rating: demo.shopRating(slug) };
+    return { shop, cards: demo.productsByShop(slug).map(demoCard), rating: demo.shopRating(slug), awards: [] as string[] };
   }
   const sb = supabasePublic();
   const { data: s } = await sb.from("shops").select("id, slug, name, city, country, description, created_at, accepts_cod, response_time, payments").eq("slug", slug).eq("status", "approved").maybeSingle();
@@ -131,7 +131,8 @@ export async function getShopPage(slug: string) {
   const all = cards.filter((c) => c.rating.count);
   const count = all.reduce((n, c) => n + c.rating.count, 0);
   const average = count ? Math.round((all.reduce((n, c) => n + c.rating.average * c.rating.count, 0) / count) * 10) / 10 : 0;
-  return { shop: toShop(s as ShopRow), cards, rating: { average, count } };
+  const { data: aw } = await sb.from("rewards").select("title").eq("shop_id", s.id).is("revoked_at", null).neq("kind", "gift").order("created_at", { ascending: false }).limit(5);
+  return { shop: toShop(s as ShopRow), cards, rating: { average, count }, awards: (aw ?? []).map((a) => a.title) };
 }
 
 export async function allSlugs() {

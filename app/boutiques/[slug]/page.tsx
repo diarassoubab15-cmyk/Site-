@@ -28,7 +28,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function ShopPage({ params }: Props) {
   const page = await getShopPage((await params).slug);
   if (!page) notFound();
-  const { shop, cards: items, rating } = page;
+  const { shop, cards: items, rating, awards } = page;
   return (
     <section className="container-x py-16">
       <Breadcrumbs items={[{ name: "Accueil", href: "/" }, { name: "Boutiques", href: "/marketplace" }, { name: shop.name, href: `/boutiques/${shop.slug}` }]} />
@@ -38,6 +38,11 @@ export default async function ShopPage({ params }: Props) {
             <h1 className="text-3xl font-medium tracking-tight text-white">{shop.name}</h1>
             {shop.verified && <span className="badge text-pulse">✓ vendeur vérifié</span>}
           </div>
+          {awards.length > 0 && (
+            <ul className="mt-3 flex flex-wrap gap-2" aria-label="Distinctions">
+              {awards.map((a) => <li key={a} className="badge border-amber/40 text-amber">🏆 {a}</li>)}
+            </ul>
+          )}
           <p className="mt-2 text-sm text-ash">{shop.city}, {shop.country} · sur NEXORA depuis le {formatDate(shop.since)} · {shop.responseTime}</p>
           {rating.count > 0 && <p className="mt-3 flex items-center gap-2 text-sm text-ash"><Stars value={rating.average} /> {rating.average}/5 · {rating.count} avis vérifiés</p>}
           <p className="mt-5 max-w-2xl text-bone">{shop.description}</p>

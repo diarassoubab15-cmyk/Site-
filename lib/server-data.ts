@@ -7,6 +7,13 @@ import { paymentMethods } from "./payments";
 import { orderStatusFr, shopStatusFr, subPaymentStatusFr, ticketKindFr, ticketStatusFr, type LiveAccount, type LiveAdmin, type LiveSeller } from "./views";
 import type { DemoSubPayment } from "./demo-store";
 import { adminPaymentInfo } from "./payment-info";
+import { periodOf, type RewardView } from "./rewards";
+
+type RewardRow = { id: string; shop_id: string; kind: string; period_key: string; title: string; free_months: number; starts_on: string | null; ends_on: string | null; note: string | null; revoked_at: string | null; created_at: string };
+const rewardView = (r: RewardRow, shopName = ""): RewardView => ({
+  id: r.id, shopId: r.shop_id, shopName, kind: r.kind as RewardView["kind"], periodKey: r.period_key, title: r.title, freeMonths: r.free_months,
+  startsOn: r.starts_on, endsOn: r.ends_on, note: r.note ?? undefined, revoked: !!r.revoked_at, createdAt: r.created_at.slice(0, 10),
+});
 
 type PaymentRow = { id: string; ref: string; shop_id: string; plan: string; annual: boolean; amount: number; status: string; operator_ref: string | null; payer_phone: string | null; admin_note: string | null; created_at: string };
 const paymentView = (p: PaymentRow, extra: Partial<DemoSubPayment> = {}): DemoSubPayment => ({
@@ -72,16 +79,27 @@ export async function loadSeller(): Promise<LiveSeller | null> {
   const { data: shops } = await sb.from("shops").select("id, name, status, created_at").eq("owner_id", user.id).order("created_at", { ascending: false }).limit(1);
   const shop = shops?.[0];
   const prefs = await prefsOf(sb, user.id);
-  if (!shop) return { shop: null, payouts: [], orders: [], prefs, subscription: null, payment: null, payInfo: null, owner };
+  if (!shop) return { shop: null, payouts: [], orders: [], prefs, subscription: null, payment: null, payInfo: null, owner, coveredUntil: null, rewards: [], stats: null };
   const [{ data: sub }, { data: payouts }, { data: orders }, { data: pays }] = await Promise.all([
     sb.from("subscriptions").select("plan, annual, active, current_period_end").eq("shop_id", shop.id).maybeSingle(),
     sb.from("payout_accounts").select("id, type, last4").eq("shop_id", shop.id),
     sb.from("orders").select("*").eq("shop_id", shop.id).order("created_at", { ascending: false }).limit(100),
     sb.from("subscription_payments").select("*").eq("shop_id", shop.id).order("created_at", { ascending: false }).limit(1),
   ]);
+  const now = new Date();
+  const month = periodOf("month", `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, "0")}`)!;
+  const [{ data: covered }, { data: rw }, { data: st }] = await Promise.all([
+    sb.rpc("shop_covered_until", { p_shop: shop.id }),
+    sb.from("rewards").select("*").eq("shop_id", shop.id).is("revoked_at", null).order("created_at", { ascending: false }),
+    sb.rpc("seller_my_stats", { p_from: month.from, p_to: month.to }),
+  ]);
+  const s0 = st?.[0];
   const payment = pays?.[0] ? paymentView(pays[0]) : null;
   return {
     owner,
+    coveredUntil: covered && covered !== "infinity" ? String(covered) : null,
+    rewards: (rw ?? []).map((r) => rewardView(r, shop.name)),
+    stats: s0 ? { delivered: s0.delivered, revenue: Number(s0.revenue), openOrders: s0.open_orders, rating: s0.rating === null ? null : Number(s0.rating), reviews: s0.reviews, rank: shop.status === "approved" ? s0.rank : null, competitors: s0.competitors } : null,
     subscription: sub ? { plan: sub.plan, annual: sub.annual, active: sub.active, until: sub.current_period_end } : null,
     payment,
     // Les coordonnées de paiement ne quittent le serveur qu'après le contact confirmé par l'admin.
@@ -101,13 +119,15 @@ export async function loadAdmin(): Promise<LiveAdmin | null> {
   const u = await currentUser();
   if (!u || u.profile?.role !== "admin") return null;
   const { sb } = u;
-  const [{ data: shops }, { data: tickets }, { data: pays }] = await Promise.all([
+  const [{ data: shops }, { data: tickets }, { data: pays }, { data: rw }] = await Promise.all([
     sb.from("shops").select("id, name, owner_name, contact_email, contact_phone, city, country, category, status, created_at").order("created_at", { ascending: false }),
     sb.from("tickets").select("*").order("created_at", { ascending: false }).limit(200),
     sb.from("subscription_payments").select("*").order("created_at", { ascending: false }).limit(100),
+    sb.from("rewards").select("*").order("created_at", { ascending: false }).limit(200),
   ]);
   const shopById = new Map((shops ?? []).map((s) => [s.id, s]));
   return {
+    rewards: (rw ?? []).map((r) => rewardView(r, shopById.get(r.shop_id)?.name ?? "")),
     payments: (pays ?? []).map((p) => {
       const s = shopById.get(p.shop_id);
       return paymentView(p, { shopName: s?.name, owner: s?.owner_name ?? undefined, ownerPhone: s?.contact_phone ?? undefined });

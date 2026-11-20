@@ -181,6 +181,32 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"rewards": {
+                  Row: {
+                    "created_at": string,"ends_on": string | null,"free_months": number,"granted_by": string | null,"id": string,"kind": Database["public"]['Enums']["reward_kind"],"note": string | null,"period_key": string,"revoked_at": string | null,"shop_id": string,"starts_on": string | null,"title": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "created_at"?: string,"ends_on"?: string | null,"free_months": number,"granted_by"?: string | null,"id"?: string,"kind": Database["public"]['Enums']["reward_kind"],"note"?: string | null,"period_key": string,"revoked_at"?: string | null,"shop_id": string,"starts_on"?: string | null,"title": string
+                  }
+                  Update: {
+                    "created_at"?: string,"ends_on"?: string | null,"free_months"?: number,"granted_by"?: string | null,"id"?: string,"kind"?: Database["public"]['Enums']["reward_kind"],"note"?: string | null,"period_key"?: string,"revoked_at"?: string | null,"shop_id"?: string,"starts_on"?: string | null,"title"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "rewards_granted_by_fkey"
+      columns: ["granted_by"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "rewards_shop_id_fkey"
+      columns: ["shop_id"]
+isOneToOne: false
+      referencedRelation: "shops"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"shops": {
                   Row: {
                     "accepts_cod": boolean,"category": string,"city": string,"contact_email": string | null,"contact_phone": string | null,"country": string,"created_at": string,"description": string | null,"id": string,"name": string,"owner_id": string,"owner_name": string | null,"payments": (Database["public"]['Enums']["payment_method"])[],"response_time": string,"slug": string,"status": Database["public"]['Enums']["shop_status"],"status_changed_at": string | null,"status_reason": string | null
@@ -282,11 +308,22 @@ isOneToOne: false
             "admin_confirm_payment":
 { Args: { "p_payment": string }; Returns: undefined
                            },
+"admin_grant_reward":
+{ Args: { "p_free_months": number,"p_kind": Database["public"]['Enums']["reward_kind"],"p_note"?: string,"p_period_key": string,"p_shop": string,"p_start"?: string,"p_title": string }; Returns: string
+                           },
 "admin_mark_contacted":
 { Args: { "p_payment": string }; Returns: undefined
                            },
 "admin_reject_payment":
 { Args: { "p_note"?: string,"p_payment": string }; Returns: undefined
+                           },
+"admin_revoke_reward":
+{ Args: { "p_note"?: string,"p_reward": string }; Returns: undefined
+                           },
+"admin_seller_ranking":
+{ Args: { "p_from": string,"p_to": string }; Returns: {
+              "contact_phone": string,"delivered": number,"disputes": number,"owner_name": string,"rating": number,"revenue": number,"reviews": number,"shop_id": string,"shop_name": string
+            }[]
                            },
 "admin_set_shop_status":
 { Args: { "p_reason"?: string,"p_shop": string,"p_status": Database["public"]['Enums']["shop_status"] }; Returns: undefined
@@ -303,12 +340,20 @@ isOneToOne: false
 "plan_monthly_price":
 { Args: { "p": Database["public"]['Enums']["plan_id"] }; Returns: number
                            },
+"seller_my_stats":
+{ Args: { "p_from": string,"p_to": string }; Returns: {
+              "competitors": number,"delivered": number,"open_orders": number,"rank": number,"rating": number,"revenue": number,"reviews": number
+            }[]
+                           },
+"shop_covered_until":
+{ Args: { "p_shop": string }; Returns: string
+                           },
 "shop_is_live":
 { Args: { "p_shop": string }; Returns: boolean
                            }
           }
           Enums: {
-            "order_status": "pending_payment"|"confirmed"|"shipped"|"delivered"|"not_received"|"refunded"|"cancelled","payment_method": "orange_money"|"wave"|"mtn_momo"|"moov_money"|"card"|"cash_on_delivery","payout_type": "orange_money"|"wave"|"mtn_momo"|"moov_money"|"card"|"bank","plan_id": "essentiel"|"pro"|"business","shop_status": "pending"|"approved"|"suspended"|"rejected"|"closed","subscription_payment_status": "contact_pending"|"awaiting_payment"|"declared"|"confirmed"|"rejected","ticket_kind": "contact"|"report"|"refund","ticket_status": "open"|"in_progress"|"resolved","user_role": "client"|"seller"|"admin"
+            "order_status": "pending_payment"|"confirmed"|"shipped"|"delivered"|"not_received"|"refunded"|"cancelled","payment_method": "orange_money"|"wave"|"mtn_momo"|"moov_money"|"card"|"cash_on_delivery","payout_type": "orange_money"|"wave"|"mtn_momo"|"moov_money"|"card"|"bank","plan_id": "essentiel"|"pro"|"business","reward_kind": "month"|"semester"|"year"|"gift","shop_status": "pending"|"approved"|"suspended"|"rejected"|"closed","subscription_payment_status": "contact_pending"|"awaiting_payment"|"declared"|"confirmed"|"rejected","ticket_kind": "contact"|"report"|"refund","ticket_status": "open"|"in_progress"|"resolved","user_role": "client"|"seller"|"admin"
           }
           CompositeTypes: {
             [_ in never]: never
@@ -428,7 +473,7 @@ export const Constants = {
           }
         },"public": {
           Enums: {
-            "order_status": ["pending_payment", "confirmed", "shipped", "delivered", "not_received", "refunded", "cancelled"],"payment_method": ["orange_money", "wave", "mtn_momo", "moov_money", "card", "cash_on_delivery"],"payout_type": ["orange_money", "wave", "mtn_momo", "moov_money", "card", "bank"],"plan_id": ["essentiel", "pro", "business"],"shop_status": ["pending", "approved", "suspended", "rejected", "closed"],"subscription_payment_status": ["contact_pending", "awaiting_payment", "declared", "confirmed", "rejected"],"ticket_kind": ["contact", "report", "refund"],"ticket_status": ["open", "in_progress", "resolved"],"user_role": ["client", "seller", "admin"]
+            "order_status": ["pending_payment", "confirmed", "shipped", "delivered", "not_received", "refunded", "cancelled"],"payment_method": ["orange_money", "wave", "mtn_momo", "moov_money", "card", "cash_on_delivery"],"payout_type": ["orange_money", "wave", "mtn_momo", "moov_money", "card", "bank"],"plan_id": ["essentiel", "pro", "business"],"reward_kind": ["month", "semester", "year", "gift"],"shop_status": ["pending", "approved", "suspended", "rejected", "closed"],"subscription_payment_status": ["contact_pending", "awaiting_payment", "declared", "confirmed", "rejected"],"ticket_kind": ["contact", "report", "refund"],"ticket_status": ["open", "in_progress", "resolved"],"user_role": ["client", "seller", "admin"]
           }
         }
 } as const

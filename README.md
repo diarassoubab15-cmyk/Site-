@@ -63,12 +63,12 @@ Copier les clés affichées dans `.env.local` (`NEXT_PUBLIC_SUPABASE_URL`, `NEXT
 - `npm run db:reset` : recrée la base (migrations + données de démo de `supabase/seed.sql`).
 - `npm run db:seed:generate` : régénère `seed.sql` à partir de `lib/data.ts`.
 - `npm run db:types` : régénère les types TypeScript après une modification du schéma.
-- `supabase/tests/` : 25 scénarios d'attaque à rejouer sur la base (voir son README).
+- `supabase/tests/` : 36 scénarios d'attaque à rejouer sur la base (voir son README).
 
 ## Mettre en ligne avec Supabase
 
 1. **Créer le projet** sur supabase.com (région la plus proche de vos clients).
-2. **Créer les tables** : exécuter dans l'éditeur SQL, dans l'ordre, `supabase/migrations/0001_init.sql`, `0002_app.sql` puis `0003_subscription_payments.sql`. Ne **pas** exécuter `seed.sql` (données de démonstration).
+2. **Créer les tables** : exécuter dans l'éditeur SQL, dans l'ordre, `supabase/migrations/0001_init.sql`, `0002_app.sql`, `0003_subscription_payments.sql` puis `0004_rewards.sql`. Ne **pas** exécuter `seed.sql` (données de démonstration).
 3. **Variables** sur l'hébergeur : `NEXT_PUBLIC_SITE_URL`, `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY` (secrète, jamais côté navigateur), et pour les abonnements : `NEXT_PUBLIC_ADMIN_WHATSAPP`, `NEXT_PUBLIC_ADMIN_PHONE`, `NEXT_PUBLIC_ADMIN_PHONE_DISPLAY`, `ADMIN_ORANGE_MONEY_NUMBER`, `ADMIN_ORANGE_MONEY_NAME`.
 4. **Authentification** (Authentication) :
    - *URL Configuration* : Site URL = votre domaine ; Redirect URLs = `https://votre-domaine/auth/callback`.
@@ -92,6 +92,14 @@ Copier les clés affichées dans `.env.local` (`NEXT_PUBLIC_SUPABASE_URL`, `NEXT
 
 Sans l'étape 3, la base refuse toute déclaration de paiement. Montants calculés par la base, un numéro de transaction ne sert qu'une fois, une seule demande en cours par boutique.
 
+### Récompenses et mois offerts (admin seul)
+
+- Dans `/admin`, section **Récompenses** : classement du **mois**, du **semestre** et de l'**année**, calculé sur les ventes livrées. La note moyenne et le nombre de litiges sont affichés pour aider à choisir.
+- L'admin désigne le gagnant (un seul par période) et offre de 0 à 12 mois gratuits, **à partir d'un mois précis** (ex. janvier 2027) ou **à la suite** de l'abonnement en cours. Il peut aussi offrir des mois hors classement (geste commercial) et retirer une récompense.
+- Les mois offerts comptent comme un abonnement payé : la boutique reste en ligne sans payer pendant cette période. Un paiement confirmé prolonge à partir de la fin de couverture (payée + offerte).
+- Badge public « Meilleur vendeur de… » sur la page de la boutique (les cadeaux libres restent privés).
+- Chaque vendeur a son **tableau de bord** dans `/vendeur` (ventes livrées, chiffre d'affaires, commandes à traiter, note, rang du mois, récompenses). Il n'est accessible qu'au vendeur : l'admin n'y a pas accès et ne peut rien y modifier.
+
 ### Ce que garantit la base (testé)
 
 - un seul compte `admin` ; personne ne peut changer son propre rôle ;
@@ -101,7 +109,8 @@ Sans l'étape 3, la base refuse toute déclaration de paiement. Montants calcul�
 - l'acheteur ne peut que confirmer la réception ou signaler « pas reçu » ; le vendeur expédier, annuler ou rembourser ;
 - avis possible uniquement sur une commande livrée, un seul par commande ;
 - comptes d'encaissement visibles par leur seul propriétaire (4 derniers chiffres seulement) ;
-- une boutique n'est visible que si elle est autorisée **et** que son abonnement est payé et en cours ;
+- une boutique n'est visible que si elle est autorisée **et** couverte (abonnement payé en cours ou mois offerts) ;
+- seul l'admin peut offrir ou retirer des mois et consulter le classement complet ; un vendeur ne voit que ses propres chiffres ;
 - fermeture de boutique : suppression des comptes de paiement et arrêt de l'abonnement ;
 - suppression de compte : l'historique des commandes est conservé mais anonymisé.
 

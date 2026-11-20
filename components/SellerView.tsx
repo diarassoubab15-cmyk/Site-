@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { NotificationPrefs } from "./NotificationPrefs";
 import { SubscriptionPanel } from "./SubscriptionPanel";
+import { SellerStats } from "./SellerStats";
 import { plans } from "@/lib/plans";
 import { formatPrice } from "@/lib/format";
 import { paymentMethods, type PaymentMethodId } from "@/lib/payments";
@@ -110,6 +111,8 @@ export function SellerView({ live }: { live?: LiveSeller | null }) {
           {!supabaseEnabled && shop.status === "en attente" && <p className="mt-4 text-xs text-iron">Démo : ouvrez <Link href="/admin" className="link">/admin</Link> pour autoriser cette boutique.</p>}
           {plan && !closed && <p className="mt-6 text-sm text-ash">Forfait choisi : <span className="text-white">{plan.name}</span></p>}
         </section>
+
+        {!closed && <SellerStats shop={shop} live={live} />}
 
         {!closed && <SubscriptionPanel shop={shop} live={live} />}
 

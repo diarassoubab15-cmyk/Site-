@@ -56,6 +56,10 @@ export type LiveSeller = {
   /** Coordonnées Orange Money : envoyées par le serveur UNIQUEMENT après le contact avec l'admin. */
   payInfo: { number: string; name: string } | null;
   owner: { name: string; phone: string };
+  /** Fin de couverture : abonnement payé prolongé par les mois offerts. */
+  coveredUntil: string | null;
+  rewards: import("./rewards").RewardView[];
+  stats: { delivered: number; revenue: number; openOrders: number; rating: number | null; reviews: number; rank: number | null; competitors: number } | null;
 };
 
-export type LiveAdmin = { sellers: DemoSeller[]; tickets: (Ticket & { shopId?: string })[]; payments: DemoSubPayment[] };
+export type LiveAdmin = { sellers: DemoSeller[]; tickets: (Ticket & { shopId?: string })[]; payments: DemoSubPayment[]; rewards: import("./rewards").RewardView[] };

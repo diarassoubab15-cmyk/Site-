@@ -34,6 +34,13 @@
 - Une boutique n'est visible que si elle est autorisée ET que l'abonnement est payé et non expiré.
 - Agrégateurs étudiés : CinetPay (retraits vers Orange Mali pas encore ouverts), PayDunya (2e choix), Orange Money Business en direct (1er choix, réponse d'Orange Mali attendue).
 
+## Récompenses (novembre 2026)
+- Meilleur vendeur du mois, du semestre et de l'année : classement par ventes LIVRÉES (pas les commandes annulées ou en litige) ; note et litiges affichés à titre d'aide.
+- L'admin seul désigne le gagnant et offre des mois gratuits (mois précis ou à la suite de l'abonnement) ; il peut aussi offrir des mois hors classement et retirer une récompense. Fonctions SQL réservées à is_admin(), aucune écriture directe possible.
+- Mois offerts = couverture d'abonnement (shop_covered_until) ; boutique en ligne si autorisée ET couverte.
+- Mini tableau de bord par boutique dans /vendeur, propre au vendeur ; l'admin ne le pilote pas (il garde seulement l'arbitrage des litiges et l'autorisation/suspension).
+- La demande mentionnait aussi « meilleur de la semaine » : non retenu (mois, semestre, année), à confirmer avec le propriétaire.
+
 ## Animations et 3D (skill animations-3d-nexora)
 - Couleurs : on garde noir + violet (choix du propriétaire), pas la charte bleu/orange du skill.
 - Écran d'ouverture 1,3 s, une fois par session, piloté par un script intégré (lib/motion-script.ts) et non par React,
