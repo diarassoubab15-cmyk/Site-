@@ -7,7 +7,7 @@ import { Stars } from "./Stars";
 export function ProductCard({ item }: { item: CardItem }) {
   const { product, shop, rating } = item;
   return (
-    <article className="group relative flex flex-col gap-4 rounded-[16px] border border-line p-3 transition-colors duration-150 hover:border-iron">
+    <article className="lift group relative flex flex-col gap-4 rounded-[16px] border border-line p-3 hover:border-iron">
       <ProductThumb product={product} />
       <div className="flex flex-1 flex-col gap-1.5 px-1 pb-1">
         <h3 className="text-[15px] font-medium leading-snug text-white">

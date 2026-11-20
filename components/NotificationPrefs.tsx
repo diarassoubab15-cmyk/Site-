@@ -3,6 +3,7 @@ import { useState } from "react";
 import { update, useDemo, type NotificationPrefs as Prefs } from "@/lib/demo-store";
 import { supabaseEnabled } from "@/lib/supabase/env";
 import { savePrefs } from "@/app/actions";
+import { toast } from "@/lib/toast";
 
 const groups: Record<"client" | "vendeur", { key: keyof Prefs; label: string; hint: string }[]> = {
   client: [
@@ -22,17 +23,19 @@ const groups: Record<"client" | "vendeur", { key: keyof Prefs; label: string; hi
 export function NotificationPrefs({ role, initial }: { role: "client" | "vendeur"; initial?: Prefs }) {
   const demo = useDemo();
   const [livePrefs, setLivePrefs] = useState<Prefs | undefined>(initial);
-  const [saved, setSaved] = useState<"" | "ok" | "err">("");
   const prefs = supabaseEnabled && livePrefs ? livePrefs : demo.prefs;
   const allOff = groups[role].every((g) => !prefs[g.key]);
 
   function set(changes: Partial<Prefs>) {
-    if (!supabaseEnabled) return update((s) => ({ ...s, prefs: { ...s.prefs, ...changes } }));
+    if (!supabaseEnabled) {
+      update((s) => ({ ...s, prefs: { ...s.prefs, ...changes } }));
+      return toast("Préférences enregistrées");
+    }
     const before = prefs;
     setLivePrefs({ ...prefs, ...changes });
     savePrefs(changes).then((r) => {
-      if (r.ok) setSaved("ok");
-      else { setLivePrefs(before); setSaved("err"); }
+      if (r.ok) toast("Préférences enregistrées");
+      else { setLivePrefs(before); toast("Enregistrement impossible, réessayez", "error"); }
     });
   }
 
@@ -54,8 +57,6 @@ export function NotificationPrefs({ role, initial }: { role: "client" | "vendeur
       <button type="button" className="mt-2 text-xs text-ash hover:text-white" onClick={() => set(Object.fromEntries(groups[role].map((g) => [g.key, allOff])))}>
         {allOff ? "Tout réactiver" : "Tout désactiver"}
       </button>
-      {saved === "ok" && <p className="text-xs text-pulse" role="status">Préférences enregistrées.</p>}
-      {saved === "err" && <p className="text-xs text-alarm" role="alert">Enregistrement impossible, réessayez.</p>}
       <p className="pt-2 text-xs text-iron">Les codes de connexion et alertes de sécurité restent toujours envoyés.</p>
     </div>
   );

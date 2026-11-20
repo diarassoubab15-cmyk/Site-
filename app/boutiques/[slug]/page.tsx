@@ -32,7 +32,7 @@ export default async function ShopPage({ params }: Props) {
   return (
     <section className="container-x py-16">
       <Breadcrumbs items={[{ name: "Accueil", href: "/" }, { name: "Boutiques", href: "/marketplace" }, { name: shop.name, href: `/boutiques/${shop.slug}` }]} />
-      <div className="card grid gap-8 md:grid-cols-[1fr_auto]">
+      <div className="card pop grid gap-8 md:grid-cols-[1fr_auto]">
         <div>
           <div className="flex flex-wrap items-center gap-3">
             <h1 className="text-3xl font-medium tracking-tight text-white">{shop.name}</h1>
@@ -49,7 +49,7 @@ export default async function ShopPage({ params }: Props) {
         </div>
       </div>
       <h2 className="mb-8 mt-16 text-2xl font-medium text-white">Produits ({items.length})</h2>
-      <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4" data-reveal suppressHydrationWarning>
         {items.map((c) => <ProductCard key={c.product.slug} item={c} />)}
       </div>
       <JsonLd

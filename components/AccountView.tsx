@@ -7,6 +7,7 @@ import { formatPrice } from "@/lib/format";
 import { paymentMethods } from "@/lib/payments";
 import { today, uid, update, useDemo, type DemoOrder } from "@/lib/demo-store";
 import { supabaseEnabled } from "@/lib/supabase/env";
+import { toast } from "@/lib/toast";
 import type { LiveAccount } from "@/lib/views";
 import { deleteAccount, markOrder, updateProfile } from "@/app/actions";
 
@@ -41,18 +42,24 @@ export function AccountView({ live }: { live?: LiveAccount | null }) {
   }
 
   /** Exécute l'action réelle (Supabase) ou la version démo, puis rafraîchit. */
-  function run(real: () => Promise<{ ok: boolean; error?: string }>, fake: () => void) {
+  function run(real: () => Promise<{ ok: boolean; error?: string }>, fake: () => void, success = "Enregistré") {
     setError("");
-    if (!supabaseEnabled) return fake();
+    if (!supabaseEnabled) {
+      fake();
+      return toast(success);
+    }
     start(async () => {
       const r = await real();
-      if (!r.ok) setError(r.error ?? "Erreur");
+      if (!r.ok) {
+        setError(r.error ?? "Erreur");
+        toast(r.error ?? "Erreur", "error");
+      } else toast(success);
       router.refresh();
     });
   }
 
   function received(o: DemoOrder) {
-    run(() => markOrder({ id: o.uuid, status: "delivered" }), () => update((s) => ({ ...s, orders: s.orders.map((x) => (x.id === o.id ? { ...x, status: "livrée" } : x)) })));
+    run(() => markOrder({ id: o.uuid, status: "delivered" }), () => update((s) => ({ ...s, orders: s.orders.map((x) => (x.id === o.id ? { ...x, status: "livrée" } : x)) })), "Réception confirmée");
   }
   function notReceived(o: DemoOrder) {
     run(
@@ -63,6 +70,7 @@ export function AccountView({ live }: { live?: LiveAccount | null }) {
           orders: s.orders.map((x) => (x.id === o.id ? { ...x, status: "non reçue" } : x)),
           tickets: [{ id: uid("T"), kind: "remboursement", subject: "Produit non reçu", message: `Commande ${o.id} non reçue.`, orderId: o.id, shop: o.shop, status: "ouvert", createdAt: today() }, ...s.tickets],
         })),
+      "Litige ouvert : le vendeur a 72 h",
     );
   }
 
@@ -70,7 +78,7 @@ export function AccountView({ live }: { live?: LiveAccount | null }) {
     e.preventDefault();
     const f = new FormData(e.currentTarget);
     const v = { name: String(f.get("name") ?? ""), phone: String(f.get("phone") ?? ""), city: String(f.get("city") ?? ""), country: String(f.get("country") ?? "") };
-    run(() => updateProfile(v), () => update((s) => ({ ...s, profile: { ...v, email: String(f.get("email") ?? s.profile?.email ?? "") } })));
+    run(() => updateProfile(v), () => update((s) => ({ ...s, profile: { ...v, email: String(f.get("email") ?? s.profile?.email ?? "") } })), "Profil enregistré");
     setEdit(false);
   }
 
@@ -100,7 +108,7 @@ export function AccountView({ live }: { live?: LiveAccount | null }) {
         <section className="card" aria-labelledby="cmd">
           <h2 id="cmd" className="mb-6 text-xl font-medium text-white">Mes commandes</h2>
           {orders.length === 0 && <p className="text-sm text-ash">Aucune commande. <Link href="/marketplace" className="link">Parcourir la marketplace</Link></p>}
-          <ul className="divide-y divide-line">
+          <ul className="divide-y divide-line" data-reveal suppressHydrationWarning>
             {orders.map((o) => (
               <li key={o.id} className="flex flex-col gap-3 py-4 sm:flex-row sm:items-center sm:justify-between">
                 <div>

@@ -46,7 +46,7 @@ export default async function ProductPage({ params }: Props) {
       <Breadcrumbs items={[{ name: "Accueil", href: "/" }, { name: cat.name, href: `/marketplace/${cat.slug}` }, { name: product.name, href: `/produits/${product.slug}` }]} />
       <div className="grid gap-10 lg:grid-cols-[1.1fr_1fr]">
         <div className="space-y-8">
-          <ProductThumb product={product} large />
+          <div className="pop"><ProductThumb product={product} large /></div>
           <div>
             <h2 className="mb-4 text-xl font-medium text-white">Description</h2>
             <p className="leading-relaxed text-bone">{product.description}</p>
@@ -84,7 +84,7 @@ export default async function ProductPage({ params }: Props) {
       <section id="avis" className="mt-24 scroll-mt-24" aria-labelledby="avis-titre">
         <h2 id="avis-titre" className="h-section text-4xl sm:text-5xl">Avis clients</h2>
         <p className="mb-8 mt-3 text-ash">{rating.count ? `${rating.average}/5 sur ${rating.count} avis, tous issus d'achats vérifiés.` : "Pas encore d'avis."}</p>
-        <div className="space-y-4">
+        <div className="space-y-4" data-reveal suppressHydrationWarning>
           <ReviewSection product={product.slug} />
           {list.map((r) => (
             <article key={r.id} className="card p-6">
@@ -106,7 +106,7 @@ export default async function ProductPage({ params }: Props) {
       {related.length > 0 && (
         <section className="mt-24" aria-labelledby="similaires">
           <h2 id="similaires" className="mb-8 text-2xl font-medium text-white">Dans la même catégorie</h2>
-          <div className="grid grid-cols-2 gap-4 md:grid-cols-4">{related.map((c) => <ProductCard key={c.product.slug} item={c} />)}</div>
+          <div className="grid grid-cols-2 gap-4 md:grid-cols-4" data-reveal suppressHydrationWarning>{related.map((c) => <ProductCard key={c.product.slug} item={c} />)}</div>
         </section>
       )}
 

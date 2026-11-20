@@ -4,8 +4,10 @@ import { useState, useTransition } from "react";
 import { categories } from "@/lib/data";
 import { update, useDemo, type SellerStatus } from "@/lib/demo-store";
 import { supabaseEnabled } from "@/lib/supabase/env";
+import { toast } from "@/lib/toast";
 import type { LiveAdmin } from "@/lib/views";
 import { adminResolveTicket, adminSetShopStatus } from "@/app/actions";
+import { CountUp } from "./CountUp";
 
 const tabs: { id: SellerStatus | "tous"; label: string }[] = [
   { id: "en attente", label: "À vérifier" },
@@ -31,21 +33,29 @@ export function AdminView({ live }: { live?: LiveAdmin | null }) {
   const count = (st: SellerStatus) => sellers.filter((s) => s.status === st).length;
   const openTickets = tickets.filter((t) => t.status !== "résolu");
 
-  function run(real: () => Promise<{ ok: boolean; error?: string }>, fake: () => void) {
+  function run(real: () => Promise<{ ok: boolean; error?: string }>, fake: () => void, success = "Enregistré") {
     setError("");
-    if (!supabaseEnabled) return fake();
+    if (!supabaseEnabled) {
+      fake();
+      return toast(success);
+    }
     start(async () => {
       const r = await real();
-      if (!r.ok) setError(r.error ?? "Erreur");
+      if (!r.ok) {
+        setError(r.error ?? "Erreur");
+        toast(r.error ?? "Erreur", "error");
+      } else toast(success);
       router.refresh();
     });
   }
+  const statusMsg: Record<SellerStatus, string> = { autorisé: "Boutique autorisée", refusé: "Demande refusée", suspendu: "Boutique suspendue", "en attente": "Remise en attente", fermé: "Boutique fermée" };
   const setStatus = (id: string, status: SellerStatus) =>
-    run(() => adminSetShopStatus({ shopId: id, status }), () => update((s) => ({ ...s, sellers: s.sellers.map((x) => (x.id === id ? { ...x, status } : x)) })));
+    run(() => adminSetShopStatus({ shopId: id, status }), () => update((s) => ({ ...s, sellers: s.sellers.map((x) => (x.id === id ? { ...x, status } : x)) })), statusMsg[status]);
   const suspendFromTicket = (t: AdminTicket) =>
     run(
       () => (t.shopId ? adminSetShopStatus({ shopId: t.shopId, status: "suspendu" }) : Promise.resolve({ ok: false, error: "Boutique inconnue" })),
       () => update((s) => ({ ...s, sellers: s.sellers.map((x) => (x.shopName === t.shop ? { ...x, status: "suspendu" } : x)) })),
+      "Vendeur suspendu",
     );
   const resolve = (t: AdminTicket, refund: boolean) =>
     run(
@@ -56,6 +66,7 @@ export function AdminView({ live }: { live?: LiveAdmin | null }) {
           orders: refund ? s.orders.map((o) => (o.id === t.orderId ? { ...o, status: "remboursée" } : o)) : s.orders,
           tickets: s.tickets.map((x) => (x.id === t.id ? { ...x, status: "résolu" } : x)),
         })),
+      refund ? "Remboursement enregistré" : "Demande résolue",
     );
 
   return (
@@ -65,7 +76,7 @@ export function AdminView({ live }: { live?: LiveAdmin | null }) {
         {([["À vérifier", count("en attente"), "text-amber"], ["Vendeurs autorisés", count("autorisé"), "text-pulse"], ["Suspendus", count("suspendu"), "text-alarm"], ["Litiges ouverts", openTickets.length, "text-iris-glow"]] as const).map(([l, n, c]) => (
           <div key={l} className="card p-5">
             <p className="text-xs text-ash">{l}</p>
-            <p className={`mt-2 font-mono text-3xl ${c}`}>{n}</p>
+            <p className={`mt-2 font-mono text-3xl ${c}`}><CountUp value={n} /></p>
           </div>
         ))}
       </div>
@@ -78,7 +89,7 @@ export function AdminView({ live }: { live?: LiveAdmin | null }) {
           ))}
         </div>
         {list.length === 0 && <p className="text-sm text-iron">Rien ici.</p>}
-        <ul className="divide-y divide-line">
+        <ul className="divide-y divide-line" data-reveal suppressHydrationWarning>
           {list.map((s) => (
             <li key={s.id} className="flex flex-col gap-4 py-5 md:flex-row md:items-center md:justify-between">
               <div>
@@ -88,7 +99,7 @@ export function AdminView({ live }: { live?: LiveAdmin | null }) {
               </div>
               <div className="flex flex-wrap gap-2">
                 {s.status === "en attente" && (<>
-                  <button className="btn-solid px-3 py-1.5 text-xs" disabled={pending} onClick={() => setStatus(s.id, "autorisé")}>Autoriser</button>
+                  <button className="btn-solid px-3 py-1.5 text-xs" data-haptic disabled={pending} onClick={() => setStatus(s.id, "autorisé")}>Autoriser</button>
                   <button className="btn-danger px-3 py-1.5 text-xs" disabled={pending} onClick={() => setStatus(s.id, "refusé")}>Refuser</button>
                 </>)}
                 {s.status === "autorisé" && <button className="btn-danger px-3 py-1.5 text-xs" disabled={pending} onClick={() => setStatus(s.id, "suspendu")}>Suspendre</button>}
@@ -103,7 +114,7 @@ export function AdminView({ live }: { live?: LiveAdmin | null }) {
       <section className="card" aria-labelledby="litiges">
         <h2 id="litiges" className="mb-6 text-xl font-medium text-white">Signalements et litiges</h2>
         {tickets.length === 0 && <p className="text-sm text-iron">Aucune demande pour le moment.</p>}
-        <ul className="space-y-3">
+        <ul className="space-y-3" data-reveal suppressHydrationWarning>
           {tickets.map((t) => (
             <li key={t.id} className="rounded-[6px] border border-line p-4">
               <div className="flex flex-wrap items-center justify-between gap-2">

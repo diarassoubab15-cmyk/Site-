@@ -27,6 +27,15 @@
 - Sécurité vérifiée dans la base elle-même (triggers + RLS), pas seulement dans le site : 14 scénarios d'attaque dans `supabase/tests`.
 - Comme l'argent va au vendeur, NEXORA ne peut pas rembourser elle-même : elle impose le délai et sanctionne. C'est expliqué au client, qui peut choisir le paiement à la livraison.
 
+## Animations et 3D (skill animations-3d-nexora)
+- Couleurs : on garde noir + violet (choix du propriétaire), pas la charte bleu/orange du skill.
+- Écran d'ouverture 1,3 s, une fois par session, piloté par un script intégré (lib/motion-script.ts) et non par React,
+  pour finir à l'heure même sur téléphone lent. Jamais sur /admin, /vendeur, /compte, /connexion, ni en mouvement réduit.
+- Apparition des cartes au défilement en CSS + IntersectionObserver ([data-reveal]) : sans JavaScript, rien n'est caché.
+- 3D (Three.js, sans React Three Fiber) uniquement sur la bannière d'accueil, chargée en différé, seulement sur
+  ordinateur capable (≥ 1024 px, ≥ 4 Go, ≥ 4 cœurs, pas d'économie de données). Sinon : cube CSS.
+- Pas de GSAP ni de Framer Motion : aucun besoin qui le justifie, 0 Ko ajouté.
+
 ## Historique
 - Novembre 2026 : branchement Supabase testé de bout en bout sur un Supabase local (20 vérifications navigateur + 14 attaques SQL).
 - Un premier essai (branche `claude/nexora-marketplace-design-bx4zii`, 3 commits) n'a jamais pu être récupéré : le projet a été refait de zéro sur `claude/nexora-marketplace-design-74sqrs`.

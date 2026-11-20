@@ -9,6 +9,7 @@ import { today, uid, update, useDemo } from "@/lib/demo-store";
 import { supabaseEnabled } from "@/lib/supabase/env";
 import { applySeller } from "@/app/actions";
 import type { KnownUser } from "@/lib/server-data";
+import { SuccessCheck } from "./SuccessCheck";
 
 const steps = ["Boutique", "Vous", "Encaissement", "Forfait"] as const;
 const payoutChoices: (PaymentMethodId | "bank")[] = ["orange_money", "wave", "mtn_momo", "moov_money", "bank"];
@@ -43,8 +44,8 @@ export function SellerApplyForm({ initialPlan, known }: { initialPlan: string; k
   }
   if (myShop) {
     return (
-      <div className="card space-y-4" role="status">
-        <p className="eyebrow">Statut de votre demande</p>
+      <div className="card pop space-y-4" role="status">
+        <p className="eyebrow flex items-center gap-3">{myShop.status === "en attente" && <SuccessCheck size={22} />}Statut de votre demande</p>
         <p className="text-2xl text-white">{myShop.status === "en attente" ? "En cours de vérification" : `Boutique ${myShop.status}`}</p>
         <p className="text-ash">
           {myShop.status === "en attente"
@@ -154,7 +155,7 @@ export function SellerApplyForm({ initialPlan, known }: { initialPlan: string; k
 
       <div className="flex justify-between gap-3 border-t border-line pt-5">
         <button type="button" className="btn" onClick={() => setStep(Math.max(0, step - 1))} disabled={step === 0}>Retour</button>
-        <button type="submit" className="btn-solid" disabled={pending}>{pending ? "Envoi…" : step === steps.length - 1 ? "Envoyer ma demande" : "Continuer"}</button>
+        <button type="submit" data-haptic className="btn-solid" disabled={pending}>{pending ? "Envoi…" : step === steps.length - 1 ? "Envoyer ma demande" : "Continuer"}</button>
       </div>
       {error && <p className="text-sm text-alarm" role="alert">{error}</p>}
       <p className="font-mono text-xs text-iron">brouillon enregistré automatiquement</p>

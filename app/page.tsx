@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Cube } from "@/components/Cube";
+import { Hero3D } from "@/components/Hero3D";
 import { ProductCard } from "@/components/ProductCard";
 import { PaymentMethods } from "@/components/PaymentMethods";
 import { categories } from "@/lib/data";
@@ -62,28 +62,28 @@ export default async function Home() {
     <>
       {/* HERO */}
       <section className="container-x grid items-center gap-12 pb-24 pt-16 sm:pt-24 lg:grid-cols-[1.25fr_1fr]">
-        <div className="fade-up">
-          <Link href="/securite" className="pill hover:border-white">
+        <div>
+          <Link href="/securite" className="pill fade-up hover:border-white" style={{ ["--d" as string]: 1 }}>
             <span className="h-1.5 w-1.5 rounded-full bg-pulse" aria-hidden="true" />
             Chaque vendeur est vérifié avant de vendre
             <span className="text-iris-glow" aria-hidden="true">›</span>
           </Link>
-          <h1 className="h-display mt-8">
+          <h1 className="h-display fade-up mt-8" style={{ ["--d" as string]: 2 }}>
             Vendez partout en Afrique.
             <br />
             <em className="text-ash">Encaissez directement.</em>
           </h1>
-          <p className="mt-8 max-w-xl text-lg leading-relaxed text-ash">
+          <p className="fade-up mt-8 max-w-xl text-lg leading-relaxed text-ash" style={{ ["--d" as string]: 3 }}>
             NEXORA est la marketplace où le client paie en Orange Money, Wave, carte ou à la livraison, et où le vendeur reçoit son argent
             sans intermédiaire ni commission.
           </p>
-          <div className="mt-10 flex flex-wrap gap-3">
+          <div className="fade-up mt-10 flex flex-wrap gap-3" style={{ ["--d" as string]: 4 }}>
             <Link href="/marketplace" className="btn-solid">Découvrir les produits</Link>
             <Link href="/vendre" className="btn">Ouvrir ma boutique <span aria-hidden="true">›</span></Link>
           </div>
         </div>
-        <div className="hidden justify-center py-10 lg:flex">
-          <Cube size={260} />
+        <div className="fade-up hidden justify-center lg:flex" style={{ ["--d" as string]: 3 }}>
+          <Hero3D size={260} />
         </div>
       </section>
 
@@ -99,7 +99,7 @@ export default async function Home() {
       <section className="container-x py-24" aria-labelledby="promesses">
         <p className="eyebrow">Ce qui change</p>
         <h2 id="promesses" className="h-section mt-4 max-w-3xl">Les défauts des grandes plateformes, corrigés.</h2>
-        <div className="mt-14 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="mt-14 grid gap-4 sm:grid-cols-2 lg:grid-cols-3" data-reveal suppressHydrationWarning>
           {promises.map((p) => (
             <article key={p.title} className="card">
               <span className="badge text-iris-glow">{p.tag}</span>
@@ -130,7 +130,7 @@ export default async function Home() {
             <span className="h-2.5 w-2.5 rounded-full bg-charcoal" />
             <span className="ml-3 font-mono text-xs text-iron">commande NX-20418</span>
           </div>
-          <ol className="space-y-3 p-5 font-mono text-[13px] leading-relaxed">
+          <ol className="space-y-3 p-5 font-mono text-[13px] leading-relaxed" data-reveal suppressHydrationWarning>
             {timeline.map((e, i) => (
               <li key={i} className="flex flex-wrap items-center gap-x-3 gap-y-1">
                 <span className="text-charcoal">{e.t}</span>
@@ -149,9 +149,9 @@ export default async function Home() {
           <h2 id="categories" className="h-section">Parcourir</h2>
           <Link href="/marketplace" className="text-sm text-bone hover:text-white">Tout voir ›</Link>
         </div>
-        <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3" data-reveal suppressHydrationWarning>
           {categories.map((c) => (
-            <Link key={c.slug} href={`/marketplace/${c.slug}`} className="card group flex items-start gap-5 transition-colors hover:border-iron">
+            <Link key={c.slug} href={`/marketplace/${c.slug}`} className="card lift group flex items-start gap-5 hover:border-iron">
               <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[16px] text-xl text-white" style={{ background: "linear-gradient(to right bottom, #9281f7, #9a54dc)" }} aria-hidden="true">
                 {c.icon}
               </span>
@@ -167,7 +167,7 @@ export default async function Home() {
       {/* PRODUITS */}
       <section className="container-x py-12" aria-labelledby="selection">
         <h2 id="selection" className="h-section">Sélection du moment</h2>
-        <div className="mt-10 grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
+        <div className="mt-10 grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4" data-reveal suppressHydrationWarning>
           {featured.map((c) => (
             <ProductCard key={c.product.slug} item={c} />
           ))}
@@ -178,7 +178,7 @@ export default async function Home() {
       <section className="container-x py-24" aria-labelledby="avis">
         <p className="eyebrow">Avis</p>
         <h2 id="avis" className="h-section mt-4">Ils vendent et achètent sur NEXORA.</h2>
-        <div className="mt-12 grid gap-4 md:grid-cols-3">
+        <div className="mt-12 grid gap-4 md:grid-cols-3" data-reveal suppressHydrationWarning>
           {testimonials.map((t) => (
             <figure key={t.name} className="card flex flex-col justify-between gap-8 p-6">
               <blockquote className="text-bone">« {t.quote} »</blockquote>

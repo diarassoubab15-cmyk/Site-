@@ -259,3 +259,23 @@ export const adminResolveTicket = action(z.object({ ticketId: z.string().uuid(),
   revalidatePath("/admin");
   return { ok: true };
 });
+
+// ------------------------------------------------------------------ contexte acheteur (fiche produit)
+/**
+ * Ce que la fiche produit doit savoir de l'utilisateur, sans embarquer le client Supabase
+ * dans le navigateur (≈ 75 Ko de moins sur la page la plus visitée).
+ */
+export async function getBuyerContext(slug: string): Promise<{ loggedIn: boolean; known: { name: string; city: string } | null; reviewableOrderId: string | null }> {
+  const u = await currentUser();
+  if (!u) return { loggedIn: false, known: null, reviewableOrderId: null };
+  const p = u.profile;
+  const known = p?.full_name && p?.phone && p?.city ? { name: p.full_name, city: p.city } : null;
+  const { data: orders } = await u.sb.from("orders").select("id").eq("buyer_id", u.user.id).eq("product_slug", String(slug).slice(0, 100)).eq("status", "delivered");
+  let reviewableOrderId: string | null = null;
+  if (orders?.length) {
+    const { data: done } = await u.sb.from("reviews").select("order_id").in("order_id", orders.map((o) => o.id));
+    const taken = new Set((done ?? []).map((d) => d.order_id));
+    reviewableOrderId = orders.find((o) => !taken.has(o.id))?.id ?? null;
+  }
+  return { loggedIn: true, known, reviewableOrderId };
+}

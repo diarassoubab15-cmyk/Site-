@@ -1,36 +1,21 @@
 "use client";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useState, useTransition } from "react";
+import { useState, useTransition } from "react";
 import type { Product, Shop } from "@/lib/data";
 import { formatPrice } from "@/lib/format";
 import { paymentMethods, type PaymentMethodId } from "@/lib/payments";
 import { today, uid, update, useDemo } from "@/lib/demo-store";
 import { supabaseEnabled } from "@/lib/supabase/env";
-import { supabaseBrowser } from "@/lib/supabase/client";
+import { useBuyerContext } from "@/lib/use-buyer-context";
 import { placeOrder } from "@/app/actions";
+import { SuccessCheck } from "./SuccessCheck";
 
 type Known = { name: string; city: string } | null;
 
-/** En mode Supabase, lit le profil côté navigateur (la page produit reste en cache pour tous). */
-function useLiveProfile() {
-  const [state, setState] = useState<{ loaded: boolean; loggedIn: boolean; known: Known }>({ loaded: !supabaseEnabled, loggedIn: false, known: null });
-  useEffect(() => {
-    if (!supabaseEnabled) return;
-    const sb = supabaseBrowser();
-    sb.auth.getUser().then(async ({ data }) => {
-      if (!data.user) return setState({ loaded: true, loggedIn: false, known: null });
-      const { data: p } = await sb.from("profiles").select("full_name, phone, city").eq("id", data.user.id).single();
-      const complete = p?.full_name && p?.phone && p?.city;
-      setState({ loaded: true, loggedIn: true, known: complete ? { name: p.full_name!, city: p.city! } : null });
-    });
-  }, []);
-  return state;
-}
-
 export function BuyBox({ product, shop }: { product: Product; shop: Shop }) {
   const demo = useDemo();
-  const live = useLiveProfile();
+  const live = useBuyerContext(product.slug);
   const router = useRouter();
   const [pending, start] = useTransition();
   const [qty, setQty] = useState(1);
@@ -70,8 +55,8 @@ export function BuyBox({ product, shop }: { product: Product; shop: Shop }) {
 
   if (done) {
     return (
-      <div className="card space-y-4" role="status">
-        <p className="eyebrow text-pulse">Commande envoyée</p>
+      <div className="card pop space-y-4" role="status">
+        <p className="eyebrow flex items-center gap-3 text-pulse"><SuccessCheck />Commande envoyée</p>
         <p className="text-white">Commande <span className="font-mono text-iris">{done}</span> transmise à {shop.name}.</p>
         <p className="text-sm text-ash">
           {method === "cash_on_delivery"
@@ -138,7 +123,7 @@ export function BuyBox({ product, shop }: { product: Product; shop: Shop }) {
         <span className="font-mono text-lg text-white">{formatPrice(total)}</span>
       </div>
       {error && <p className="text-sm text-alarm" role="alert">{error}</p>}
-      <button type="submit" className="btn-solid w-full" disabled={out || pending || !live.loaded}>
+      <button type="submit" data-haptic className="btn-solid w-full" disabled={out || pending || !live.loaded}>
         {out
           ? "Indisponible"
           : pending

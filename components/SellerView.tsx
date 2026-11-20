@@ -8,6 +8,7 @@ import { formatPrice } from "@/lib/format";
 import { paymentMethods, type PaymentMethodId } from "@/lib/payments";
 import { uid, update, useDemo } from "@/lib/demo-store";
 import { supabaseEnabled } from "@/lib/supabase/env";
+import { toast } from "@/lib/toast";
 import type { LiveSeller } from "@/lib/views";
 import { addPayout, closeShop as closeShopAction, removePayout, sellerUpdateOrder } from "@/app/actions";
 
@@ -49,15 +50,20 @@ export function SellerView({ live }: { live?: LiveSeller | null }) {
   const plan = plans.find((p) => p.id === shop.plan);
   const closed = shop.status === "fermé";
 
-  function run(real: () => Promise<{ ok: boolean; error?: string }>, fake: () => void, after?: () => void) {
+  function run(real: () => Promise<{ ok: boolean; error?: string }>, fake: () => void, after?: () => void, success = "Enregistré") {
     setError("");
     if (!supabaseEnabled) {
       fake();
+      toast(success);
       return after?.();
     }
     start(async () => {
       const r = await real();
-      if (!r.ok) return setError(r.error ?? "Erreur");
+      if (!r.ok) {
+        toast(r.error ?? "Erreur", "error");
+        return setError(r.error ?? "Erreur");
+      }
+      toast(success);
       after?.();
       router.refresh();
     });
@@ -72,6 +78,7 @@ export function SellerView({ live }: { live?: LiveSeller | null }) {
       () => addPayout({ type, number }),
       () => update((s) => ({ ...s, payouts: [...s.payouts, { id: uid("P"), type, label: payoutLabel(type), masked: `•••• ${number.slice(-4)}` }] })),
       () => setAdding(false),
+      "Compte d'encaissement ajouté",
     );
   }
 
@@ -87,6 +94,7 @@ export function SellerView({ live }: { live?: LiveSeller | null }) {
           subscription: opts.subscription ? null : s.subscription,
         })),
       () => setClosing(false),
+      "Boutique fermée",
     );
   }
 
@@ -108,7 +116,7 @@ export function SellerView({ live }: { live?: LiveSeller | null }) {
           <section className="card" aria-labelledby="cmdv">
             <h2 id="cmdv" className="mb-6 text-xl font-medium text-white">Commandes reçues</h2>
             {orders.length === 0 && <p className="text-sm text-ash">Aucune commande pour le moment.</p>}
-            <ul className="divide-y divide-line">
+            <ul className="divide-y divide-line" data-reveal suppressHydrationWarning>
               {orders.map((o) => (
                 <li key={o.id} className="flex flex-col gap-3 py-4 sm:flex-row sm:items-center sm:justify-between">
                   <div>

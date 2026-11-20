@@ -31,6 +31,15 @@ Copier `.env.example` en `.env.local` et remplir les valeurs.
 | `/support` | WhatsApp, e-mail, formulaire vers l'admin, protection acheteur |
 | `/securite`, `/confidentialite`, `/conditions` | Informations (textes légaux à faire relire) |
 
+## Animations
+
+| Où | Quoi | Poids |
+|---|---|---|
+| Toutes les pages | écran d'ouverture (1 fois par session), cartes en cascade au défilement, onde et enfoncement des boutons, transition entre pages, notifications | ≈ 2 Ko (script intégré) + CSS |
+| Accueil, ordinateur capable | cube 3D Three.js qui suit le pointeur | 137 Ko compressés, chargés en différé |
+| Téléphone, appareil modeste, économie de données | cube en CSS pur, aucune 3D téléchargée | 0 Ko |
+| Mouvement réduit (réglage système) | ni ouverture, ni 3D, tout s'affiche directement | — |
+
 ## Deux modes de fonctionnement
 
 | | Mode démo | Mode Supabase |

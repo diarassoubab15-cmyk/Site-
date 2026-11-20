@@ -6,6 +6,7 @@ import { site } from "@/lib/site";
 import { supabaseEnabled } from "@/lib/supabase/env";
 import { createTicket } from "@/app/actions";
 import type { KnownUser } from "@/lib/server-data";
+import { SuccessCheck } from "./SuccessCheck";
 
 const kinds: { id: Ticket["kind"]; label: string; anchor: string }[] = [
   { id: "contact", label: "Poser une question", anchor: "contact" },
@@ -68,8 +69,8 @@ export function SupportForm({ shop, known: liveKnown }: { shop?: string; known?:
 
   if (sent) {
     return (
-      <div className="card space-y-3" role="status">
-        <p className="eyebrow text-pulse">Demande reçue</p>
+      <div className="card pop space-y-3" role="status">
+        <p className="eyebrow flex items-center gap-3 text-pulse"><SuccessCheck />Demande reçue</p>
         <p className="text-white">Ticket <span className="font-mono text-iris">{sent}</span> transmis à l&apos;équipe.</p>
         <p className="text-sm text-ash">Première réponse en {site.support.firstResponse}, par e-mail et dans votre compte. Vous n&apos;aurez pas à répéter votre problème : tout l&apos;historique suit le ticket.</p>
         <button className="btn" onClick={() => setSent(null)}>Nouvelle demande</button>
@@ -116,7 +117,7 @@ export function SupportForm({ shop, known: liveKnown }: { shop?: string; known?:
         <p className="text-xs leading-relaxed text-iron">Le vendeur a 72 h pour vous rembourser ou prouver la livraison. Passé ce délai, l&apos;administrateur tranche, et le vendeur peut être suspendu.</p>
       )}
       {error && <p className="text-sm text-alarm" role="alert">{error}</p>}
-      <button className="btn-solid" disabled={pending}>{pending ? "Envoi…" : "Envoyer à l'administrateur"}</button>
+      <button className="btn-solid" data-haptic disabled={pending}>{pending ? "Envoi…" : "Envoyer à l'administrateur"}</button>
     </form>
   );
 }

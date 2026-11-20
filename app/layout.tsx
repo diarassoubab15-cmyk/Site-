@@ -4,6 +4,9 @@ import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { SupportButton } from "@/components/SupportButton";
 import { JsonLd } from "@/components/JsonLd";
+import { IntroScreen } from "@/components/Intro";
+import { Toaster } from "@/components/Toaster";
+import { motionScript } from "@/lib/motion-script";
 import { site, absoluteUrl } from "@/lib/site";
 
 export const metadata: Metadata = {
@@ -22,8 +25,13 @@ export const viewport: Viewport = { themeColor: "#000000", width: "device-width"
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="fr">
+    <html lang="fr" suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: motionScript }} />
+      </head>
       <body className="min-h-screen">
+        <IntroScreen />
+        <Toaster />
         <a href="#contenu" className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 btn bg-black">
           Aller au contenu
         </a>
