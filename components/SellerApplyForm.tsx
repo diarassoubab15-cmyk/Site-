@@ -49,7 +49,7 @@ export function SellerApplyForm({ initialPlan, known }: { initialPlan: string; k
         <p className="text-2xl text-white">{myShop.status === "en attente" ? "En cours de vérification" : `Boutique ${myShop.status}`}</p>
         <p className="text-ash">
           {myShop.status === "en attente"
-            ? "L'administrateur vérifie votre demande, en général sous 24 à 48 h. Vous recevrez un seul e-mail avec la décision. Aucun paiement n'est prélevé avant l'autorisation."
+            ? "L'administrateur vérifie votre demande, en général sous 24 à 48 h. Vous recevrez un seul e-mail avec la décision. Vous paierez votre abonnement par Orange Money seulement après l'autorisation."
             : "Retrouvez votre boutique et vos réglages dans l'espace vendeur."}
         </p>
         <Link href="/vendeur" className="btn">Espace vendeur</Link>
@@ -149,7 +149,7 @@ export function SellerApplyForm({ initialPlan, known }: { initialPlan: string; k
               <span className="font-mono text-sm text-bone">{pl.monthly.toLocaleString("fr-FR")} FCFA/mois</span>
             </label>
           ))}
-          <p className="text-xs text-iron">Aucun prélèvement avant l&apos;autorisation de votre boutique par l&apos;administrateur.</p>
+          <p className="text-xs text-iron">Rien à payer maintenant. Après l&apos;autorisation, vous contacterez l&apos;administrateur puis paierez par Orange Money.</p>
         </div>
       )}
 

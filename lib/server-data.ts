@@ -4,7 +4,15 @@ import { currentUser } from "./supabase/server";
 import type { NotificationPrefs, Ticket } from "./demo-store";
 import type { PaymentMethodId } from "./payments";
 import { paymentMethods } from "./payments";
-import { orderStatusFr, shopStatusFr, ticketKindFr, ticketStatusFr, type LiveAccount, type LiveAdmin, type LiveSeller } from "./views";
+import { orderStatusFr, shopStatusFr, subPaymentStatusFr, ticketKindFr, ticketStatusFr, type LiveAccount, type LiveAdmin, type LiveSeller } from "./views";
+import type { DemoSubPayment } from "./demo-store";
+import { adminPaymentInfo } from "./payment-info";
+
+type PaymentRow = { id: string; ref: string; shop_id: string; plan: string; annual: boolean; amount: number; status: string; operator_ref: string | null; payer_phone: string | null; admin_note: string | null; created_at: string };
+const paymentView = (p: PaymentRow, extra: Partial<DemoSubPayment> = {}): DemoSubPayment => ({
+  id: p.id, ref: p.ref, shopId: p.shop_id, plan: p.plan, annual: p.annual, amount: p.amount, status: subPaymentStatusFr[p.status],
+  operatorRef: p.operator_ref ?? undefined, payerPhone: p.payer_phone ?? undefined, adminNote: p.admin_note ?? undefined, createdAt: p.created_at.slice(0, 10), ...extra,
+});
 
 type Sb = NonNullable<Awaited<ReturnType<typeof currentUser>>>["sb"];
 
@@ -59,17 +67,25 @@ export async function loadAccount(): Promise<LiveAccount | null> {
 export async function loadSeller(): Promise<LiveSeller | null> {
   const u = await currentUser();
   if (!u) return null;
-  const { sb, user } = u;
+  const { sb, user, profile } = u;
+  const owner = { name: profile?.full_name ?? "", phone: profile?.phone ?? user.phone ?? "" };
   const { data: shops } = await sb.from("shops").select("id, name, status, created_at").eq("owner_id", user.id).order("created_at", { ascending: false }).limit(1);
   const shop = shops?.[0];
   const prefs = await prefsOf(sb, user.id);
-  if (!shop) return { shop: null, payouts: [], orders: [], prefs };
-  const [{ data: sub }, { data: payouts }, { data: orders }] = await Promise.all([
-    sb.from("subscriptions").select("plan").eq("shop_id", shop.id).maybeSingle(),
+  if (!shop) return { shop: null, payouts: [], orders: [], prefs, subscription: null, payment: null, payInfo: null, owner };
+  const [{ data: sub }, { data: payouts }, { data: orders }, { data: pays }] = await Promise.all([
+    sb.from("subscriptions").select("plan, annual, active, current_period_end").eq("shop_id", shop.id).maybeSingle(),
     sb.from("payout_accounts").select("id, type, last4").eq("shop_id", shop.id),
     sb.from("orders").select("*").eq("shop_id", shop.id).order("created_at", { ascending: false }).limit(100),
+    sb.from("subscription_payments").select("*").eq("shop_id", shop.id).order("created_at", { ascending: false }).limit(1),
   ]);
+  const payment = pays?.[0] ? paymentView(pays[0]) : null;
   return {
+    owner,
+    subscription: sub ? { plan: sub.plan, annual: sub.annual, active: sub.active, until: sub.current_period_end } : null,
+    payment,
+    // Les coordonnées de paiement ne quittent le serveur qu'après le contact confirmé par l'admin.
+    payInfo: payment?.status === "paiement" ? adminPaymentInfo() : null,
     shop: { id: shop.id, shopName: shop.name, status: shopStatusFr[shop.status], plan: sub?.plan ?? null },
     payouts: (payouts ?? []).map((p) => ({ id: p.id, type: p.type, label: p.type === "bank" ? "Compte bancaire" : paymentMethods[p.type as PaymentMethodId].label, masked: `•••• ${p.last4}` })),
     orders: (orders ?? []).map((o) => ({
@@ -85,11 +101,17 @@ export async function loadAdmin(): Promise<LiveAdmin | null> {
   const u = await currentUser();
   if (!u || u.profile?.role !== "admin") return null;
   const { sb } = u;
-  const [{ data: shops }, { data: tickets }] = await Promise.all([
+  const [{ data: shops }, { data: tickets }, { data: pays }] = await Promise.all([
     sb.from("shops").select("id, name, owner_name, contact_email, contact_phone, city, country, category, status, created_at").order("created_at", { ascending: false }),
     sb.from("tickets").select("*").order("created_at", { ascending: false }).limit(200),
+    sb.from("subscription_payments").select("*").order("created_at", { ascending: false }).limit(100),
   ]);
+  const shopById = new Map((shops ?? []).map((s) => [s.id, s]));
   return {
+    payments: (pays ?? []).map((p) => {
+      const s = shopById.get(p.shop_id);
+      return paymentView(p, { shopName: s?.name, owner: s?.owner_name ?? undefined, ownerPhone: s?.contact_phone ?? undefined });
+    }),
     sellers: (shops ?? []).map((s) => ({
       id: s.id, shopName: s.name, owner: s.owner_name ?? "", email: s.contact_email ?? "", phone: s.contact_phone ?? "",
       city: s.city, country: s.country, category: s.category, status: shopStatusFr[s.status], createdAt: s.created_at.slice(0, 10),

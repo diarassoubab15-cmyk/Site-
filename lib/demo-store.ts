@@ -35,6 +35,24 @@ export type Ticket = {
   status: "ouvert" | "en cours" | "résolu";
   createdAt: string;
 };
+/** Paiement d'abonnement : contact de l'admin obligatoire avant de payer. */
+export type SubPaymentStatus = "contact" | "paiement" | "déclaré" | "confirmé" | "refusé";
+export type DemoSubPayment = {
+  id: string;
+  ref: string;
+  shopId: string;
+  shopName?: string;
+  owner?: string;
+  ownerPhone?: string;
+  plan: string;
+  annual: boolean;
+  amount: number;
+  status: SubPaymentStatus;
+  operatorRef?: string;
+  payerPhone?: string;
+  adminNote?: string;
+  createdAt: string;
+};
 export type Profile = { name: string; email: string; phone: string; city: string; country: string };
 export type NotificationPrefs = {
   orderUpdates: boolean;
@@ -55,7 +73,8 @@ export type DemoState = {
   tickets: Ticket[];
   prefs: NotificationPrefs;
   myShopId: string | null;
-  subscription: { plan: string; annual: boolean; active: boolean } | null;
+  subscription: { plan: string; annual: boolean; active: boolean; until?: string } | null;
+  subPayments: DemoSubPayment[];
   onboardingDraft: Record<string, string>;
 };
 
@@ -87,6 +106,7 @@ const initial: DemoState = {
   },
   myShopId: null,
   subscription: null,
+  subPayments: [],
   onboardingDraft: {},
 };
 

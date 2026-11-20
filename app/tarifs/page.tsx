@@ -2,20 +2,20 @@ import type { Metadata } from "next";
 import { JsonLd } from "@/components/JsonLd";
 import { PaymentMethods } from "@/components/PaymentMethods";
 import { PricingTable } from "@/components/PricingTable";
-import { onlineMethods } from "@/lib/payments";
 
 export const metadata: Metadata = {
   title: "Tarifs vendeurs : dès 4 900 FCFA/mois, 0 % de commission",
-  description: "Trois forfaits simples pour vendre en ligne en Afrique. Sans commission sur les ventes, payables en Orange Money, Wave, MTN MoMo, Moov ou carte. Résiliable en un clic.",
+  description: "Trois forfaits simples pour vendre en ligne en Afrique. Sans commission sur les ventes, payables en Orange Money. Sans engagement ni prélèvement automatique.",
   alternates: { canonical: "/tarifs" },
 };
 
 const faq = [
   { q: "Prenez-vous une commission sur mes ventes ?", a: "Non. Vous payez uniquement votre abonnement. Le paiement de vos clients arrive directement sur votre compte Mobile Money ou bancaire." },
-  { q: "Comment payer mon abonnement ?", a: "Par Orange Money, Wave, MTN MoMo, Moov Money ou carte bancaire. Vous recevez une facture par e-mail à chaque paiement." },
+  { q: "Comment payer mon abonnement ?", a: "Par Orange Money. Depuis votre espace vendeur, vous contactez d'abord l'administrateur sur WhatsApp ou par téléphone ; il vous communique ensuite le numéro où envoyer le paiement. Cet échange est obligatoire : il protège contre les arnaques et les erreurs de numéro." },
   { q: "Pourquoi n'y a-t-il pas de forfait gratuit ?", a: "Chaque boutique est vérifiée à la main par l'administrateur. Un abonnement, même modeste, éloigne les faux vendeurs et finance un SAV humain." },
-  { q: "Puis-je arrêter quand je veux ?", a: "Oui, sans engagement. En fermant votre boutique, vous supprimez aussi vos cartes et comptes de paiement enregistrés : aucun prélèvement ne continue." },
-  { q: "Que se passe-t-il si ma demande d'ouverture est refusée ?", a: "Vous n'êtes pas prélevé. L'abonnement ne démarre qu'après l'autorisation de votre boutique par l'administrateur." },
+  { q: "Puis-je arrêter quand je veux ?", a: "Oui, sans engagement. Il n'y a aucun prélèvement automatique : vous payez chaque mois (ou chaque année) seulement si vous voulez continuer. En fermant votre boutique, vous supprimez aussi vos comptes de paiement enregistrés." },
+  { q: "Que se passe-t-il si ma demande d'ouverture est refusée ?", a: "Vous n'avez rien payé : le paiement n'est possible qu'après l'autorisation de votre boutique par l'administrateur." },
+  { q: "Quand ma boutique devient-elle visible ?", a: "Dès que l'administrateur a reçu votre paiement Orange Money. Si l'abonnement n'est pas renouvelé à l'échéance, la boutique est masquée jusqu'au paiement suivant, sans rien perdre." },
 ];
 
 export default function Tarifs() {
@@ -28,8 +28,8 @@ export default function Tarifs() {
       </p>
       <PricingTable />
       <div className="mt-10 flex flex-col gap-4 rounded-[16px] border border-line p-6 md:flex-row md:items-center md:justify-between">
-        <p className="text-sm text-ash">Payez votre abonnement avec</p>
-        <PaymentMethods methods={onlineMethods} />
+        <p className="text-sm text-ash">Payez votre abonnement par Orange Money, après un échange avec l&apos;administrateur sur WhatsApp ou par téléphone.</p>
+        <PaymentMethods methods={["orange_money"]} />
       </div>
 
       <section className="mt-24 max-w-3xl" aria-labelledby="faq">

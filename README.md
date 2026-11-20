@@ -63,13 +63,13 @@ Copier les clés affichées dans `.env.local` (`NEXT_PUBLIC_SUPABASE_URL`, `NEXT
 - `npm run db:reset` : recrée la base (migrations + données de démo de `supabase/seed.sql`).
 - `npm run db:seed:generate` : régénère `seed.sql` à partir de `lib/data.ts`.
 - `npm run db:types` : régénère les types TypeScript après une modification du schéma.
-- `supabase/tests/` : 14 scénarios d'attaque à rejouer sur la base (voir son README).
+- `supabase/tests/` : 25 scénarios d'attaque à rejouer sur la base (voir son README).
 
 ## Mettre en ligne avec Supabase
 
 1. **Créer le projet** sur supabase.com (région la plus proche de vos clients).
-2. **Créer les tables** : exécuter dans l'éditeur SQL `supabase/migrations/0001_init.sql` puis `0002_app.sql`. Ne **pas** exécuter `seed.sql` (données de démonstration).
-3. **Variables** sur l'hébergeur : `NEXT_PUBLIC_SITE_URL`, `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY` (secrète, jamais côté navigateur).
+2. **Créer les tables** : exécuter dans l'éditeur SQL, dans l'ordre, `supabase/migrations/0001_init.sql`, `0002_app.sql` puis `0003_subscription_payments.sql`. Ne **pas** exécuter `seed.sql` (données de démonstration).
+3. **Variables** sur l'hébergeur : `NEXT_PUBLIC_SITE_URL`, `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY` (secrète, jamais côté navigateur), et pour les abonnements : `NEXT_PUBLIC_ADMIN_WHATSAPP`, `NEXT_PUBLIC_ADMIN_PHONE`, `NEXT_PUBLIC_ADMIN_PHONE_DISPLAY`, `ADMIN_ORANGE_MONEY_NUMBER`, `ADMIN_ORANGE_MONEY_NAME`.
 4. **Authentification** (Authentication) :
    - *URL Configuration* : Site URL = votre domaine ; Redirect URLs = `https://votre-domaine/auth/callback`.
    - *Email Templates* : coller `supabase/templates/code.html` dans « Magic Link » et « Confirm signup » (le code à 6 chiffres remplace le lien).
@@ -82,6 +82,16 @@ Copier les clés affichées dans `.env.local` (`NEXT_PUBLIC_SUPABASE_URL`, `NEXT
    ```
    La base n'accepte qu'un seul admin.
 
+### Paiement des abonnements (Orange Money, contact obligatoire)
+
+1. L'admin autorise la boutique. Elle reste **invisible** tant que l'abonnement n'est pas payé.
+2. Le vendeur choisit son forfait dans `/vendeur` : le site lui demande de **contacter l'admin** (WhatsApp prérempli avec la référence, ou appel). Aucune coordonnée de paiement n'est affichée.
+3. Après l'échange, l'admin clique « Vendeur contacté » dans `/admin`. Le serveur envoie alors au vendeur le numéro Orange Money (`ADMIN_ORANGE_MONEY_NUMBER`, jamais présent dans le code du navigateur).
+4. Le vendeur paie et saisit le numéro de transaction reçu par SMS.
+5. L'admin vérifie le SMS sur son téléphone et clique « Paiement reçu » : boutique visible pour 1 mois (ou 1 an). À l'échéance, elle est masquée jusqu'au paiement suivant.
+
+Sans l'étape 3, la base refuse toute déclaration de paiement. Montants calculés par la base, un numéro de transaction ne sert qu'une fois, une seule demande en cours par boutique.
+
 ### Ce que garantit la base (testé)
 
 - un seul compte `admin` ; personne ne peut changer son propre rôle ;
@@ -91,13 +101,14 @@ Copier les clés affichées dans `.env.local` (`NEXT_PUBLIC_SUPABASE_URL`, `NEXT
 - l'acheteur ne peut que confirmer la réception ou signaler « pas reçu » ; le vendeur expédier, annuler ou rembourser ;
 - avis possible uniquement sur une commande livrée, un seul par commande ;
 - comptes d'encaissement visibles par leur seul propriétaire (4 derniers chiffres seulement) ;
+- une boutique n'est visible que si elle est autorisée **et** que son abonnement est payé et en cours ;
 - fermeture de boutique : suppression des comptes de paiement et arrêt de l'abonnement ;
 - suppression de compte : l'historique des commandes est conservé mais anonymisé.
 
 ## Reste à brancher
 
 1. **Paiement en ligne des commandes** : chaque vendeur relie son propre compte marchand (Orange Money, Wave, MTN, Moov, carte) chez un agrégateur (CinetPay, PayDunya, Flutterwave…). Aujourd'hui, une commande en ligne est créée en statut « en attente de paiement » ; il faut la redirection vers l'opérateur et un webhook qui passe la commande en `confirmed`. Le paiement à la livraison fonctionne déjà de bout en bout.
-2. **Paiement des abonnements** à NEXORA : même agrégateur ; le webhook met `subscriptions.active = true`. Aujourd'hui l'abonnement s'active à l'autorisation de la boutique.
+2. **Paiement automatique des abonnements** (facultatif) : aujourd'hui le paiement se fait par Orange Money avec confirmation manuelle de l'admin (voir plus haut). Un agrégateur (PayDunya, Moneroo…) ou Orange Money Business pourra l'automatiser ensuite.
 3. **E-mails de notification** (commande, expédition, avis…) : envoi via un service transactionnel en respectant `notification_preferences` (déjà enregistrées).
 4. **Rappel des litiges** : tâche planifiée qui alerte l'admin quand `tickets.seller_deadline` (72 h) est dépassé.
 5. **Photos produits** (Supabase Storage) et formulaire d'ajout de produits pour les vendeurs.

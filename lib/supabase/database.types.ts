@@ -201,6 +201,26 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"subscription_payments": {
+                  Row: {
+                    "admin_note": string | null,"amount": number,"annual": boolean,"contacted_at": string | null,"created_at": string,"decided_at": string | null,"declared_at": string | null,"id": string,"operator_ref": string | null,"payer_phone": string | null,"plan": Database["public"]['Enums']["plan_id"],"ref": string,"shop_id": string,"status": Database["public"]['Enums']["subscription_payment_status"]
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "admin_note"?: string | null,"amount"?: number,"annual"?: boolean,"contacted_at"?: string | null,"created_at"?: string,"decided_at"?: string | null,"declared_at"?: string | null,"id"?: string,"operator_ref"?: string | null,"payer_phone"?: string | null,"plan": Database["public"]['Enums']["plan_id"],"ref"?: string,"shop_id": string,"status"?: Database["public"]['Enums']["subscription_payment_status"]
+                  }
+                  Update: {
+                    "admin_note"?: string | null,"amount"?: number,"annual"?: boolean,"contacted_at"?: string | null,"created_at"?: string,"decided_at"?: string | null,"declared_at"?: string | null,"id"?: string,"operator_ref"?: string | null,"payer_phone"?: string | null,"plan"?: Database["public"]['Enums']["plan_id"],"ref"?: string,"shop_id"?: string,"status"?: Database["public"]['Enums']["subscription_payment_status"]
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "subscription_payments_shop_id_fkey"
+      columns: ["shop_id"]
+isOneToOne: false
+      referencedRelation: "shops"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"subscriptions": {
                   Row: {
                     "active": boolean,"annual": boolean,"created_at": string,"current_period_end": string | null,"id": string,"plan": Database["public"]['Enums']["plan_id"],"provider_ref": string | null,"shop_id": string
@@ -259,7 +279,16 @@ isOneToOne: false
             [_ in never]: never
           }
           Functions: {
-            "admin_set_shop_status":
+            "admin_confirm_payment":
+{ Args: { "p_payment": string }; Returns: undefined
+                           },
+"admin_mark_contacted":
+{ Args: { "p_payment": string }; Returns: undefined
+                           },
+"admin_reject_payment":
+{ Args: { "p_note"?: string,"p_payment": string }; Returns: undefined
+                           },
+"admin_set_shop_status":
 { Args: { "p_reason"?: string,"p_shop": string,"p_status": Database["public"]['Enums']["shop_status"] }; Returns: undefined
                            },
 "close_my_shop":
@@ -270,10 +299,16 @@ isOneToOne: false
                            },
 "is_end_user":
 { Args: Record<PropertyKey, never>; Returns: boolean
+                           },
+"plan_monthly_price":
+{ Args: { "p": Database["public"]['Enums']["plan_id"] }; Returns: number
+                           },
+"shop_is_live":
+{ Args: { "p_shop": string }; Returns: boolean
                            }
           }
           Enums: {
-            "order_status": "pending_payment"|"confirmed"|"shipped"|"delivered"|"not_received"|"refunded"|"cancelled","payment_method": "orange_money"|"wave"|"mtn_momo"|"moov_money"|"card"|"cash_on_delivery","payout_type": "orange_money"|"wave"|"mtn_momo"|"moov_money"|"card"|"bank","plan_id": "essentiel"|"pro"|"business","shop_status": "pending"|"approved"|"suspended"|"rejected"|"closed","ticket_kind": "contact"|"report"|"refund","ticket_status": "open"|"in_progress"|"resolved","user_role": "client"|"seller"|"admin"
+            "order_status": "pending_payment"|"confirmed"|"shipped"|"delivered"|"not_received"|"refunded"|"cancelled","payment_method": "orange_money"|"wave"|"mtn_momo"|"moov_money"|"card"|"cash_on_delivery","payout_type": "orange_money"|"wave"|"mtn_momo"|"moov_money"|"card"|"bank","plan_id": "essentiel"|"pro"|"business","shop_status": "pending"|"approved"|"suspended"|"rejected"|"closed","subscription_payment_status": "contact_pending"|"awaiting_payment"|"declared"|"confirmed"|"rejected","ticket_kind": "contact"|"report"|"refund","ticket_status": "open"|"in_progress"|"resolved","user_role": "client"|"seller"|"admin"
           }
           CompositeTypes: {
             [_ in never]: never
@@ -393,7 +428,7 @@ export const Constants = {
           }
         },"public": {
           Enums: {
-            "order_status": ["pending_payment", "confirmed", "shipped", "delivered", "not_received", "refunded", "cancelled"],"payment_method": ["orange_money", "wave", "mtn_momo", "moov_money", "card", "cash_on_delivery"],"payout_type": ["orange_money", "wave", "mtn_momo", "moov_money", "card", "bank"],"plan_id": ["essentiel", "pro", "business"],"shop_status": ["pending", "approved", "suspended", "rejected", "closed"],"ticket_kind": ["contact", "report", "refund"],"ticket_status": ["open", "in_progress", "resolved"],"user_role": ["client", "seller", "admin"]
+            "order_status": ["pending_payment", "confirmed", "shipped", "delivered", "not_received", "refunded", "cancelled"],"payment_method": ["orange_money", "wave", "mtn_momo", "moov_money", "card", "cash_on_delivery"],"payout_type": ["orange_money", "wave", "mtn_momo", "moov_money", "card", "bank"],"plan_id": ["essentiel", "pro", "business"],"shop_status": ["pending", "approved", "suspended", "rejected", "closed"],"subscription_payment_status": ["contact_pending", "awaiting_payment", "declared", "confirmed", "rejected"],"ticket_kind": ["contact", "report", "refund"],"ticket_status": ["open", "in_progress", "resolved"],"user_role": ["client", "seller", "admin"]
           }
         }
 } as const

@@ -279,3 +279,67 @@ export async function getBuyerContext(slug: string): Promise<{ loggedIn: boolean
   }
   return { loggedIn: true, known, reviewableOrderId };
 }
+
+// ------------------------------------------------------------------ abonnements (Orange Money, contact admin obligatoire)
+const PLAN = z.enum(["essentiel", "pro", "business"]);
+
+async function myShopId(sb: Awaited<ReturnType<typeof requireUser>>["sb"], userId: string) {
+  const { data } = await sb.from("shops").select("id").eq("owner_id", userId).neq("status", "closed").maybeSingle();
+  return data?.id ?? null;
+}
+
+/** Étape 1 : le vendeur demande à payer. Il devra ensuite contacter l'admin (WhatsApp ou appel). */
+export const requestSubscriptionPayment = action<{ plan: "essentiel" | "pro" | "business"; annual: boolean }, string>(
+  z.object({ plan: PLAN, annual: z.boolean() }),
+  async ({ plan, annual }, { user, sb }) => {
+    const shopId = await myShopId(sb, user.id);
+    if (!shopId) return fail("Aucune boutique active");
+    const { data, error } = await sb.from("subscription_payments").insert({ shop_id: shopId, plan, annual }).select("ref").single();
+    if (error) return fail(error.code === "23505" ? "Vous avez déjà une demande de paiement en cours." : error.message.split("\n")[0]);
+    revalidatePath("/vendeur");
+    return { ok: true, data: data.ref };
+  },
+);
+
+/** Étape 3 : après avoir payé, le vendeur saisit le numéro de transaction reçu par SMS. */
+export const declareSubscriptionPayment = action(
+  z.object({ id: z.string().uuid(), operatorRef: z.string().trim().min(4, "Numéro de transaction trop court").max(40), payerPhone: PHONE }),
+  async ({ id, operatorRef, payerPhone }, { sb }) => {
+    const { error } = await sb.from("subscription_payments").update({ status: "declared", operator_ref: operatorRef, payer_phone: payerPhone }).eq("id", id);
+    if (error) return fail(error.code === "23505" ? "Ce numéro de transaction a déjà été utilisé." : error.message.split("\n")[0]);
+    revalidatePath("/vendeur");
+    revalidatePath("/admin");
+    return { ok: true };
+  },
+);
+
+export const cancelSubscriptionPayment = action(z.object({ id: z.string().uuid() }), async ({ id }, { sb }) => {
+  const { error } = await sb.from("subscription_payments").update({ status: "rejected" }).eq("id", id);
+  if (error) return dbError(error);
+  revalidatePath("/vendeur");
+  return { ok: true };
+});
+
+/** Étape 2 (admin) : l'échange WhatsApp ou téléphonique a eu lieu ; le vendeur peut maintenant payer. */
+export const adminMarkContacted = action(z.object({ id: z.string().uuid() }), async ({ id }, { sb }) => {
+  const { error } = await sb.rpc("admin_mark_contacted", { p_payment: id });
+  if (error) return dbError(error);
+  revalidatePath("/admin");
+  return { ok: true };
+});
+
+/** Étape 4 (admin) : argent reçu sur Orange Money, l'abonnement est prolongé et la boutique devient visible. */
+export const adminConfirmPayment = action(z.object({ id: z.string().uuid() }), async ({ id }, { sb }) => {
+  const { error } = await sb.rpc("admin_confirm_payment", { p_payment: id });
+  if (error) return dbError(error);
+  revalidatePath("/admin");
+  revalidatePath("/", "layout");
+  return { ok: true };
+});
+
+export const adminRejectPayment = action(z.object({ id: z.string().uuid(), note: z.string().trim().max(500).optional() }), async ({ id, note }, { sb }) => {
+  const { error } = await sb.rpc("admin_reject_payment", { p_payment: id, p_note: note || undefined });
+  if (error) return dbError(error);
+  revalidatePath("/admin");
+  return { ok: true };
+});
