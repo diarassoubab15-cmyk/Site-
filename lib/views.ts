@@ -73,6 +73,8 @@ export type LiveSeller = {
   payment: DemoSubPayment | null;
   /** Coordonnées Orange Money : envoyées par le serveur UNIQUEMENT après le contact avec l'admin. */
   payInfo: { number: string; name: string } | null;
+  /** Opérateurs proposés pour payer l'abonnement (ceux dont l'admin a configuré un numéro). */
+  payMethods?: ("orange_money" | "wave" | "mtn_momo" | "moov_money")[];
   owner: { name: string; phone: string };
   /** Fin de couverture : abonnement payé prolongé par les mois offerts. */
   coveredUntil: string | null;

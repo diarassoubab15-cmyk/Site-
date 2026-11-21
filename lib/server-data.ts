@@ -6,7 +6,7 @@ import type { PaymentMethodId } from "./payments";
 import { paymentMethods } from "./payments";
 import { orderStatusFr, shopStatusFr, subPaymentStatusFr, ticketKindFr, ticketStatusFr, type LiveAccount, type EditRequestView, type LiveAdmin, type LiveSeller } from "./views";
 import type { DemoSubPayment } from "./demo-store";
-import { adminPaymentInfo } from "./payment-info";
+import { adminPaymentInfo, subscriptionMethods } from "./payment-info";
 import { periodOf, type RewardView } from "./rewards";
 import { storageUrl } from "./site-videos";
 import type { VideoView } from "./views";
@@ -26,9 +26,9 @@ const rewardView = (r: RewardRow, shopName = ""): RewardView => ({
   startsOn: r.starts_on, endsOn: r.ends_on, note: r.note ?? undefined, revoked: !!r.revoked_at, createdAt: r.created_at.slice(0, 10),
 });
 
-type PaymentRow = { id: string; ref: string; shop_id: string; plan: string; annual: boolean; amount: number; status: string; operator_ref: string | null; payer_phone: string | null; admin_note: string | null; created_at: string };
+type PaymentRow = { id: string; ref: string; shop_id: string; plan: string; annual: boolean; amount: number; method?: string; status: string; operator_ref: string | null; payer_phone: string | null; admin_note: string | null; created_at: string };
 const paymentView = (p: PaymentRow, extra: Partial<DemoSubPayment> = {}): DemoSubPayment => ({
-  id: p.id, ref: p.ref, shopId: p.shop_id, plan: p.plan, annual: p.annual, amount: p.amount, status: subPaymentStatusFr[p.status],
+  id: p.id, ref: p.ref, shopId: p.shop_id, plan: p.plan, annual: p.annual, amount: p.amount, method: (p.method ?? "orange_money") as DemoSubPayment["method"], status: subPaymentStatusFr[p.status],
   operatorRef: p.operator_ref ?? undefined, payerPhone: p.payer_phone ?? undefined, adminNote: p.admin_note ?? undefined, createdAt: p.created_at.slice(0, 10), ...extra,
 });
 
@@ -119,7 +119,8 @@ export async function loadSeller(): Promise<LiveSeller | null> {
     subscription: sub ? { plan: sub.plan, annual: sub.annual, active: sub.active, until: sub.current_period_end } : null,
     payment,
     // Les coordonnées de paiement ne quittent le serveur qu'après le contact confirmé par l'admin.
-    payInfo: payment?.status === "paiement" ? adminPaymentInfo() : null,
+    payInfo: payment?.status === "paiement" ? adminPaymentInfo(payment.method) : null,
+    payMethods: subscriptionMethods(),
     shop: { id: shop.id, shopName: shop.name, status: shopStatusFr[shop.status], plan: sub?.plan ?? null },
     payouts: (payouts ?? []).map((p) => ({ id: p.id, type: p.type, label: p.type === "bank" ? "Compte bancaire" : paymentMethods[p.type as PaymentMethodId].label, masked: `•••• ${p.last4}` })),
     orders: (orders ?? []).map((o) => ({

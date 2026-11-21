@@ -307,14 +307,14 @@ isOneToOne: false
                   ]
                 },"subscription_payments": {
                   Row: {
-                    "admin_note": string | null,"amount": number,"annual": boolean,"contacted_at": string | null,"created_at": string,"decided_at": string | null,"declared_at": string | null,"id": string,"operator_ref": string | null,"payer_phone": string | null,"plan": Database["public"]['Enums']["plan_id"],"ref": string,"shop_id": string,"status": Database["public"]['Enums']["subscription_payment_status"]
+                    "admin_note": string | null,"amount": number,"annual": boolean,"contacted_at": string | null,"created_at": string,"decided_at": string | null,"declared_at": string | null,"id": string,"method": Database["public"]['Enums']["payment_method"],"operator_ref": string | null,"payer_phone": string | null,"plan": Database["public"]['Enums']["plan_id"],"ref": string,"shop_id": string,"status": Database["public"]['Enums']["subscription_payment_status"]
                   }
                   ComputedFields: never
                   Insert: {
-                    "admin_note"?: string | null,"amount"?: number,"annual"?: boolean,"contacted_at"?: string | null,"created_at"?: string,"decided_at"?: string | null,"declared_at"?: string | null,"id"?: string,"operator_ref"?: string | null,"payer_phone"?: string | null,"plan": Database["public"]['Enums']["plan_id"],"ref"?: string,"shop_id": string,"status"?: Database["public"]['Enums']["subscription_payment_status"]
+                    "admin_note"?: string | null,"amount"?: number,"annual"?: boolean,"contacted_at"?: string | null,"created_at"?: string,"decided_at"?: string | null,"declared_at"?: string | null,"id"?: string,"method"?: Database["public"]['Enums']["payment_method"],"operator_ref"?: string | null,"payer_phone"?: string | null,"plan": Database["public"]['Enums']["plan_id"],"ref"?: string,"shop_id": string,"status"?: Database["public"]['Enums']["subscription_payment_status"]
                   }
                   Update: {
-                    "admin_note"?: string | null,"amount"?: number,"annual"?: boolean,"contacted_at"?: string | null,"created_at"?: string,"decided_at"?: string | null,"declared_at"?: string | null,"id"?: string,"operator_ref"?: string | null,"payer_phone"?: string | null,"plan"?: Database["public"]['Enums']["plan_id"],"ref"?: string,"shop_id"?: string,"status"?: Database["public"]['Enums']["subscription_payment_status"]
+                    "admin_note"?: string | null,"amount"?: number,"annual"?: boolean,"contacted_at"?: string | null,"created_at"?: string,"decided_at"?: string | null,"declared_at"?: string | null,"id"?: string,"method"?: Database["public"]['Enums']["payment_method"],"operator_ref"?: string | null,"payer_phone"?: string | null,"plan"?: Database["public"]['Enums']["plan_id"],"ref"?: string,"shop_id"?: string,"status"?: Database["public"]['Enums']["subscription_payment_status"]
                   }
                   Relationships: [
                     {

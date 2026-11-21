@@ -2,8 +2,9 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
 import { SuccessCheck } from "./SuccessCheck";
-import { plans, ANNUAL_MONTHS_PAID } from "@/lib/plans";
+import { plans, planName, ANNUAL_MONTHS_PAID } from "@/lib/plans";
 import { formatDate, formatPrice } from "@/lib/format";
+import { paymentMethods } from "@/lib/payments";
 import { site } from "@/lib/site";
 import { callLink, whatsappLink } from "@/lib/contact";
 import { toast } from "@/lib/toast";
@@ -13,12 +14,14 @@ import type { LiveSeller } from "@/lib/views";
 import { cancelSubscriptionPayment, declareSubscriptionPayment, requestSubscriptionPayment } from "@/app/actions";
 
 const amountFor = (plan: string, annual: boolean) => (plans.find((p) => p.id === plan)?.monthly ?? 0) * (annual ? ANNUAL_MONTHS_PAID : 1);
-const planName = (id: string) => plans.find((p) => p.id === id)?.name ?? id;
 
 const steps = ["Contacter l'admin", "Payer", "Vérification"];
 
+type SubMethod = NonNullable<DemoSubPayment["method"]>;
+const methodLabel = (m?: SubMethod) => paymentMethods[m ?? "orange_money"].label;
+
 /**
- * Paiement de l'abonnement par Orange Money.
+ * Paiement de l'abonnement par Mobile Money (Orange Money, Wave, MTN MoMo, Moov Money).
  * Règle : le vendeur DOIT contacter l'administrateur (WhatsApp ou appel) avant tout paiement.
  * Les coordonnées de paiement ne s'affichent qu'après que l'admin a confirmé cet échange.
  */
@@ -42,6 +45,8 @@ export function SubscriptionPanel({
 
   const [plan, setPlan] = useState(shop.plan ?? "pro");
   const [annual, setAnnual] = useState(false);
+  const methods: SubMethod[] = supabaseEnabled ? live?.payMethods ?? ["orange_money"] : ["orange_money", "wave", "mtn_momo", "moov_money"];
+  const [method, setMethod] = useState<SubMethod>("orange_money");
   const [operatorRef, setOperatorRef] = useState("");
   const [payerPhone, setPayerPhone] = useState(ownerPhone);
 
@@ -99,7 +104,7 @@ export function SubscriptionPanel({
   }
 
   const waText = open
-    ? `Bonjour, je suis ${ownerName || "vendeur"} de la boutique « ${shop.shopName} » sur NEXORA. Je souhaite payer mon abonnement ${planName(open.plan)} (${open.annual ? "annuel" : "mensuel"}) : ${formatPrice(open.amount)}. Référence : ${open.ref}.`
+    ? `Bonjour, je suis ${ownerName || "vendeur"} de la boutique « ${shop.shopName} » sur NEXORA. Je souhaite payer mon abonnement ${planName(open.plan)} (${open.annual ? "annuel" : "mensuel"}) : ${formatPrice(open.amount)} par ${methodLabel(open.method)}. Référence : ${open.ref}.`
     : "";
   const stepIndex = open ? { contact: 0, paiement: 1, déclaré: 2 }[open.status as "contact" | "paiement" | "déclaré"] : -1;
 
@@ -148,8 +153,8 @@ export function SubscriptionPanel({
           onSubmit={(e) => {
             e.preventDefault();
             run(
-              () => requestSubscriptionPayment({ plan, annual }),
-              () => update((s) => ({ ...s, subPayments: [...s.subPayments, { id: uid("AB"), ref: uid("AB"), shopId: shop.id, shopName: shop.shopName, owner: ownerName, ownerPhone, plan, annual, amount: amountFor(plan, annual), status: "contact", createdAt: today() }] })),
+              () => requestSubscriptionPayment({ plan, annual, method }),
+              () => update((s) => ({ ...s, subPayments: [...s.subPayments, { id: uid("AB"), ref: uid("AB"), shopId: shop.id, shopName: shop.shopName, owner: ownerName, ownerPhone, plan, annual, method, amount: amountFor(plan, annual), status: "contact", createdAt: today() }] })),
               "Demande créée : contactez l'administrateur",
             );
           }}
@@ -163,6 +168,16 @@ export function SubscriptionPanel({
               </label>
             ))}
           </fieldset>
+          {methods.length > 1 && (
+            <fieldset className="grid gap-2 sm:grid-cols-4">
+              <legend className="label">Payer avec</legend>
+              {methods.map((m) => (
+                <label key={m} className={`flex cursor-pointer items-center gap-2 rounded-[6px] border px-3 py-2 text-sm ${method === m ? "border-white text-white" : "border-line text-bone"}`}>
+                  <input type="radio" name="sub-method" checked={method === m} onChange={() => setMethod(m)} className="accent-[#9281f7]" />{methodLabel(m)}
+                </label>
+              ))}
+            </fieldset>
+          )}
           <label className="flex items-center gap-3 text-sm text-bone">
             <input type="checkbox" checked={annual} onChange={(e) => setAnnual(e.target.checked)} className="accent-[#9281f7]" />
             Payer pour un an (2 mois offerts)
@@ -171,7 +186,7 @@ export function SubscriptionPanel({
             <p className="text-sm text-ash">À payer : <span className="font-mono text-lg text-white">{formatPrice(amountFor(plan, annual))}</span></p>
             <button className="btn-solid" data-haptic disabled={pending}>{pending ? "…" : activeNow ? "Renouveler mon abonnement" : "Payer mon abonnement"}</button>
           </div>
-          <p className="text-xs text-iron">Paiement par Orange Money. Vous devrez d&apos;abord contacter l&apos;administrateur sur WhatsApp ou par téléphone.</p>
+          <p className="text-xs text-iron">Paiement par {methodLabel(method)}. Vous devrez d&apos;abord contacter l&apos;administrateur sur WhatsApp ou par téléphone.</p>
         </form>
       )}
 
@@ -217,13 +232,13 @@ export function SubscriptionPanel({
         >
           <p className="flex items-center gap-3 text-white"><SuccessCheck size={22} />L&apos;administrateur a confirmé votre échange. Vous pouvez payer.</p>
           <dl className="grid gap-2 rounded-[6px] border border-line p-4 text-sm sm:grid-cols-[160px_1fr]">
-            <dt className="text-ash">Envoyer par</dt><dd className="text-white">Orange Money</dd>
+            <dt className="text-ash">Envoyer par</dt><dd className="text-white">{methodLabel(open.method)}</dd>
             <dt className="text-ash">Au numéro</dt><dd className="font-mono text-lg text-iris">{payInfo.number}</dd>
             <dt className="text-ash">Au nom de</dt><dd className="text-white">{payInfo.name}</dd>
             <dt className="text-ash">Montant exact</dt><dd className="font-mono text-lg text-white">{formatPrice(open.amount)}</dd>
             <dt className="text-ash">Référence</dt><dd className="font-mono text-iris">{open.ref}</dd>
           </dl>
-          <p className="text-sm text-ash">Après l&apos;envoi, vous recevez un SMS d&apos;Orange Money avec un numéro de transaction. Saisissez-le ci-dessous.</p>
+          <p className="text-sm text-ash">Après l&apos;envoi, vous recevez un SMS de {methodLabel(open.method)} avec un numéro de transaction. Saisissez-le ci-dessous.</p>
           <div className="grid gap-3 sm:grid-cols-2">
             <div><label htmlFor="opref" className="label">Numéro de transaction (SMS)</label><input id="opref" required minLength={4} maxLength={40} className="input font-mono" value={operatorRef} onChange={(e) => setOperatorRef(e.target.value)} /></div>
             <div><label htmlFor="payer" className="label">Numéro qui a payé</label><input id="payer" required inputMode="tel" pattern="[+0-9 ]{8,20}" className="input font-mono" value={payerPhone} onChange={(e) => setPayerPhone(e.target.value)} /></div>

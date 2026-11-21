@@ -47,6 +47,8 @@ export type DemoSubPayment = {
   plan: string;
   annual: boolean;
   amount: number;
+  /** Opérateur choisi pour payer l'abonnement */
+  method?: "orange_money" | "wave" | "mtn_momo" | "moov_money";
   status: SubPaymentStatus;
   operatorRef?: string;
   payerPhone?: string;

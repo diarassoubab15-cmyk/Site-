@@ -309,12 +309,13 @@ async function myShopId(sb: Awaited<ReturnType<typeof requireUser>>["sb"], userI
 }
 
 /** Étape 1 : le vendeur demande à payer. Il devra ensuite contacter l'admin (WhatsApp ou appel). */
-export const requestSubscriptionPayment = action<{ plan: "essentiel" | "pro" | "business"; annual: boolean }, string>(
-  z.object({ plan: PLAN, annual: z.boolean() }),
-  async ({ plan, annual }, { user, sb }) => {
+const SUB_METHOD = z.enum(["orange_money", "wave", "mtn_momo", "moov_money"]);
+export const requestSubscriptionPayment = action<{ plan: "essentiel" | "pro" | "business"; annual: boolean; method?: z.infer<typeof SUB_METHOD> }, string>(
+  z.object({ plan: PLAN, annual: z.boolean(), method: SUB_METHOD.default("orange_money") }),
+  async ({ plan, annual, method }, { user, sb }) => {
     const shopId = await myShopId(sb, user.id);
     if (!shopId) return fail("Aucune boutique active");
-    const { data, error } = await sb.from("subscription_payments").insert({ shop_id: shopId, plan, annual }).select("ref").single();
+    const { data, error } = await sb.from("subscription_payments").insert({ shop_id: shopId, plan, annual, method }).select("ref").single();
     if (error) return fail(error.code === "23505" ? "Vous avez déjà une demande de paiement en cours." : error.message.split("\n")[0]);
     revalidatePath("/vendeur");
     return { ok: true, data: data.ref };
