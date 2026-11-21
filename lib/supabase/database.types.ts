@@ -510,6 +510,9 @@ isOneToOne: false
 "shop_is_live":
 { Args: { "p_shop": string }; Returns: boolean
                            },
+"shop_tier":
+{ Args: { "p_slug": string }; Returns: Database["public"]['Enums']["plan_id"]
+                           },
 "tryon_quota":
 { Args: { "p_shop": string }; Returns: number
                            },

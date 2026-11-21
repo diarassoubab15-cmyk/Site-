@@ -396,6 +396,51 @@ body {
 @keyframes scan { from { transform: translateY(-30%); } to { transform: translateY(260%); } }
 @media (prefers-reduced-motion: reduce) { .tryon-scan, .tryon-check { animation: none; } .tryon-cta, .tryon-item { transition: none; } }
 
+
+/* ==================================================================== PRÉSENTATION ANIMÉE (Ultra) */
+.showcase { position: relative; overflow: hidden; aspect-ratio: 4 / 5; border-radius: 18px; background: #000;
+  border: 1px solid color-mix(in srgb, var(--c) 45%, transparent); outline: none; isolation: isolate; }
+@media (min-width: 640px) { .showcase { aspect-ratio: 16 / 11; } }
+.showcase:focus-visible { box-shadow: 0 0 0 2px #000, 0 0 0 4px var(--c); }
+.showcase-bars { position: absolute; z-index: 4; left: 12px; right: 12px; top: 10px; display: flex; gap: 4px; }
+.showcase-bar { flex: 1; height: 3px; border-radius: 9999px; background: rgba(255, 255, 255, 0.25); overflow: hidden; }
+.showcase-bar > span { display: block; height: 100%; background: #fff; transform-origin: left; transform: scaleX(0); }
+.showcase-bar > .is-done { transform: none; }
+.showcase-bar > .is-run { animation: barFill linear forwards; }
+.showcase-bar > .is-hold { transform: scaleX(0.04); }
+@keyframes barFill { to { transform: none; } }
+.showcase-scene { position: absolute; inset: 0; }
+.showcase-photo { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.showcase-shade { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(0,0,0,0.35) 0%, transparent 25%, transparent 45%, rgba(0,0,0,0.85) 100%); }
+.showcase-text { position: absolute; z-index: 3; left: 20px; right: 20px; bottom: 22px; pointer-events: none; }
+.showcase-text a { pointer-events: auto; }
+.showcase-title { font-family: var(--font-display); font-size: clamp(1.9rem, 6vw, 2.75rem); line-height: 1.02; color: #fff; }
+.showcase-price { margin-top: 0.25rem; font-family: var(--font-mono); font-size: clamp(2rem, 7vw, 3rem); color: #fff; animation: fadeUp 500ms cubic-bezier(0.23, 1, 0.32, 1) 150ms backwards; }
+.showcase-mosaic { position: absolute; inset: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 3px; }
+.showcase-mosaic img { width: 100%; height: 100%; object-fit: cover; }
+.showcase-tap { position: absolute; z-index: 2; top: 0; bottom: 0; width: 30%; -webkit-tap-highlight-color: transparent; }
+.showcase-tap:focus-visible { outline: 2px solid var(--c); outline-offset: -4px; }
+.sc-kenburns { animation: kenburns 2800ms cubic-bezier(0.23, 1, 0.32, 1) backwards; }
+@keyframes kenburns { from { transform: scale(1.14); } }
+.sc-slide { animation: scSlide 700ms cubic-bezier(0.23, 1, 0.32, 1) backwards; }
+@keyframes scSlide { from { transform: translateX(14%) scale(1.06); opacity: 0.2; } }
+.sc-zoom { animation: scZoom 2600ms cubic-bezier(0.645, 0.045, 0.355, 1) backwards; }
+@keyframes scZoom { from { transform: scale(1); } to { transform: scale(1.1); } }
+.sc-word-mask { display: inline-block; overflow: hidden; vertical-align: bottom; }
+.sc-word { display: inline-block; animation: wordUp 600ms cubic-bezier(0.23, 1, 0.32, 1) backwards; }
+@keyframes wordUp { from { transform: translateY(105%); } }
+.sc-fade { animation: fadeUp 500ms cubic-bezier(0.23, 1, 0.32, 1) backwards; }
+.sc-chip { display: inline-block; border-radius: 9999px; padding: 0.4rem 0.85rem; font-size: 0.85rem; background: rgba(0, 0, 0, 0.55);
+  border: 1px solid color-mix(in srgb, var(--c) 60%, transparent); backdrop-filter: blur(12px); color: #fff;
+  animation: chipIn 450ms cubic-bezier(0.23, 1, 0.32, 1) backwards; }
+@keyframes chipIn { from { opacity: 0; transform: translateY(10px) scale(0.95); } }
+.sc-tile { animation: tileIn 600ms cubic-bezier(0.23, 1, 0.32, 1) backwards; }
+@keyframes tileIn { from { opacity: 0; transform: scale(1.08); } }
+.showcase.is-static *, .showcase.is-static { animation: none !important; }
+@media (prefers-reduced-motion: reduce) {
+  .showcase *, .showcase-bar > span { animation: none !important; }
+}
+
 /* Mouvement réduit : tout s'affiche immédiatement. */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {

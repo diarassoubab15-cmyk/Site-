@@ -265,3 +265,10 @@ export async function listShopsByType(type: string): Promise<TypeShop[]> {
     })
     .sort((a, b) => a.name.localeCompare(b.name, "fr", { sensitivity: "base" }));
 }
+
+/** Forfait public d'une boutique en ligne (essentiel = Base, pro = Pro, business = Ultra) ; null si inconnu. */
+export async function getShopTier(slug: string): Promise<"essentiel" | "pro" | "business" | null> {
+  if (!supabaseEnabled) return null;
+  const { data } = await supabasePublic().rpc("shop_tier", { p_slug: slug });
+  return (data as "essentiel" | "pro" | "business" | null) ?? null;
+}

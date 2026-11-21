@@ -63,7 +63,7 @@ export const plans: Plan[] = [
       { text: "Tout le forfait Pro" },
       { text: "Vitrine Ultra : thème et animation signature créés pour votre boutique", soon: true },
       { text: "À la une de votre catégorie et dans la page Award, chaque semaine", soon: true },
-      { text: "Aperçu 3D de vos produits généré par IA, validé par NEXORA", soon: true },
+      { text: "Présentation animée en motion design de chaque produit, créée à partir de vos photos" },
       { text: "10 vidéos animées par mois" },
       { text: "Essais virtuels illimités pour vos clients" },
       { text: "Prix de gros par quantité et vente dans plusieurs pays" },

@@ -97,6 +97,9 @@
 - Réglages : panier sur l'appareil (localStorage), une commande par article ; paiement préféré sur le profil.
 - Essayage : 5 essais par client (Base), 15 (Pro), illimité (Ultra) ; photo jamais conservée ; fournisseur d'IA
   branché par adaptateur HTTP, à choisir par le propriétaire (clé payante).
+- Étape 5 (« aperçu 3D par IA ») remplacée, à la demande du propriétaire, par une présentation animée en motion design
+  des produits (Ultra), faite à partir des photos du vendeur : pas d'IA, pas de 3D, pas de validation ni de coût par produit.
+  La colonne model3d de la migration 0006 reste en réserve, inutilisée.
 - Audit d'accessibilité (reviews/audit-as-a11y-eng.md) : focus des fenêtres plein écran, rôle du logo, contraste du gris
   secondaire (#7c8088, 5,3:1) corrigés.
 

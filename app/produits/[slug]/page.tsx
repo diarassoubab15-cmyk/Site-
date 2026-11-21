@@ -14,7 +14,8 @@ import { getShopType } from "@/lib/shop-types";
 import { ReviewSection } from "@/components/ReviewSection";
 import { Stars } from "@/components/Stars";
 import { getCategory } from "@/lib/data";
-import { allSlugs, getProductPage, listCards } from "@/lib/catalog";
+import { allSlugs, getProductPage, getShopTier, listCards } from "@/lib/catalog";
+import { ProductShowcase } from "@/components/ProductShowcase";
 import { formatDate, formatPrice, formatPriceUnit } from "@/lib/format";
 import { absoluteUrl, site } from "@/lib/site";
 
@@ -44,6 +45,9 @@ export default async function ProductPage({ params }: Props) {
   if (!page) notFound();
   const { product, shop, rating, reviews: list, related } = page;
   const cat = getCategory(product.category) ?? { slug: product.category, name: product.category };
+  // Présentation animée en motion design : boutiques Ultra, produits avec au moins une vraie photo.
+  const tier = product.images?.length ? await getShopTier(shop.slug) : null;
+  const typeColor = getShopType(product.category)?.color ?? "#9281f7";
   // Essayage virtuel : vêtements de la même boutique qui ont une vraie photo.
   const tryItems: TryOnItem[] =
     product.category === "mode" && product.images?.length
@@ -58,7 +62,16 @@ export default async function ProductPage({ params }: Props) {
       <Breadcrumbs items={[{ name: "Accueil", href: "/" }, { name: cat.name, href: `/marketplace/${cat.slug}` }, { name: product.name, href: `/produits/${product.slug}` }]} />
       {/* Sur mobile : photo, puis prix et bouton, puis description. Sur grand écran : deux colonnes. */}
       <div className="grid gap-10 lg:grid-cols-[1.1fr_1fr] lg:grid-rows-[auto_1fr]">
-        <div className="pop lg:col-start-1 lg:row-start-1">{product.images?.length ? <ProductGallery product={product} /> : <ProductThumb product={product} large />}</div>
+        <div className="pop space-y-6 lg:col-start-1 lg:row-start-1">{product.images?.length ? <ProductGallery product={product} /> : <ProductThumb product={product} large />}
+          {tier === "business" && (
+            <ProductShowcase
+              d={{
+                name: product.name, short: product.short, images: product.images!, specs: product.specs, price: product.price,
+                unit: product.priceUnit, wholesale: product.wholesale, shopName: shop.name, cod: shop.acceptsCashOnDelivery, color: typeColor,
+              }}
+            />
+          )}
+        </div>
         <div className="space-y-6 lg:col-start-2 lg:row-span-2 lg:row-start-1 lg:sticky lg:top-24 lg:self-start">
           <div>
             <h1 className="text-3xl font-medium tracking-tight text-white sm:text-4xl">{product.name}</h1>
@@ -85,12 +98,12 @@ export default async function ProductPage({ params }: Props) {
               <Link href={`/support?boutique=${shop.slug}#contact`} className="btn-solid w-full" data-haptic>Demander une visite</Link>
             </div>
           ) : (
-            <>
+            <div id="achat" className="scroll-mt-24 space-y-6">
               {tryItems.length > 0 && (
                 <TryOn shopSlug={shop.slug} shopName={shop.name} color={getShopType("mode")!.color} items={tryItems} initial={product.slug} />
               )}
               <BuyBox product={product} shop={shop} />
-            </>
+            </div>
           )}
         </div>
         <div className="space-y-8 lg:col-start-1 lg:row-start-2">
