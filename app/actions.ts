@@ -7,6 +7,8 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { currentUser, supabaseServer, supabaseService } from "@/lib/supabase/server";
 import { slugify } from "@/lib/format";
+import { categories } from "@/lib/data";
+import { coordsFromMapsUrl, isMapsUrl } from "@/lib/maps";
 import { shopStatusDb, ticketKindDb, type ActionResult } from "@/lib/views";
 import type { SellerStatus } from "@/lib/demo-store";
 import { periodOf, rewardTitle, type RankingRow } from "@/lib/rewards";
@@ -177,27 +179,44 @@ export async function signOut() {
 }
 
 // ------------------------------------------------------------------ vendeurs
-const applySchema = z.object({
-  shopName: z.string().trim().min(2).max(60),
-  category: z.string().min(1).max(40),
-  city: z.string().trim().min(2).max(80),
-  country: z.string().trim().min(2).max(60),
-  owner: z.string().trim().min(2).max(80),
-  email: z.string().trim().email(),
-  phone: PHONE,
-  payoutMethod: PAYOUT,
-  payoutAccount: z.string().trim().min(6).max(40),
-  cod: z.boolean(),
-  plan: z.enum(["essentiel", "pro", "business"]),
-});
+const sampleSchema = z.object({ name: z.string().trim().min(1, "Nom du produit manquant").max(60), price: z.number().int().min(1, "Prix invalide").max(1_000_000_000) });
+const applySchema = z
+  .object({
+    shopName: z.string().trim().min(2, "Nom de boutique trop court").max(60),
+    category: z.string().refine((v) => categories.some((c) => c.slug === v), "Choisissez le type de boutique"),
+    samples: z.array(sampleSchema).min(1, "Indiquez au moins un produit et son prix").max(5),
+    country: z.string().trim().min(2).max(60),
+    city: z.string().trim().min(2).max(80),
+    district: z.string().trim().max(80),
+    isPhysical: z.boolean(),
+    mapsUrl: z.string().trim().max(500).refine((v) => !v || isMapsUrl(v), "Collez un lien Google Maps (google.com/maps ou maps.app.goo.gl)"),
+    lat: z.number().min(-90).max(90).nullable(),
+    lng: z.number().min(-180).max(180).nullable(),
+    whatsapp: PHONE,
+    callPhone: PHONE,
+    owner: z.string().trim().min(2).max(80),
+    email: z.string().trim().email(),
+    payoutMethod: PAYOUT,
+    payoutAccount: z.string().trim().min(6).max(40),
+    cod: z.boolean(),
+    plan: z.enum(["essentiel", "pro", "business"]),
+  })
+  .refine((f) => !f.isPhysical || f.mapsUrl || f.lat !== null, { message: "Boutique physique : collez le lien Google Maps ou utilisez votre position" });
 
 export const applySeller = action(applySchema, async (f, { user, sb }) => {
   const { data: existing } = await sb.from("shops").select("id").eq("owner_id", user.id).neq("status", "closed").maybeSingle();
   if (existing) return fail("Vous avez déjà une boutique.");
   const slug = `${slugify(f.shopName).slice(0, 50) || "boutique"}-${Math.random().toString(36).slice(2, 6)}`;
+  // Adresse précise seulement pour une boutique physique ; coordonnées tirées du lien si besoin.
+  const coords = f.isPhysical ? (f.lat !== null && f.lng !== null ? { lat: f.lat, lng: f.lng } : coordsFromMapsUrl(f.mapsUrl)) : null;
   const { data: shop, error } = await sb
     .from("shops")
-    .insert({ owner_id: user.id, slug, name: f.shopName, category: f.category, city: f.city, country: f.country, accepts_cod: f.cod, owner_name: f.owner, contact_email: f.email, contact_phone: f.phone })
+    .insert({
+      owner_id: user.id, slug, name: f.shopName, category: f.category, city: f.city, country: f.country, accepts_cod: f.cod,
+      owner_name: f.owner, contact_email: f.email, contact_phone: f.callPhone,
+      district: f.district || null, is_physical: f.isPhysical, maps_url: f.isPhysical && f.mapsUrl ? f.mapsUrl : null,
+      lat: coords?.lat ?? null, lng: coords?.lng ?? null, whatsapp: f.whatsapp, call_phone: f.callPhone, sample_prices: f.samples,
+    })
     .select("id")
     .single();
   if (error) return dbError(error);
@@ -205,7 +224,7 @@ export const applySeller = action(applySchema, async (f, { user, sb }) => {
   // En production : le compte est enregistré chez le prestataire de paiement, qui renvoie un jeton.
   await sb.from("payout_accounts").insert({ shop_id: shop.id, type: f.payoutMethod, provider_token: `a-relier:${f.payoutMethod}`, last4: digits.slice(-4) });
   await sb.from("subscriptions").insert({ shop_id: shop.id, plan: f.plan, active: false });
-  await sb.from("profiles").update({ full_name: f.owner, phone: f.phone, city: f.city, country: f.country }).eq("id", user.id);
+  await sb.from("profiles").update({ full_name: f.owner, phone: f.callPhone, city: f.city, country: f.country }).eq("id", user.id);
   revalidatePath("/vendeur");
   return { ok: true };
 });
@@ -627,3 +646,38 @@ export async function getHubRoles(): Promise<ActionResult<{ seller: boolean; adm
   const { data: shop } = await u.sb.from("shops").select("id").eq("owner_id", u.user.id).neq("status", "closed").maybeSingle();
   return { ok: true, data: { seller: !!shop, admin: u.profile?.role === "admin" } };
 }
+
+// ------------------------------------------------------------------ fiche publique de la boutique (mise à jour par le vendeur)
+const shopProfileSchema =
+  z
+    .object({
+      city: z.string().trim().min(2).max(80),
+      district: z.string().trim().max(80),
+      isPhysical: z.boolean(),
+      mapsUrl: z.string().trim().max(500).refine((v) => !v || isMapsUrl(v), "Collez un lien Google Maps (google.com/maps ou maps.app.goo.gl)"),
+      whatsapp: PHONE,
+      callPhone: PHONE,
+      samples: z.array(sampleSchema).max(5),
+    })
+    .refine((f) => !f.isPhysical || f.mapsUrl, { message: "Boutique physique : collez le lien Google Maps" });
+
+export const updateShopProfile = action(
+  shopProfileSchema,
+  async (f, { user, sb }) => {
+    const coords = f.isPhysical ? coordsFromMapsUrl(f.mapsUrl) : null;
+    const { data, error } = await sb
+      .from("shops")
+      .update({
+        city: f.city, district: f.district || null, is_physical: f.isPhysical, maps_url: f.isPhysical ? f.mapsUrl : null,
+        lat: coords?.lat ?? null, lng: coords?.lng ?? null, whatsapp: f.whatsapp, call_phone: f.callPhone, sample_prices: f.samples,
+      })
+      .eq("owner_id", user.id)
+      .neq("status", "closed")
+      .select("slug")
+      .single();
+    if (error) return dbError(error);
+    revalidatePath(`/boutiques/${data.slug}`);
+    revalidatePath("/vendeur");
+    return { ok: true };
+  },
+);

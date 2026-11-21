@@ -13,6 +13,8 @@ const csp = [
   `media-src 'self' blob:${supabase ? ` ${supabase}` : ""}`,
   "font-src 'self' data:",
   `connect-src 'self'${supabase ? ` ${supabase} ${supabase.replace("https", "wss")}` : ""}`,
+  // Carte Google Maps des boutiques physiques (chargée seulement à la demande du visiteur).
+  "frame-src https://www.google.com",
   "frame-ancestors 'none'",
   "form-action 'self'",
   "base-uri 'self'",
@@ -27,7 +29,7 @@ const securityHeaders = [
   { key: "X-Content-Type-Options", value: "nosniff" },
   { key: "X-Frame-Options", value: "DENY" },
   { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
-  { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=(), payment=(self)" },
+  { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=(self), payment=(self)" },
   { key: "Cross-Origin-Opener-Policy", value: "same-origin" },
 ];
 

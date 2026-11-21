@@ -17,7 +17,11 @@ const rate = (list: { rating: number }[]): Rating =>
   list.length ? { average: Math.round((list.reduce((s, r) => s + r.rating, 0) / list.length) * 10) / 10, count: list.length } : { average: 0, count: 0 };
 
 // ------------------------------------------------------------------ correspondance base → affichage
-type ShopRow = { slug: string; name: string; city: string; country: string; description: string | null; created_at: string; accepts_cod: boolean; response_time: string; payments: string[] };
+type ShopRow = {
+  slug: string; name: string; city: string; country: string; description: string | null; created_at: string; accepts_cod: boolean; response_time: string; payments: string[];
+  district?: string | null; is_physical?: boolean; maps_url?: string | null; lat?: number | null; lng?: number | null;
+  whatsapp?: string | null; call_phone?: string | null; sample_prices?: unknown; category?: string;
+};
 type ProductRow = {
   id: string; slug: string; name: string; short: string | null; description: string | null; category: string; price: number;
   compare_at: number | null; stock: number; wholesale_min: number | null; wholesale_price: number | null; specs: unknown; glyph: string; tone: string;
@@ -36,6 +40,15 @@ const toShop = (s: ShopRow): Shop => ({
   responseTime: s.response_time,
   acceptsCashOnDelivery: s.accepts_cod,
   payments: [...(s.payments as PaymentMethodId[]), ...(s.accepts_cod ? (["cash_on_delivery"] as PaymentMethodId[]) : [])],
+  category: s.category,
+  district: s.district ?? undefined,
+  isPhysical: s.is_physical ?? false,
+  mapsUrl: s.maps_url ?? undefined,
+  lat: s.lat != null ? Number(s.lat) : undefined,
+  lng: s.lng != null ? Number(s.lng) : undefined,
+  whatsapp: s.whatsapp ?? undefined,
+  callPhone: s.call_phone ?? undefined,
+  samplePrices: Array.isArray(s.sample_prices) ? (s.sample_prices as { name: string; price: number }[]) : [],
 });
 
 const toProduct = (p: ProductRow): Product => ({
@@ -135,7 +148,7 @@ export async function getShopPage(slug: string) {
     return { shop, cards: demo.productsByShop(slug).map(demoCard), rating: demo.shopRating(slug), awards: [] as string[], video: null as { src: string; poster: string } | null };
   }
   const sb = supabasePublic();
-  const { data: s } = await sb.from("shops").select("id, slug, name, city, country, description, created_at, accepts_cod, response_time, payments").eq("slug", slug).eq("status", "approved").maybeSingle();
+  const { data: s } = await sb.from("shops").select("id, slug, name, city, country, description, created_at, accepts_cod, response_time, payments, category, district, is_physical, maps_url, lat, lng, whatsapp, call_phone, sample_prices").eq("slug", slug).eq("status", "approved").maybeSingle();
   if (!s) return null;
   const { data } = await sb.from("products").select(PRODUCT_COLS).eq("shop_id", s.id).eq("published", true);
   const cards = await toCards((data ?? []) as unknown as ProductRow[]);

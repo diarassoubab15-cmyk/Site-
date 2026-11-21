@@ -21,6 +21,15 @@ export type Shop = {
   payments: PaymentMethodId[];
   /** Type de boutique (slug de catégorie) ; en démonstration, déduit de ses produits. */
   category?: string;
+  /** Fiche publique (page de la boutique) */
+  district?: string;
+  isPhysical?: boolean;
+  mapsUrl?: string;
+  lat?: number;
+  lng?: number;
+  whatsapp?: string;
+  callPhone?: string;
+  samplePrices?: { name: string; price: number }[];
 };
 
 export type Product = {

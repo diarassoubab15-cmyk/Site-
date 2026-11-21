@@ -7,8 +7,11 @@ import { PaymentMethods } from "@/components/PaymentMethods";
 import { ProductCard } from "@/components/ProductCard";
 import { Stars } from "@/components/Stars";
 import { VideoPlayer } from "@/components/VideoPlayer";
+import { ShopMap } from "@/components/ShopMap";
+import { getShopType } from "@/lib/shop-types";
+import { mapsEmbedUrl, telLink, waLink } from "@/lib/maps";
 import { allSlugs, getShopPage } from "@/lib/catalog";
-import { formatDate } from "@/lib/format";
+import { formatDate, formatPrice } from "@/lib/format";
 import { absoluteUrl } from "@/lib/site";
 
 type Props = { params: Promise<{ slug: string }> };
@@ -30,9 +33,11 @@ export default async function ShopPage({ params }: Props) {
   const page = await getShopPage((await params).slug);
   if (!page) notFound();
   const { shop, cards: items, rating, awards, video } = page;
+  const type = shop.category ? getShopType(shop.category) : undefined;
+  const place = [shop.district, shop.city, shop.country].filter(Boolean).join(", ");
   return (
     <section className="container-x py-16">
-      <Breadcrumbs items={[{ name: "Accueil", href: "/" }, { name: "Boutiques", href: "/marketplace" }, { name: shop.name, href: `/boutiques/${shop.slug}` }]} />
+      <Breadcrumbs items={[{ name: "Accueil", href: "/" }, type ? { name: type.name, href: `/categories/${type.slug}` } : { name: "Boutiques", href: "/categories" }, { name: shop.name, href: `/boutiques/${shop.slug}` }]} />
       <div className="card pop grid gap-8 md:grid-cols-[1fr_auto]">
         <div>
           <div className="flex flex-wrap items-center gap-3">
@@ -44,13 +49,35 @@ export default async function ShopPage({ params }: Props) {
               {awards.map((a) => <li key={a} className="badge border-amber/40 text-amber">🏆 {a}</li>)}
             </ul>
           )}
-          <p className="mt-2 text-sm text-ash">{shop.city}, {shop.country} · sur NEXORA depuis le {formatDate(shop.since)} · {shop.responseTime}</p>
+          <p className="mt-2 text-sm text-ash">{place} · sur NEXORA depuis le {formatDate(shop.since)} · {shop.responseTime}</p>
+          {/* Sur téléphone, les boutons de contact viennent tout de suite (sur ordinateur : colonne de droite) */}
+          {(shop.whatsapp || shop.callPhone) && (
+            <div className="mt-4 grid grid-cols-2 gap-2 md:hidden">
+              {shop.whatsapp && <a href={waLink(shop.whatsapp)} target="_blank" rel="noopener noreferrer" className="btn-solid" data-haptic>WhatsApp</a>}
+              {shop.callPhone && <a href={telLink(shop.callPhone)} className="btn" data-haptic>Appeler</a>}
+            </div>
+          )}
           {rating.count > 0 && <p className="mt-3 flex items-center gap-2 text-sm text-ash"><Stars value={rating.average} /> {rating.average}/5 · {rating.count} avis vérifiés</p>}
           <p className="mt-5 max-w-2xl text-bone">{shop.description}</p>
+          {(shop.samplePrices?.length ?? 0) > 0 && (
+            <ul className="mt-5 max-w-md space-y-1.5 text-sm" aria-label="Quelques prix">
+              {shop.samplePrices!.map((s) => (
+                <li key={s.name} className="flex justify-between gap-4 border-b border-line/60 pb-1.5"><span className="text-bone">{s.name}</span><span className="font-mono text-white">{formatPrice(s.price)}</span></li>
+              ))}
+            </ul>
+          )}
           <div className="mt-6"><PaymentMethods methods={shop.payments} /></div>
+          {shop.isPhysical && (
+            <div className="mt-6">
+              <p className="mb-3 text-sm text-ash">Boutique physique : vous pouvez venir sur place.</p>
+              <ShopMap embed={mapsEmbedUrl(shop)} link={shop.mapsUrl} label={`${shop.name}, ${place}`} />
+            </div>
+          )}
         </div>
         <div className="flex flex-col gap-2 md:w-56">
-          <Link href={`/support?boutique=${shop.slug}#contact`} className="btn">Contacter le vendeur</Link>
+          {shop.whatsapp && <a href={waLink(shop.whatsapp)} target="_blank" rel="noopener noreferrer" className="btn-solid max-md:hidden" data-haptic>WhatsApp</a>}
+          {shop.callPhone && <a href={telLink(shop.callPhone)} className="btn max-md:hidden" data-haptic>Appeler · <span className="font-mono">{shop.callPhone}</span></a>}
+          <Link href={`/support?boutique=${shop.slug}#contact`} className="btn">Écrire via NEXORA</Link>
           <Link href={`/support?boutique=${shop.slug}#signaler`} className="btn-danger">Signaler cette boutique</Link>
         </div>
       </div>

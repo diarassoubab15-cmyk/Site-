@@ -135,15 +135,19 @@ export async function loadAdmin(): Promise<LiveAdmin | null> {
   const u = await currentUser();
   if (!u || u.profile?.role !== "admin") return null;
   const { sb } = u;
-  const [{ data: shops }, { data: tickets }, { data: pays }, { data: rw }, { data: vids }, { data: edits }] = await Promise.all([
-    sb.from("shops").select("id, name, owner_name, contact_email, contact_phone, city, country, category, status, created_at").order("created_at", { ascending: false }),
+  const [{ data: shopRows }, { data: contacts }, { data: tickets }, { data: pays }, { data: rw }, { data: vids }, { data: edits }] = await Promise.all([
+    sb.from("shops").select("id, name, city, country, category, status, created_at").order("created_at", { ascending: false }),
+    // Coordonnées du responsable : jamais lisibles directement, seulement par cette fonction réservée à l'admin.
+    sb.rpc("admin_shop_contacts"),
     sb.from("tickets").select("*").order("created_at", { ascending: false }).limit(200),
     sb.from("subscription_payments").select("*").order("created_at", { ascending: false }).limit(100),
     sb.from("rewards").select("*").order("created_at", { ascending: false }).limit(200),
     sb.from("shop_videos").select("*").in("status", ["queued", "rendering", "review", "approved"]).order("created_at", { ascending: false }).limit(100),
     sb.from("product_edit_requests").select(EDIT_COLS).eq("status", "review").order("created_at").limit(100),
   ]);
-  const shopById = new Map((shops ?? []).map((s) => [s.id, s]));
+  const contactById = new Map((contacts ?? []).map((c) => [c.id, c]));
+  const shops = (shopRows ?? []).map((s) => ({ ...s, owner_name: contactById.get(s.id)?.owner_name ?? null, contact_email: contactById.get(s.id)?.contact_email ?? null, contact_phone: contactById.get(s.id)?.contact_phone ?? null }));
+  const shopById = new Map(shops.map((s) => [s.id, s]));
   return {
     videos: (vids ?? []).map((v) => videoView(v, shopById.get(v.shop_id)?.name ?? "")),
     edits: (edits ?? []).map((e) => editView(e, shopById.get(e.shop_id)?.name ?? "")),
@@ -152,7 +156,7 @@ export async function loadAdmin(): Promise<LiveAdmin | null> {
       const s = shopById.get(p.shop_id);
       return paymentView(p, { shopName: s?.name, owner: s?.owner_name ?? undefined, ownerPhone: s?.contact_phone ?? undefined });
     }),
-    sellers: (shops ?? []).map((s) => ({
+    sellers: shops.map((s) => ({
       id: s.id, shopName: s.name, owner: s.owner_name ?? "", email: s.contact_email ?? "", phone: s.contact_phone ?? "",
       city: s.city, country: s.country, category: s.category, status: shopStatusFr[s.status], createdAt: s.created_at.slice(0, 10),
     })),
@@ -238,4 +242,25 @@ export async function loadEditRequests(productId: string): Promise<EditRequestVi
   if (!u) return [];
   const { data } = await u.sb.from("product_edit_requests").select(EDIT_COLS).eq("product_id", productId).order("created_at", { ascending: false }).limit(20);
   return (data ?? []).map((e) => editView(e as EditRow, ""));
+}
+
+// ------------------------------------------------------------------ fiche publique de la boutique (vendeur)
+export type ShopProfile = {
+  slug: string; name: string; category: string; city: string; country: string; district: string; isPhysical: boolean; mapsUrl: string;
+  whatsapp: string; callPhone: string; samples: { name: string; price: number }[];
+};
+export async function loadShopProfile(): Promise<ShopProfile | null> {
+  const u = await currentUser();
+  if (!u) return null;
+  const { data: s } = await u.sb
+    .from("shops")
+    .select("slug, name, category, city, country, district, is_physical, maps_url, whatsapp, call_phone, sample_prices")
+    .eq("owner_id", u.user.id)
+    .neq("status", "closed")
+    .maybeSingle();
+  if (!s) return null;
+  return {
+    slug: s.slug, name: s.name, category: s.category, city: s.city, country: s.country, district: s.district ?? "", isPhysical: s.is_physical, mapsUrl: s.maps_url ?? "",
+    whatsapp: s.whatsapp ?? "", callPhone: s.call_phone ?? "", samples: Array.isArray(s.sample_prices) ? (s.sample_prices as ShopProfile["samples"]) : [],
+  };
 }

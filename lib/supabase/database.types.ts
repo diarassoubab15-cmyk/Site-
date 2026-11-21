@@ -287,14 +287,14 @@ isOneToOne: false
                   ]
                 },"shops": {
                   Row: {
-                    "accepts_cod": boolean,"category": string,"city": string,"contact_email": string | null,"contact_phone": string | null,"country": string,"created_at": string,"description": string | null,"id": string,"name": string,"owner_id": string,"owner_name": string | null,"payments": (Database["public"]['Enums']["payment_method"])[],"response_time": string,"slug": string,"status": Database["public"]['Enums']["shop_status"],"status_changed_at": string | null,"status_reason": string | null
+                    "accepts_cod": boolean,"call_phone": string | null,"category": string,"city": string,"contact_email": string | null,"contact_phone": string | null,"country": string,"created_at": string,"description": string | null,"district": string | null,"id": string,"is_physical": boolean,"lat": number | null,"lng": number | null,"maps_url": string | null,"name": string,"owner_id": string,"owner_name": string | null,"payments": (Database["public"]['Enums']["payment_method"])[],"response_time": string,"sample_prices": NonNullable<Json>,"slug": string,"status": Database["public"]['Enums']["shop_status"],"status_changed_at": string | null,"status_reason": string | null,"whatsapp": string | null
                   }
                   ComputedFields: never
                   Insert: {
-                    "accepts_cod"?: boolean,"category": string,"city": string,"contact_email"?: string | null,"contact_phone"?: string | null,"country": string,"created_at"?: string,"description"?: string | null,"id"?: string,"name": string,"owner_id": string,"owner_name"?: string | null,"payments"?: (Database["public"]['Enums']["payment_method"])[],"response_time"?: string,"slug": string,"status"?: Database["public"]['Enums']["shop_status"],"status_changed_at"?: string | null,"status_reason"?: string | null
+                    "accepts_cod"?: boolean,"call_phone"?: string | null,"category": string,"city": string,"contact_email"?: string | null,"contact_phone"?: string | null,"country": string,"created_at"?: string,"description"?: string | null,"district"?: string | null,"id"?: string,"is_physical"?: boolean,"lat"?: number | null,"lng"?: number | null,"maps_url"?: string | null,"name": string,"owner_id": string,"owner_name"?: string | null,"payments"?: (Database["public"]['Enums']["payment_method"])[],"response_time"?: string,"sample_prices"?: NonNullable<Json>,"slug": string,"status"?: Database["public"]['Enums']["shop_status"],"status_changed_at"?: string | null,"status_reason"?: string | null,"whatsapp"?: string | null
                   }
                   Update: {
-                    "accepts_cod"?: boolean,"category"?: string,"city"?: string,"contact_email"?: string | null,"contact_phone"?: string | null,"country"?: string,"created_at"?: string,"description"?: string | null,"id"?: string,"name"?: string,"owner_id"?: string,"owner_name"?: string | null,"payments"?: (Database["public"]['Enums']["payment_method"])[],"response_time"?: string,"slug"?: string,"status"?: Database["public"]['Enums']["shop_status"],"status_changed_at"?: string | null,"status_reason"?: string | null
+                    "accepts_cod"?: boolean,"call_phone"?: string | null,"category"?: string,"city"?: string,"contact_email"?: string | null,"contact_phone"?: string | null,"country"?: string,"created_at"?: string,"description"?: string | null,"district"?: string | null,"id"?: string,"is_physical"?: boolean,"lat"?: number | null,"lng"?: number | null,"maps_url"?: string | null,"name"?: string,"owner_id"?: string,"owner_name"?: string | null,"payments"?: (Database["public"]['Enums']["payment_method"])[],"response_time"?: string,"sample_prices"?: NonNullable<Json>,"slug"?: string,"status"?: Database["public"]['Enums']["shop_status"],"status_changed_at"?: string | null,"status_reason"?: string | null,"whatsapp"?: string | null
                   }
                   Relationships: [
                     {
@@ -415,6 +415,11 @@ isOneToOne: false
 "admin_set_shop_status":
 { Args: { "p_reason"?: string,"p_shop": string,"p_status": Database["public"]['Enums']["shop_status"] }; Returns: undefined
                            },
+"admin_shop_contacts":
+{ Args: Record<PropertyKey, never>; Returns: {
+              "contact_email": string,"contact_phone": string,"id": string,"owner_name": string
+            }[]
+                           },
 "admin_unpublish_video":
 { Args: { "p_note"?: string,"p_video": string }; Returns: undefined
                            },
@@ -472,6 +477,9 @@ isOneToOne: false
                            },
 "shop_is_live":
 { Args: { "p_shop": string }; Returns: boolean
+                           },
+"valid_sample_prices":
+{ Args: { "p": Json }; Returns: boolean
                            }
           }
           Enums: {
