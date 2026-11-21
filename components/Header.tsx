@@ -2,10 +2,11 @@ import Link from "next/link";
 import { Logo } from "./Logo";
 
 const nav = [
-  { href: "/marketplace", label: "Marketplace" },
-  { href: "/vendre", label: "Vendre" },
+  { href: "/award", label: "Award" },
+  { href: "/categories", label: "Catégories" },
+  { href: "/marketplace", label: "Produits" },
   { href: "/tarifs", label: "Tarifs" },
-  { href: "/securite", label: "Sécurité" },
+  { href: "/reglages", label: "Réglages" },
   { href: "/support", label: "Aide & SAV" },
 ];
 
@@ -26,7 +27,7 @@ export function Header() {
             Connexion
           </Link>
           <Link href="/vendre" className="btn">
-            Ouvrir ma boutique
+            Créer ma boutique
           </Link>
         </div>
         {/* Menu mobile sans JavaScript */}

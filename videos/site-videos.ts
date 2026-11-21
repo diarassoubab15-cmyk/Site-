@@ -33,8 +33,8 @@ export const SITE_VIDEOS: Record<string, VideoScript> = {
     closing: "Ouvrez votre boutique ce soir",
     mood: "élégant",
   }),
-  mode: brand("Mode & pagnes", "violet", {
-    headline: "Mode & pagnes",
+  mode: brand("Vêtements", "violet", {
+    headline: "Vêtements",
     tagline: "Wax, bazin et créations cousues en Afrique.",
     scenes: [
       { title: "Créateurs locaux", text: "Des ateliers vérifiés, de Dakar à Abidjan.", icon: "tissu" },
@@ -55,9 +55,9 @@ export const SITE_VIDEOS: Record<string, VideoScript> = {
     closing: "Prenez soin de vous",
     mood: "chaleureux",
   }),
-  electronique: brand("Électronique", "bleu", {
-    headline: "Électronique",
-    tagline: "Téléphones, accessoires et solaire.",
+  electronique: brand("Technologie", "bleu", {
+    headline: "Technologie",
+    tagline: "Consoles, ordinateurs, téléphones et solaire.",
     scenes: [
       { title: "Vendeurs contrôlés", text: "Des boutiques vérifiées avant d'être en ligne.", icon: "bouclier" },
       { title: "Énergie solaire", text: "Kits pour la maison et le travail.", icon: "ecran" },
@@ -66,8 +66,8 @@ export const SITE_VIDEOS: Record<string, VideoScript> = {
     closing: "Équipez-vous en confiance",
     mood: "dynamique",
   }),
-  maison: brand("Maison & déco", "terre", {
-    headline: "Maison & déco",
+  maison: brand("Meubles & déco", "terre", {
+    headline: "Meubles & déco",
     tagline: "Vannerie, mobilier et objets d'artisans.",
     scenes: [
       { title: "Savoir-faire", text: "Des pièces fabriquées à la main.", icon: "outil" },
@@ -98,6 +98,17 @@ export const SITE_VIDEOS: Record<string, VideoScript> = {
     ],
     closing: "Trouvez votre prochain chez-vous",
     mood: "élégant",
+  }),
+  automobile: brand("Automobile", "corail", {
+    headline: "Automobile",
+    tagline: "Concessions, voitures neuves et d'occasion, motos et pièces.",
+    scenes: [
+      { title: "Concessions vérifiées", text: "Chaque vendeur est contrôlé avant de publier.", icon: "bouclier" },
+      { title: "Neuf et occasion", text: "Comparez les modèles et les prix, en FCFA.", icon: "cle" },
+      { title: "Pièces détachées", text: "Livrées chez vous ou à retirer en magasin.", icon: "camion" },
+    ],
+    closing: "Trouvez votre prochaine voiture",
+    mood: "dynamique",
   }),
   gros: brand("Vente en gros", "violet", {
     headline: "Vente en gros",

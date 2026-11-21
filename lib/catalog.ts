@@ -161,3 +161,94 @@ export async function allSlugs() {
     return { products: [], shops: [] }; // base injoignable au build : pages générées à la demande
   }
 }
+
+// ------------------------------------------------------------------ Award
+export type AwardWinner = { title: string; kind: "month" | "semester" | "year"; shop: { slug: string; name: string; city: string } };
+export type AwardCategory = {
+  slug: string;
+  name: string;
+  shops: { slug: string; name: string; average: number; count: number }[];
+  products: CardItem[];
+};
+
+/** Palmarès (récompenses publiques) et, par catégorie, les 3 boutiques et les 3 produits les mieux notés (avis vérifiés). */
+export async function getAwardPage(): Promise<{ winners: AwardWinner[]; categories: AwardCategory[] }> {
+  const cards = await listCards({ limit: 500 });
+  const rated = cards.filter((c) => c.rating.count > 0);
+  const score = (avg: number, n: number) => (avg * n + 4 * 2) / (n + 2);   // moyenne lissée : 1 seul avis 5/5 ne passe pas devant 20 avis à 4,8
+  const categories: AwardCategory[] = demo.categories
+    .map((cat) => {
+      const inCat = rated.filter((c) => c.product.category === cat.slug);
+      const byShop = new Map<string, { slug: string; name: string; sum: number; count: number }>();
+      for (const c of inCat) {
+        const s = byShop.get(c.shop.slug) ?? { slug: c.shop.slug, name: c.shop.name, sum: 0, count: 0 };
+        s.sum += c.rating.average * c.rating.count;
+        s.count += c.rating.count;
+        byShop.set(c.shop.slug, s);
+      }
+      const shops = [...byShop.values()]
+        .map((s) => ({ slug: s.slug, name: s.name, average: Math.round((s.sum / s.count) * 10) / 10, count: s.count }))
+        .sort((a, b) => score(b.average, b.count) - score(a.average, a.count))
+        .slice(0, 3);
+      const products = [...inCat].sort((a, b) => score(b.rating.average, b.rating.count) - score(a.rating.average, a.rating.count)).slice(0, 3);
+      return { slug: cat.slug, name: cat.name, shops, products };
+    })
+    .filter((c) => c.products.length);
+
+  if (!supabaseEnabled) return { winners: [], categories };
+  const { data } = await supabasePublic()
+    .from("rewards")
+    .select("title, kind, shops(slug, name, city)")
+    .is("revoked_at", null)
+    .neq("kind", "gift")
+    .order("created_at", { ascending: false })
+    .limit(24);
+  const winners = (data ?? [])
+    .filter((r) => r.shops)
+    .map((r) => ({ title: r.title, kind: r.kind as AwardWinner["kind"], shop: r.shops as unknown as AwardWinner["shop"] }));
+  return { winners, categories };
+}
+
+// ------------------------------------------------------------------ types de boutiques
+export type TypeShop = { slug: string; name: string; city: string; country: string; verified: boolean; average: number; reviews: number; products: number };
+
+/** En démonstration, le type d'une boutique est la catégorie de ses produits. */
+const demoShopType = (slug: string) => demo.products.find((p) => p.shop === slug)?.category;
+
+/** Nombre de boutiques en ligne par type. */
+export async function shopTypeCounts(): Promise<Record<string, number>> {
+  const counts: Record<string, number> = {};
+  if (!supabaseEnabled) {
+    for (const s of demo.shops) { const t = demoShopType(s.slug); if (t) counts[t] = (counts[t] ?? 0) + 1; }
+    return counts;
+  }
+  const { data } = await supabasePublic().from("shops").select("category").eq("status", "approved");
+  for (const s of data ?? []) counts[s.category] = (counts[s.category] ?? 0) + 1;
+  return counts;
+}
+
+/** Boutiques d'un type, par ordre alphabétique (ordre français : accents et majuscules confondus). */
+export async function listShopsByType(type: string): Promise<TypeShop[]> {
+  const cards = await listCards({ category: type });
+  const stats = new Map<string, { sum: number; count: number; products: number }>();
+  for (const c of cards) {
+    const s = stats.get(c.shop.slug) ?? { sum: 0, count: 0, products: 0 };
+    s.sum += c.rating.average * c.rating.count;
+    s.count += c.rating.count;
+    s.products += 1;
+    stats.set(c.shop.slug, s);
+  }
+  let rows: { slug: string; name: string; city: string; country: string; verified: boolean }[];
+  if (!supabaseEnabled) {
+    rows = demo.shops.filter((s) => demoShopType(s.slug) === type);
+  } else {
+    const { data } = await supabasePublic().from("shops").select("slug, name, city, country").eq("status", "approved").eq("category", type);
+    rows = (data ?? []).map((s) => ({ ...s, verified: true }));
+  }
+  return rows
+    .map((s) => {
+      const st = stats.get(s.slug);
+      return { ...s, average: st?.count ? Math.round((st.sum / st.count) * 10) / 10 : 0, reviews: st?.count ?? 0, products: st?.products ?? 0 };
+    })
+    .sort((a, b) => a.name.localeCompare(b.name, "fr", { sensitivity: "base" }));
+}

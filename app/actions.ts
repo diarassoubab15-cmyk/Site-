@@ -442,7 +442,7 @@ export const adminUnpublishVideo = action(z.object({ id: z.string().uuid(), note
 });
 
 // ------------------------------------------------------------------ produits du vendeur
-const CATEGORIES = ["mode", "beaute", "electronique", "maison", "alimentation", "gros", "immobilier"] as const;
+const CATEGORIES = ["mode", "beaute", "electronique", "maison", "alimentation", "gros", "immobilier", "automobile"] as const;
 const productSchema = z.object({
   id: z.string().uuid().optional(),
   name: z.string().trim().min(2, "Nom trop court").max(120),
@@ -618,3 +618,12 @@ export const adminRejectEdit = action(z.object({ id: z.string().uuid(), note: z.
   revalidatePath("/admin");
   return { ok: true };
 });
+
+// ------------------------------------------------------------------ accueil : pages en plus selon le compte
+/** Vendeur (boutique non fermée) et/ou fondateur : rien n'est révélé aux autres visiteurs. */
+export async function getHubRoles(): Promise<ActionResult<{ seller: boolean; admin: boolean }>> {
+  const u = await currentUser();
+  if (!u) return { ok: true, data: { seller: false, admin: false } };
+  const { data: shop } = await u.sb.from("shops").select("id").eq("owner_id", u.user.id).neq("status", "closed").maybeSingle();
+  return { ok: true, data: { seller: !!shop, admin: u.profile?.role === "admin" } };
+}
