@@ -2,7 +2,7 @@
 import { useEffect, useRef, useState } from "react";
 
 /** Compteur qui monte jusqu'à sa valeur (≈ 700 ms). Affiche directement la valeur en mouvement réduit. */
-export function CountUp({ value, className }: { value: number; className?: string }) {
+export function CountUp({ value, className, format = String }: { value: number; className?: string; format?: (n: number) => string }) {
   const [shown, setShown] = useState(value);
   const from = useRef(0);
   useEffect(() => {
@@ -20,5 +20,5 @@ export function CountUp({ value, className }: { value: number; className?: strin
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
   }, [value]);
-  return <span className={className} aria-label={String(value)}>{shown}</span>;
+  return <span className={className} aria-label={format(value)}>{format(shown)}</span>;
 }

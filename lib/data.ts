@@ -19,6 +19,21 @@ export type Shop = {
   responseTime: string;
   acceptsCashOnDelivery: boolean;
   payments: PaymentMethodId[];
+  /** Type de boutique (slug de catégorie) ; en démonstration, déduit de ses produits. */
+  category?: string;
+  /** Fiche publique (page de la boutique) */
+  district?: string;
+  isPhysical?: boolean;
+  mapsUrl?: string;
+  lat?: number;
+  lng?: number;
+  whatsapp?: string;
+  callPhone?: string;
+  samplePrices?: { name: string; price: number }[];
+  /** Apparence (Pro / Ultra) */
+  brandColor?: string;
+  signature?: string;
+  displayFont?: string;
 };
 
 export type Product = {
@@ -35,6 +50,14 @@ export type Product = {
   specs: [string, string][];
   glyph: string;
   tone: string; // teinte de la vignette
+  /** Unité du prix pour une location (« / mois »). */
+  priceUnit?: "mois" | "nuit" | "jour";
+  /** Vraies photos (adresses publiques), dans l'ordre. */
+  images?: string[];
+  /** Panoramas 360° par pièce (visite immobilière). */
+  panos?: { url: string; label: string }[];
+  /** Rotation 360° : photos prises en tournant autour de l'objet, dans l'ordre. */
+  spin?: string[];
 };
 
 export type Review = {
@@ -51,12 +74,14 @@ export type Review = {
 };
 
 export const categories: Category[] = [
-  { slug: "mode", name: "Mode & pagnes", description: "Wax, bazin, prêt-à-porter et accessoires créés en Afrique.", icon: "◆" },
+  { slug: "mode", name: "Vêtements", description: "Wax, bazin, prêt-à-porter et accessoires créés en Afrique.", icon: "◆" },
   { slug: "beaute", name: "Beauté & soins", description: "Karité, savons noirs, huiles et cosmétiques naturels.", icon: "✦" },
-  { slug: "electronique", name: "Électronique", description: "Téléphones, accessoires, solaire et petit électroménager.", icon: "▣" },
-  { slug: "maison", name: "Maison & déco", description: "Vannerie, mobilier, linge et objets d'artisans.", icon: "⌂" },
+  { slug: "electronique", name: "Technologie", description: "Consoles, ordinateurs, téléphones, accessoires et solaire.", icon: "▣" },
+  { slug: "maison", name: "Meubles & déco", description: "Mobilier, vannerie, linge et objets d'artisans.", icon: "⌂" },
   { slug: "alimentation", name: "Épicerie", description: "Café, cacao, épices et produits du terroir.", icon: "❋" },
   { slug: "gros", name: "Vente en gros", description: "Prix dégressifs pour revendeurs et commerçants.", icon: "▤" },
+  { slug: "immobilier", name: "Immobilier", description: "Maisons, appartements et terrains à louer ou à vendre, avec visite 360°.", icon: "⌂" },
+  { slug: "automobile", name: "Automobile", description: "Concessions, voitures neuves et d'occasion, motos et pièces détachées.", icon: "◉" },
 ];
 
 export const shops: Shop[] = [

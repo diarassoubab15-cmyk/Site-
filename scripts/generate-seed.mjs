@@ -12,10 +12,10 @@ let sql = `-- Généré par scripts/generate-seed.mjs. Ne pas modifier à la mai
 -- Données de démonstration (boutiques, produits, avis). À ne PAS charger en production.
 
 `;
-// Vendeurs (comptes de démonstration)
+// Vendeurs (comptes de démonstration). Les champs de jetons doivent valoir '' (et non NULL) pour que la connexion fonctionne.
 shops.forEach((s, i) => {
-  sql += `insert into auth.users (instance_id, id, aud, role, email, email_confirmed_at, raw_app_meta_data, raw_user_meta_data, created_at, updated_at)
-values ('00000000-0000-0000-0000-000000000000', '${ownerId(i)}', 'authenticated', 'authenticated', 'vendeur${i + 1}@demo.nexora', now(), '{"provider":"email","providers":["email"]}', '{}', now(), now());\n`;
+  sql += `insert into auth.users (instance_id, id, aud, role, email, email_confirmed_at, raw_app_meta_data, raw_user_meta_data, created_at, updated_at, confirmation_token, recovery_token, email_change_token_new, email_change, email_change_token_current, reauthentication_token, phone_change, phone_change_token)
+values ('00000000-0000-0000-0000-000000000000', '${ownerId(i)}', 'authenticated', 'authenticated', 'vendeur${i + 1}@demo.nexora', now(), '{"provider":"email","providers":["email"]}', '{}', now(), now(), '', '', '', '', '', '', '', '');\n`;
   sql += `update profiles set role = 'seller', full_name = ${q(s.name)}, city = ${q(s.city)}, country = ${q(s.country)} where id = '${ownerId(i)}';\n`;
   const online = s.payments.filter((m) => m !== "cash_on_delivery");
   sql += `insert into shops (id, owner_id, slug, name, description, category, city, country, accepts_cod, status, owner_name, contact_email, response_time, payments, created_at)
@@ -40,8 +40,8 @@ reviews.forEach((r, i) => {
   const order = `c${String(i).padStart(7, "0")}-0000-4000-8000-000000000000`;
   const [first, last = ""] = r.author.split(" ");
   const method = shops[si].acceptsCashOnDelivery ? "cash_on_delivery" : shops[si].payments[0];
-  sql += `insert into auth.users (instance_id, id, aud, role, email, email_confirmed_at, raw_app_meta_data, raw_user_meta_data, created_at, updated_at)
-values ('00000000-0000-0000-0000-000000000000', '${buyer}', 'authenticated', 'authenticated', 'client${i + 1}@demo.nexora', now(), '{"provider":"email","providers":["email"]}', '{}', now(), now());
+  sql += `insert into auth.users (instance_id, id, aud, role, email, email_confirmed_at, raw_app_meta_data, raw_user_meta_data, created_at, updated_at, confirmation_token, recovery_token, email_change_token_new, email_change, email_change_token_current, reauthentication_token, phone_change, phone_change_token)
+values ('00000000-0000-0000-0000-000000000000', '${buyer}', 'authenticated', 'authenticated', 'client${i + 1}@demo.nexora', now(), '{"provider":"email","providers":["email"]}', '{}', now(), now(), '', '', '', '', '', '', '', '');
 update profiles set full_name = ${q(`${first} ${last.replace(".", "")}`.trim())}, city = ${q(r.city)} where id = '${buyer}';
 insert into orders (id, buyer_id, shop_id, product_id, qty, total, method, shipping_name, shipping_phone, shipping_city, created_at)
 values ('${order}', '${buyer}', '${shopId(si)}', '${prodId(pi)}', 1, 1, '${method}', ${q(r.author)}, '+000', ${q(r.city)}, ${q(r.date)});

@@ -7,6 +7,9 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { currentUser, supabaseServer, supabaseService } from "@/lib/supabase/server";
 import { slugify } from "@/lib/format";
+import { categories } from "@/lib/data";
+import { coordsFromMapsUrl, isMapsUrl } from "@/lib/maps";
+import { mediaUrl as productMediaUrl } from "@/lib/catalog";
 import { shopStatusDb, ticketKindDb, type ActionResult } from "@/lib/views";
 import type { SellerStatus } from "@/lib/demo-store";
 import { periodOf, rewardTitle, type RankingRow } from "@/lib/rewards";
@@ -177,27 +180,44 @@ export async function signOut() {
 }
 
 // ------------------------------------------------------------------ vendeurs
-const applySchema = z.object({
-  shopName: z.string().trim().min(2).max(60),
-  category: z.string().min(1).max(40),
-  city: z.string().trim().min(2).max(80),
-  country: z.string().trim().min(2).max(60),
-  owner: z.string().trim().min(2).max(80),
-  email: z.string().trim().email(),
-  phone: PHONE,
-  payoutMethod: PAYOUT,
-  payoutAccount: z.string().trim().min(6).max(40),
-  cod: z.boolean(),
-  plan: z.enum(["essentiel", "pro", "business"]),
-});
+const sampleSchema = z.object({ name: z.string().trim().min(1, "Nom du produit manquant").max(60), price: z.number().int().min(1, "Prix invalide").max(1_000_000_000) });
+const applySchema = z
+  .object({
+    shopName: z.string().trim().min(2, "Nom de boutique trop court").max(60),
+    category: z.string().refine((v) => categories.some((c) => c.slug === v), "Choisissez le type de boutique"),
+    samples: z.array(sampleSchema).min(1, "Indiquez au moins un produit et son prix").max(5),
+    country: z.string().trim().min(2).max(60),
+    city: z.string().trim().min(2).max(80),
+    district: z.string().trim().max(80),
+    isPhysical: z.boolean(),
+    mapsUrl: z.string().trim().max(500).refine((v) => !v || isMapsUrl(v), "Collez un lien Google Maps (google.com/maps ou maps.app.goo.gl)"),
+    lat: z.number().min(-90).max(90).nullable(),
+    lng: z.number().min(-180).max(180).nullable(),
+    whatsapp: PHONE,
+    callPhone: PHONE,
+    owner: z.string().trim().min(2).max(80),
+    email: z.string().trim().email(),
+    payoutMethod: PAYOUT,
+    payoutAccount: z.string().trim().min(6).max(40),
+    cod: z.boolean(),
+    plan: z.enum(["essentiel", "pro", "business"]),
+  })
+  .refine((f) => !f.isPhysical || f.mapsUrl || f.lat !== null, { message: "Boutique physique : collez le lien Google Maps ou utilisez votre position" });
 
 export const applySeller = action(applySchema, async (f, { user, sb }) => {
   const { data: existing } = await sb.from("shops").select("id").eq("owner_id", user.id).neq("status", "closed").maybeSingle();
   if (existing) return fail("Vous avez déjà une boutique.");
   const slug = `${slugify(f.shopName).slice(0, 50) || "boutique"}-${Math.random().toString(36).slice(2, 6)}`;
+  // Adresse précise seulement pour une boutique physique ; coordonnées tirées du lien si besoin.
+  const coords = f.isPhysical ? (f.lat !== null && f.lng !== null ? { lat: f.lat, lng: f.lng } : coordsFromMapsUrl(f.mapsUrl)) : null;
   const { data: shop, error } = await sb
     .from("shops")
-    .insert({ owner_id: user.id, slug, name: f.shopName, category: f.category, city: f.city, country: f.country, accepts_cod: f.cod, owner_name: f.owner, contact_email: f.email, contact_phone: f.phone })
+    .insert({
+      owner_id: user.id, slug, name: f.shopName, category: f.category, city: f.city, country: f.country, accepts_cod: f.cod,
+      owner_name: f.owner, contact_email: f.email, contact_phone: f.callPhone,
+      district: f.district || null, is_physical: f.isPhysical, maps_url: f.isPhysical && f.mapsUrl ? f.mapsUrl : null,
+      lat: coords?.lat ?? null, lng: coords?.lng ?? null, whatsapp: f.whatsapp, call_phone: f.callPhone, sample_prices: f.samples,
+    })
     .select("id")
     .single();
   if (error) return dbError(error);
@@ -205,7 +225,7 @@ export const applySeller = action(applySchema, async (f, { user, sb }) => {
   // En production : le compte est enregistré chez le prestataire de paiement, qui renvoie un jeton.
   await sb.from("payout_accounts").insert({ shop_id: shop.id, type: f.payoutMethod, provider_token: `a-relier:${f.payoutMethod}`, last4: digits.slice(-4) });
   await sb.from("subscriptions").insert({ shop_id: shop.id, plan: f.plan, active: false });
-  await sb.from("profiles").update({ full_name: f.owner, phone: f.phone, city: f.city, country: f.country }).eq("id", user.id);
+  await sb.from("profiles").update({ full_name: f.owner, phone: f.callPhone, city: f.city, country: f.country }).eq("id", user.id);
   revalidatePath("/vendeur");
   return { ok: true };
 });
@@ -266,7 +286,7 @@ export const adminResolveTicket = action(z.object({ ticketId: z.string().uuid(),
  * Ce que la fiche produit doit savoir de l'utilisateur, sans embarquer le client Supabase
  * dans le navigateur (≈ 75 Ko de moins sur la page la plus visitée).
  */
-export async function getBuyerContext(slug: string): Promise<{ loggedIn: boolean; known: { name: string; city: string } | null; reviewableOrderId: string | null }> {
+export async function getBuyerContext(slug: string): Promise<{ loggedIn: boolean; known: { name: string; city: string } | null; reviewableOrderId: string | null; preferredPayment?: string | null }> {
   const u = await currentUser();
   if (!u) return { loggedIn: false, known: null, reviewableOrderId: null };
   const p = u.profile;
@@ -278,7 +298,7 @@ export async function getBuyerContext(slug: string): Promise<{ loggedIn: boolean
     const taken = new Set((done ?? []).map((d) => d.order_id));
     reviewableOrderId = orders.find((o) => !taken.has(o.id))?.id ?? null;
   }
-  return { loggedIn: true, known, reviewableOrderId };
+  return { loggedIn: true, known, reviewableOrderId, preferredPayment: p?.preferred_payment ?? null };
 }
 
 // ------------------------------------------------------------------ abonnements (Orange Money, contact admin obligatoire)
@@ -290,12 +310,13 @@ async function myShopId(sb: Awaited<ReturnType<typeof requireUser>>["sb"], userI
 }
 
 /** Étape 1 : le vendeur demande à payer. Il devra ensuite contacter l'admin (WhatsApp ou appel). */
-export const requestSubscriptionPayment = action<{ plan: "essentiel" | "pro" | "business"; annual: boolean }, string>(
-  z.object({ plan: PLAN, annual: z.boolean() }),
-  async ({ plan, annual }, { user, sb }) => {
+const SUB_METHOD = z.enum(["orange_money", "wave", "mtn_momo", "moov_money"]);
+export const requestSubscriptionPayment = action<{ plan: "essentiel" | "pro" | "business"; annual: boolean; method?: z.infer<typeof SUB_METHOD> }, string>(
+  z.object({ plan: PLAN, annual: z.boolean(), method: SUB_METHOD.default("orange_money") }),
+  async ({ plan, annual, method }, { user, sb }) => {
     const shopId = await myShopId(sb, user.id);
     if (!shopId) return fail("Aucune boutique active");
-    const { data, error } = await sb.from("subscription_payments").insert({ shop_id: shopId, plan, annual }).select("ref").single();
+    const { data, error } = await sb.from("subscription_payments").insert({ shop_id: shopId, plan, annual, method }).select("ref").single();
     if (error) return fail(error.code === "23505" ? "Vous avez déjà une demande de paiement en cours." : error.message.split("\n")[0]);
     revalidatePath("/vendeur");
     return { ok: true, data: data.ref };
@@ -402,5 +423,343 @@ export const adminRevokeReward = action(z.object({ id: z.string().uuid(), note: 
   if (error) return dbError(error);
   revalidatePath("/admin");
   revalidatePath("/", "layout");
+  return { ok: true };
+});
+
+// ------------------------------------------------------------------ vidéos de boutique
+export const requestShopVideo = action<{ description: string }, string>(
+  z.object({ description: z.string().trim().min(20, "Décrivez votre boutique en 20 caractères au moins").max(1500, "1 500 caractères au maximum") }),
+  async ({ description }, { user, sb }) => {
+    const { data: shop } = await sb.from("shops").select("id").eq("owner_id", user.id).neq("status", "closed").maybeSingle();
+    if (!shop) return fail("Aucune boutique active");
+    const { data, error } = await sb.from("shop_videos").insert({ shop_id: shop.id, description }).select("ref").single();
+    if (error) return fail(error.code === "23505" ? "Une vidéo est déjà en cours de fabrication." : error.message.split("\n")[0]);
+    revalidatePath("/vendeur");
+    return { ok: true, data: data.ref };
+  },
+);
+
+export const cancelShopVideo = action(z.object({ id: z.string().uuid() }), async ({ id }, { sb }) => {
+  const { error } = await sb.from("shop_videos").update({ status: "cancelled" }).eq("id", id);
+  if (error) return dbError(error);
+  revalidatePath("/vendeur");
+  return { ok: true };
+});
+
+export const adminReviewVideo = action(z.object({ id: z.string().uuid(), approve: z.boolean(), note: z.string().trim().max(500).optional() }), async ({ id, approve, note }, { sb }) => {
+  const { error } = await sb.rpc("admin_review_video", { p_video: id, p_approve: approve, p_note: note || undefined });
+  if (error) return dbError(error);
+  revalidatePath("/admin");
+  revalidatePath("/", "layout");
+  return { ok: true };
+});
+
+export const adminUnpublishVideo = action(z.object({ id: z.string().uuid(), note: z.string().trim().max(500).optional() }), async ({ id, note }, { sb }) => {
+  const { error } = await sb.rpc("admin_unpublish_video", { p_video: id, p_note: note || undefined });
+  if (error) return dbError(error);
+  revalidatePath("/admin");
+  revalidatePath("/", "layout");
+  return { ok: true };
+});
+
+// ------------------------------------------------------------------ produits du vendeur
+const CATEGORIES = ["mode", "beaute", "electronique", "maison", "alimentation", "gros", "immobilier", "automobile"] as const;
+const productSchema = z.object({
+  id: z.string().uuid().optional(),
+  name: z.string().trim().min(2, "Nom trop court").max(120),
+  category: z.enum(CATEGORIES),
+  price: z.number().int().min(1, "Prix invalide").max(1_000_000_000),
+  priceUnit: z.enum(["mois", "nuit", "jour"]).nullable(),
+  compareAt: z.number().int().positive().nullable(),
+  stock: z.number().int().min(0).max(1_000_000),
+  short: z.string().trim().max(200),
+  description: z.string().trim().max(5000),
+  specs: z.array(z.tuple([z.string().trim().min(1).max(40), z.string().trim().min(1).max(120)])).max(20),
+  wholesaleMin: z.number().int().min(2).nullable(),
+  wholesalePrice: z.number().int().positive().nullable(),
+  published: z.boolean(),
+});
+
+async function myApprovedShop(sb: Awaited<ReturnType<typeof requireUser>>["sb"], userId: string) {
+  const { data } = await sb.from("shops").select("id, slug, status").eq("owner_id", userId).neq("status", "closed").maybeSingle();
+  return data;
+}
+
+export const saveProduct = action<z.infer<typeof productSchema>, { id: string; slug: string }>(productSchema, async (p, { user, sb }) => {
+  const shop = await myApprovedShop(sb, user.id);
+  if (!shop || shop.status !== "approved") return fail("Votre boutique doit être autorisée pour publier des produits.");
+  if (p.compareAt !== null && p.compareAt <= p.price) return fail("L'ancien prix doit être supérieur au prix actuel.");
+  if ((p.wholesaleMin === null) !== (p.wholesalePrice === null)) return fail("Prix de gros : indiquez la quantité minimale ET le prix.");
+  const row = {
+    name: p.name, category: p.category, price: p.price, price_unit: p.priceUnit, compare_at: p.compareAt, stock: p.stock,
+    short: p.short || null, description: p.description || null, specs: p.specs, wholesale_min: p.wholesaleMin, wholesale_price: p.wholesalePrice, published: p.published,
+  };
+  if (p.id) {
+    const { data, error } = await sb.from("products").update(row).eq("id", p.id).eq("shop_id", shop.id).select("id, slug").single();
+    if (error) return dbError(error);
+    revalidatePath(`/produits/${data.slug}`);
+    revalidatePath("/vendeur/produits");
+    return { ok: true, data };
+  }
+  const slug = `${slugify(p.name).slice(0, 70) || "produit"}-${Math.random().toString(36).slice(2, 6)}`;
+  const { data, error } = await sb.from("products").insert({ ...row, shop_id: shop.id, slug }).select("id, slug").single();
+  if (error) return dbError(error);
+  revalidatePath("/vendeur/produits");
+  revalidatePath("/marketplace", "layout");
+  return { ok: true, data };
+});
+
+export const deleteProduct = action(z.object({ id: z.string().uuid() }), async ({ id }, { sb }) => {
+  const { data: files } = await sb.from("product_media").select("path").eq("product_id", id);
+  const { data: prod, error } = await sb.from("products").delete().eq("id", id).select("slug").single();
+  if (error) return dbError(error);
+  if (files?.length) await sb.storage.from("product-media").remove(files.map((f) => f.path));
+  revalidatePath("/vendeur/produits");
+  revalidatePath(`/produits/${prod.slug}`);
+  return { ok: true };
+});
+
+/** Rafraîchit la fiche publique d'un produit après un changement de ses médias. */
+async function revalidateProduct(sb: Awaited<ReturnType<typeof requireUser>>["sb"], productId: string) {
+  const { data } = await sb.from("products").select("slug").eq("id", productId).maybeSingle();
+  if (data) revalidatePath(`/produits/${data.slug}`);
+  revalidatePath("/vendeur/produits");
+  revalidatePath("/marketplace", "layout");
+}
+
+/** Enregistre un fichier déjà envoyé dans le stockage (dossier de la boutique, vérifié par la base). */
+export const addProductMedia = action(
+  z.object({
+    productId: z.string().uuid(),
+    kind: z.enum(["photo", "pano", "spin"]),
+    path: z.string().regex(/^[0-9a-f-]{36}\/[0-9a-f-]{36}\/[0-9a-z-]{8,40}\.(webp|jpg|jpeg|png)$/, "Chemin de fichier invalide"),
+    width: z.number().int().positive().max(20000),
+    height: z.number().int().positive().max(20000),
+    label: z.string().trim().max(40).optional(),
+  }),
+  async (m, { sb }) => {
+    const { count } = await sb.from("product_media").select("id", { count: "exact", head: true }).eq("product_id", m.productId).eq("kind", m.kind);
+    const { error } = await sb.from("product_media").insert({ product_id: m.productId, shop_id: m.path.slice(0, 36), kind: m.kind, path: m.path, width: m.width, height: m.height, label: m.label || null, position: count ?? 0 });
+    if (error) {
+      await sb.storage.from("product-media").remove([m.path]);
+      return dbError(error);
+    }
+    await revalidateProduct(sb, m.productId);
+    return { ok: true };
+  },
+);
+
+export const deleteProductMedia = action(z.object({ id: z.string().uuid() }), async ({ id }, { sb }) => {
+  const { data, error } = await sb.from("product_media").delete().eq("id", id).select("path, product_id").single();
+  if (error) return dbError(error);
+  await sb.storage.from("product-media").remove([data.path]);
+  await revalidateProduct(sb, data.product_id);
+  return { ok: true };
+});
+
+export const updateProductMedia = action(
+  z.object({ items: z.array(z.object({ id: z.string().uuid(), position: z.number().int().min(0).max(99), label: z.string().trim().max(40).optional() })).max(40) }),
+  async ({ items }, { sb }) => {
+    let productId = "";
+    for (const it of items) {
+      const { data, error } = await sb.from("product_media").update({ position: it.position, ...(it.label !== undefined ? { label: it.label || null } : {}) }).eq("id", it.id).select("product_id").single();
+      if (error) return dbError(error);
+      productId = data.product_id;
+    }
+    if (productId) await revalidateProduct(sb, productId);
+    return { ok: true };
+  },
+);
+
+// ------------------------------------------------------------------ modifications demandées par écrit
+const changesSchema = z
+  .object({
+    name: z.string().trim().min(2).max(120),
+    short: z.string().trim().max(200),
+    description: z.string().trim().max(5000),
+    price: z.number().int().min(1).max(1_000_000_000),
+    compareAt: z.number().int().positive().nullable(),
+    specs: z.array(z.tuple([z.string().trim().min(1).max(40), z.string().trim().min(1).max(120)])).max(20),
+  })
+  .partial()
+  .strict();
+
+/** Le vendeur écrit ce qu'il veut changer ; le serveur prépare une proposition ; l'admin décide. */
+export const requestProductEdit = action(
+  z.object({ productId: z.string().uuid(), message: z.string().trim().min(5, "Décrivez la modification (5 caractères au moins)").max(1000, "1 000 caractères au maximum") }),
+  async ({ productId, message }, { sb }) => {
+    const { data: product } = await sb.from("products").select("shop_id, name, short, description, price, compare_at, specs, category").eq("id", productId).maybeSingle();
+    if (!product) return fail("Produit introuvable");
+    const { data: req, error } = await sb.from("product_edit_requests").insert({ product_id: productId, shop_id: product.shop_id, message }).select("id").single();
+    if (error) return dbError(error);
+    // La proposition est écrite avec la clé serveur : le vendeur ne peut pas la fabriquer lui-même.
+    const { makeProposal } = await import("@/lib/edit-proposal");
+    const current = {
+      name: product.name, short: product.short, description: product.description, price: product.price, compareAt: product.compare_at,
+      specs: Array.isArray(product.specs) ? (product.specs as [string, string][]) : [],
+    };
+    try {
+      const { proposal, ai } = await makeProposal(message, current, product.category);
+      await supabaseService().from("product_edit_requests").update({ proposal, ai }).eq("id", req.id);
+    } catch (e) {
+      console.error("proposition non enregistrée :", (e as Error).message);   // l'admin traitera la demande à la main
+    }
+    revalidatePath("/vendeur/produits");
+    revalidatePath("/admin");
+    return { ok: true };
+  },
+);
+
+export const cancelProductEdit = action(z.object({ id: z.string().uuid() }), async ({ id }, { sb }) => {
+  const { error } = await sb.from("product_edit_requests").update({ status: "cancelled" }).eq("id", id).eq("status", "review");
+  if (error) return dbError(error);
+  revalidatePath("/vendeur/produits");
+  revalidatePath("/admin");
+  return { ok: true };
+});
+
+export const adminApplyEdit = action(
+  z.object({ id: z.string().uuid(), changes: changesSchema, note: z.string().trim().max(500).optional() }),
+  async ({ id, changes, note }, { sb }) => {
+    if (!Object.keys(changes).length) return fail("Aucun changement à appliquer : modifiez au moins un champ, ou refusez la demande.");
+    const { error } = await sb.rpc("admin_apply_edit", { p_request: id, p_changes: changes, p_note: note || undefined });
+    if (error) return dbError(error);
+    const { data } = await sb.from("product_edit_requests").select("products(slug)").eq("id", id).single();
+    const slug = (data?.products as { slug: string } | null)?.slug;
+    if (slug) revalidatePath(`/produits/${slug}`);
+    revalidatePath("/marketplace", "layout");
+    revalidatePath("/admin");
+    return { ok: true };
+  },
+);
+
+export const adminRejectEdit = action(z.object({ id: z.string().uuid(), note: z.string().trim().max(500).optional() }), async ({ id, note }, { sb }) => {
+  const { error } = await sb.rpc("admin_reject_edit", { p_request: id, p_note: note || undefined });
+  if (error) return dbError(error);
+  revalidatePath("/admin");
+  return { ok: true };
+});
+
+// ------------------------------------------------------------------ accueil : pages en plus selon le compte
+/** Vendeur (boutique non fermée) et/ou fondateur : rien n'est révélé aux autres visiteurs. */
+export async function getHubRoles(): Promise<ActionResult<{ seller: boolean; admin: boolean }>> {
+  const u = await currentUser();
+  if (!u) return { ok: true, data: { seller: false, admin: false } };
+  const { data: shop } = await u.sb.from("shops").select("id").eq("owner_id", u.user.id).neq("status", "closed").maybeSingle();
+  return { ok: true, data: { seller: !!shop, admin: u.profile?.role === "admin" } };
+}
+
+// ------------------------------------------------------------------ fiche publique de la boutique (mise à jour par le vendeur)
+const shopProfileSchema =
+  z
+    .object({
+      city: z.string().trim().min(2).max(80),
+      district: z.string().trim().max(80),
+      isPhysical: z.boolean(),
+      mapsUrl: z.string().trim().max(500).refine((v) => !v || isMapsUrl(v), "Collez un lien Google Maps (google.com/maps ou maps.app.goo.gl)"),
+      whatsapp: PHONE,
+      callPhone: PHONE,
+      samples: z.array(sampleSchema).max(5),
+    })
+    .refine((f) => !f.isPhysical || f.mapsUrl, { message: "Boutique physique : collez le lien Google Maps" });
+
+export const updateShopProfile = action(
+  shopProfileSchema,
+  async (f, { user, sb }) => {
+    const coords = f.isPhysical ? coordsFromMapsUrl(f.mapsUrl) : null;
+    const { data, error } = await sb
+      .from("shops")
+      .update({
+        city: f.city, district: f.district || null, is_physical: f.isPhysical, maps_url: f.isPhysical ? f.mapsUrl : null,
+        lat: coords?.lat ?? null, lng: coords?.lng ?? null, whatsapp: f.whatsapp, call_phone: f.callPhone, sample_prices: f.samples,
+      })
+      .eq("owner_id", user.id)
+      .neq("status", "closed")
+      .select("slug")
+      .single();
+    if (error) return dbError(error);
+    revalidatePath(`/boutiques/${data.slug}`);
+    revalidatePath("/vendeur");
+    return { ok: true };
+  },
+);
+
+// ------------------------------------------------------------------ réglages de l'acheteur
+export const setPreferredPayment = action(z.object({ method: PAYMENT.nullable() }), async ({ method }, { user, sb }) => {
+  const { error } = await sb.from("profiles").update({ preferred_payment: method }).eq("id", user.id);
+  if (error) return dbError(error);
+  revalidatePath("/reglages");
+  return { ok: true };
+});
+
+// ------------------------------------------------------------------ essayage virtuel des vêtements
+/** État de l'essayage pour le visiteur : connecté ? service prêt ? essais restants dans cette boutique (null = illimité). */
+export async function tryOnStatus(shopSlug: string): Promise<{ loggedIn: boolean; ready: boolean; remaining: number | null }> {
+  const { tryOnConfigured } = await import("@/lib/tryon");
+  const u = await currentUser();
+  if (!u) return { loggedIn: false, ready: tryOnConfigured(), remaining: null };
+  const { data: shop } = await u.sb.from("shops").select("id").eq("slug", String(shopSlug).slice(0, 80)).maybeSingle();
+  if (!shop) return { loggedIn: true, ready: false, remaining: 0 };
+  const { data } = await u.sb.rpc("tryon_remaining", { p_shop: shop.id });
+  return { loggedIn: true, ready: tryOnConfigured(), remaining: (data as number | null) ?? null };
+}
+
+const tryOnSchema = z.object({
+  shopSlug: z.string().min(1).max(80),
+  slugs: z.array(z.string().min(1).max(100)).min(1, "Choisissez au moins un vêtement").max(3, "3 vêtements au plus"),
+  // Photo compressée sur le téléphone ; jamais enregistrée par NEXORA.
+  photo: z.string().max(2_500_000, "Photo trop lourde").regex(/^data:image\/(jpeg|webp|png);base64,[A-Za-z0-9+/=]+$/, "Photo illisible"),
+});
+
+export const tryOn = action<z.infer<typeof tryOnSchema>, { image: string; remaining: number | null }>(tryOnSchema, async ({ shopSlug, slugs, photo }, { sb }) => {
+  const { generateTryOn, tryOnConfigured } = await import("@/lib/tryon");
+  if (!tryOnConfigured()) return fail("L'essayage par IA arrive très bientôt. Aucun essai n'a été décompté.");
+  const { data: shop } = await sb.from("shops").select("id").eq("slug", shopSlug).maybeSingle();
+  if (!shop) return fail("Boutique introuvable");
+  const { data: rows } = await sb
+    .from("products")
+    .select("id, name, short, product_media(path, kind, position)")
+    .eq("shop_id", shop.id)
+    .eq("category", "mode")
+    .eq("published", true)
+    .in("slug", slugs);
+  const garments = (rows ?? [])
+    .map((p) => {
+      const photoPath = (p.product_media ?? []).filter((m) => m.kind === "photo").sort((a, b) => a.position - b.position)[0]?.path;
+      return photoPath ? { id: p.id, imageUrl: productMediaUrl(photoPath), name: p.name, description: p.short ?? "" } : null;
+    })
+    .filter((g): g is NonNullable<typeof g> => !!g);
+  if (garments.length !== slugs.length) return fail("Chaque vêtement choisi doit avoir une photo dans cette boutique.");
+  const { data: claimId, error } = await sb.rpc("claim_tryon", { p_shop: shop.id, p_products: garments.map((g) => g.id) });
+  if (error) return dbError(error);
+  try {
+    const res = await generateTryOn(photo, garments);
+    await sb.rpc("finish_tryon", { p_id: claimId as string, p_ok: true });
+    const { data: left } = await sb.rpc("tryon_remaining", { p_shop: shop.id });
+    return { ok: true, data: { image: res.image, remaining: (left as number | null) ?? null } };
+  } catch (e) {
+    await sb.rpc("finish_tryon", { p_id: claimId as string, p_ok: false });   // l'essai raté est rendu
+    console.error("essayage :", (e as Error).message);
+    return fail("L'essayage n'a pas abouti. Votre essai n'est pas décompté : réessayez avec une photo de face, en pied, bien éclairée.");
+  }
+});
+
+// ------------------------------------------------------------------ apparence de la boutique (Pro / Ultra)
+const shopThemeSchema = z.object({
+  brandColor: z.enum(["#ff5fa2", "#ff6b6b", "#ff9f43", "#e3b341", "#84cc16", "#3ad389", "#22d3ee", "#3b9eff", "#9281f7", "#e879f9"]).nullable(),
+  signature: z.enum(["vague", "constellation", "ruban", "pulsation"]).nullable(),
+  displayFont: z.enum(["serif", "sans", "mono"]).nullable(),
+});
+export const updateShopTheme = action(shopThemeSchema, async (f, { user, sb }) => {
+  const { data, error } = await sb
+    .from("shops")
+    .update({ brand_color: f.brandColor, signature: f.signature, display_font: f.displayFont })
+    .eq("owner_id", user.id)
+    .neq("status", "closed")
+    .select("slug")
+    .single();
+  if (error) return dbError(error);
+  revalidatePath(`/boutiques/${data.slug}`);
+  revalidatePath("/vendeur");
   return { ok: true };
 });

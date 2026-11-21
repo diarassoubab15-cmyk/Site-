@@ -1,7 +1,8 @@
 "use client";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
-import { plans } from "@/lib/plans";
+import { planName } from "@/lib/plans";
+import { paymentMethods } from "@/lib/payments";
 import { formatPrice } from "@/lib/format";
 import { callLink, whatsappLink } from "@/lib/contact";
 import { toast } from "@/lib/toast";
@@ -16,7 +17,6 @@ const label: Record<SubPaymentStatus, [string, string]> = {
   confirmé: ["bg-pulse", "payé"],
   refusé: ["bg-iron", "refusé / annulé"],
 };
-const planName = (id: string) => plans.find((p) => p.id === id)?.name ?? id;
 
 /** Paiements d'abonnement : l'admin confirme le contact, puis la réception de l'argent. */
 export function AdminPayments({ live }: { live?: DemoSubPayment[] }) {
@@ -59,7 +59,7 @@ export function AdminPayments({ live }: { live?: DemoSubPayment[] }) {
     <section className="card" aria-labelledby="paiements-abo">
       <h2 id="paiements-abo" className="text-xl font-medium text-white">Paiements d&apos;abonnement</h2>
       <p className="mb-6 mt-2 text-sm text-ash">
-        Un vendeur ne peut payer qu&apos;après votre échange sur WhatsApp ou par téléphone. Cliquez sur « Vendeur contacté » une fois cet échange fait : il verra alors votre numéro Orange Money.
+        Un vendeur ne peut payer qu&apos;après votre échange sur WhatsApp ou par téléphone. Cliquez sur « Vendeur contacté » une fois cet échange fait : il verra alors votre numéro pour l&apos;opérateur qu&apos;il a choisi.
       </p>
       {open.length === 0 && <p className="text-sm text-iron">Aucun paiement en attente.</p>}
       <ul className="space-y-3" data-reveal suppressHydrationWarning>
@@ -75,11 +75,11 @@ export function AdminPayments({ live }: { live?: DemoSubPayment[] }) {
                 <span className="flex items-center gap-2 font-mono text-xs text-bone"><span className={`h-1.5 w-1.5 rounded-full ${dot}`} />{text}</span>
               </div>
               <p className="mt-1 text-sm text-ash">
-                {p.owner} · {p.ownerPhone} · {planName(p.plan)} {p.annual ? "annuel" : "mensuel"} · <span className="font-mono text-bone">{formatPrice(p.amount)}</span>
+                {p.owner} · {p.ownerPhone} · {planName(p.plan)} {p.annual ? "annuel" : "mensuel"} · <span className="font-mono text-bone">{formatPrice(p.amount)}</span> · {paymentMethods[p.method ?? "orange_money"].label}
               </p>
               {p.status === "déclaré" && (
                 <p className="mt-2 rounded-[6px] border border-iris/40 px-3 py-2 text-sm text-bone">
-                  Transaction Orange Money <span className="font-mono text-iris">{p.operatorRef}</span> depuis le <span className="font-mono">{p.payerPhone}</span>. Vérifiez le SMS reçu sur votre téléphone avant de confirmer.
+                  Transaction {paymentMethods[p.method ?? "orange_money"].label} <span className="font-mono text-iris">{p.operatorRef}</span> depuis le <span className="font-mono">{p.payerPhone}</span>. Vérifiez le SMS reçu sur votre téléphone avant de confirmer.
                 </p>
               )}
               <div className="mt-4 flex flex-wrap gap-2">

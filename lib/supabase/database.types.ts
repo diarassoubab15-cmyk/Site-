@@ -115,16 +115,74 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
-                },"products": {
+                },"product_edit_requests": {
                   Row: {
-                    "category": string,"compare_at": number | null,"created_at": string,"description": string | null,"glyph": string,"id": string,"images": (string)[],"name": string,"price": number,"published": boolean,"shop_id": string,"short": string | null,"slug": string,"specs": NonNullable<Json>,"stock": number,"tone": string,"wholesale_min": number | null,"wholesale_price": number | null
+                    "admin_note": string | null,"ai": boolean,"applied": Json | null,"author_id": string | null,"created_at": string,"decided_at": string | null,"id": string,"message": string,"product_id": string,"proposal": Json | null,"shop_id": string,"status": Database["public"]['Enums']["edit_status"]
                   }
                   ComputedFields: never
                   Insert: {
-                    "category": string,"compare_at"?: number | null,"created_at"?: string,"description"?: string | null,"glyph"?: string,"id"?: string,"images"?: (string)[],"name": string,"price": number,"published"?: boolean,"shop_id": string,"short"?: string | null,"slug": string,"specs"?: NonNullable<Json>,"stock"?: number,"tone"?: string,"wholesale_min"?: number | null,"wholesale_price"?: number | null
+                    "admin_note"?: string | null,"ai"?: boolean,"applied"?: Json | null,"author_id"?: string | null,"created_at"?: string,"decided_at"?: string | null,"id"?: string,"message": string,"product_id": string,"proposal"?: Json | null,"shop_id": string,"status"?: Database["public"]['Enums']["edit_status"]
                   }
                   Update: {
-                    "category"?: string,"compare_at"?: number | null,"created_at"?: string,"description"?: string | null,"glyph"?: string,"id"?: string,"images"?: (string)[],"name"?: string,"price"?: number,"published"?: boolean,"shop_id"?: string,"short"?: string | null,"slug"?: string,"specs"?: NonNullable<Json>,"stock"?: number,"tone"?: string,"wholesale_min"?: number | null,"wholesale_price"?: number | null
+                    "admin_note"?: string | null,"ai"?: boolean,"applied"?: Json | null,"author_id"?: string | null,"created_at"?: string,"decided_at"?: string | null,"id"?: string,"message"?: string,"product_id"?: string,"proposal"?: Json | null,"shop_id"?: string,"status"?: Database["public"]['Enums']["edit_status"]
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "product_edit_requests_author_id_fkey"
+      columns: ["author_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "product_edit_requests_product_id_fkey"
+      columns: ["product_id"]
+isOneToOne: false
+      referencedRelation: "products"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "product_edit_requests_shop_id_fkey"
+      columns: ["shop_id"]
+isOneToOne: false
+      referencedRelation: "shops"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"product_media": {
+                  Row: {
+                    "ai_generated": boolean,"created_at": string,"height": number | null,"id": string,"kind": Database["public"]['Enums']["media_kind"],"label": string | null,"path": string,"position": number,"product_id": string,"shop_id": string,"status": Database["public"]['Enums']["media_status"],"width": number | null
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "ai_generated"?: boolean,"created_at"?: string,"height"?: number | null,"id"?: string,"kind": Database["public"]['Enums']["media_kind"],"label"?: string | null,"path": string,"position"?: number,"product_id": string,"shop_id": string,"status"?: Database["public"]['Enums']["media_status"],"width"?: number | null
+                  }
+                  Update: {
+                    "ai_generated"?: boolean,"created_at"?: string,"height"?: number | null,"id"?: string,"kind"?: Database["public"]['Enums']["media_kind"],"label"?: string | null,"path"?: string,"position"?: number,"product_id"?: string,"shop_id"?: string,"status"?: Database["public"]['Enums']["media_status"],"width"?: number | null
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "product_media_product_id_fkey"
+      columns: ["product_id"]
+isOneToOne: false
+      referencedRelation: "products"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "product_media_shop_id_fkey"
+      columns: ["shop_id"]
+isOneToOne: false
+      referencedRelation: "shops"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"products": {
+                  Row: {
+                    "category": string,"compare_at": number | null,"created_at": string,"description": string | null,"glyph": string,"id": string,"images": (string)[],"name": string,"price": number,"price_unit": string | null,"published": boolean,"shop_id": string,"short": string | null,"slug": string,"specs": NonNullable<Json>,"stock": number,"tone": string,"updated_at": string,"wholesale_min": number | null,"wholesale_price": number | null
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "category": string,"compare_at"?: number | null,"created_at"?: string,"description"?: string | null,"glyph"?: string,"id"?: string,"images"?: (string)[],"name": string,"price": number,"price_unit"?: string | null,"published"?: boolean,"shop_id": string,"short"?: string | null,"slug": string,"specs"?: NonNullable<Json>,"stock"?: number,"tone"?: string,"updated_at"?: string,"wholesale_min"?: number | null,"wholesale_price"?: number | null
+                  }
+                  Update: {
+                    "category"?: string,"compare_at"?: number | null,"created_at"?: string,"description"?: string | null,"glyph"?: string,"id"?: string,"images"?: (string)[],"name"?: string,"price"?: number,"price_unit"?: string | null,"published"?: boolean,"shop_id"?: string,"short"?: string | null,"slug"?: string,"specs"?: NonNullable<Json>,"stock"?: number,"tone"?: string,"updated_at"?: string,"wholesale_min"?: number | null,"wholesale_price"?: number | null
                   }
                   Relationships: [
                     {
@@ -137,14 +195,14 @@ isOneToOne: false
                   ]
                 },"profiles": {
                   Row: {
-                    "city": string | null,"country": string | null,"created_at": string,"email": string | null,"full_name": string | null,"id": string,"phone": string | null,"role": Database["public"]['Enums']["user_role"]
+                    "city": string | null,"country": string | null,"created_at": string,"email": string | null,"full_name": string | null,"id": string,"phone": string | null,"preferred_payment": Database["public"]['Enums']["payment_method"] | null,"role": Database["public"]['Enums']["user_role"]
                   }
                   ComputedFields: never
                   Insert: {
-                    "city"?: string | null,"country"?: string | null,"created_at"?: string,"email"?: string | null,"full_name"?: string | null,"id": string,"phone"?: string | null,"role"?: Database["public"]['Enums']["user_role"]
+                    "city"?: string | null,"country"?: string | null,"created_at"?: string,"email"?: string | null,"full_name"?: string | null,"id": string,"phone"?: string | null,"preferred_payment"?: Database["public"]['Enums']["payment_method"] | null,"role"?: Database["public"]['Enums']["user_role"]
                   }
                   Update: {
-                    "city"?: string | null,"country"?: string | null,"created_at"?: string,"email"?: string | null,"full_name"?: string | null,"id"?: string,"phone"?: string | null,"role"?: Database["public"]['Enums']["user_role"]
+                    "city"?: string | null,"country"?: string | null,"created_at"?: string,"email"?: string | null,"full_name"?: string | null,"id"?: string,"phone"?: string | null,"preferred_payment"?: Database["public"]['Enums']["payment_method"] | null,"role"?: Database["public"]['Enums']["user_role"]
                   }
                   Relationships: [
                     
@@ -207,16 +265,36 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
-                },"shops": {
+                },"shop_videos": {
                   Row: {
-                    "accepts_cod": boolean,"category": string,"city": string,"contact_email": string | null,"contact_phone": string | null,"country": string,"created_at": string,"description": string | null,"id": string,"name": string,"owner_id": string,"owner_name": string | null,"payments": (Database["public"]['Enums']["payment_method"])[],"response_time": string,"slug": string,"status": Database["public"]['Enums']["shop_status"],"status_changed_at": string | null,"status_reason": string | null
+                    "admin_note": string | null,"attempts": number,"created_at": string,"decided_at": string | null,"description": string,"duration_s": number | null,"error": string | null,"id": string,"is_active": boolean,"poster_path": string | null,"ref": string,"rendered_at": string | null,"script": Json | null,"shop_id": string,"started_at": string | null,"status": Database["public"]['Enums']["video_status"],"video_path": string | null
                   }
                   ComputedFields: never
                   Insert: {
-                    "accepts_cod"?: boolean,"category": string,"city": string,"contact_email"?: string | null,"contact_phone"?: string | null,"country": string,"created_at"?: string,"description"?: string | null,"id"?: string,"name": string,"owner_id": string,"owner_name"?: string | null,"payments"?: (Database["public"]['Enums']["payment_method"])[],"response_time"?: string,"slug": string,"status"?: Database["public"]['Enums']["shop_status"],"status_changed_at"?: string | null,"status_reason"?: string | null
+                    "admin_note"?: string | null,"attempts"?: number,"created_at"?: string,"decided_at"?: string | null,"description": string,"duration_s"?: number | null,"error"?: string | null,"id"?: string,"is_active"?: boolean,"poster_path"?: string | null,"ref"?: string,"rendered_at"?: string | null,"script"?: Json | null,"shop_id": string,"started_at"?: string | null,"status"?: Database["public"]['Enums']["video_status"],"video_path"?: string | null
                   }
                   Update: {
-                    "accepts_cod"?: boolean,"category"?: string,"city"?: string,"contact_email"?: string | null,"contact_phone"?: string | null,"country"?: string,"created_at"?: string,"description"?: string | null,"id"?: string,"name"?: string,"owner_id"?: string,"owner_name"?: string | null,"payments"?: (Database["public"]['Enums']["payment_method"])[],"response_time"?: string,"slug"?: string,"status"?: Database["public"]['Enums']["shop_status"],"status_changed_at"?: string | null,"status_reason"?: string | null
+                    "admin_note"?: string | null,"attempts"?: number,"created_at"?: string,"decided_at"?: string | null,"description"?: string,"duration_s"?: number | null,"error"?: string | null,"id"?: string,"is_active"?: boolean,"poster_path"?: string | null,"ref"?: string,"rendered_at"?: string | null,"script"?: Json | null,"shop_id"?: string,"started_at"?: string | null,"status"?: Database["public"]['Enums']["video_status"],"video_path"?: string | null
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "shop_videos_shop_id_fkey"
+      columns: ["shop_id"]
+isOneToOne: false
+      referencedRelation: "shops"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"shops": {
+                  Row: {
+                    "accepts_cod": boolean,"brand_color": string | null,"call_phone": string | null,"category": string,"city": string,"contact_email": string | null,"contact_phone": string | null,"country": string,"created_at": string,"description": string | null,"display_font": string | null,"district": string | null,"id": string,"is_physical": boolean,"lat": number | null,"lng": number | null,"maps_url": string | null,"name": string,"owner_id": string,"owner_name": string | null,"payments": (Database["public"]['Enums']["payment_method"])[],"response_time": string,"sample_prices": NonNullable<Json>,"signature": string | null,"slug": string,"status": Database["public"]['Enums']["shop_status"],"status_changed_at": string | null,"status_reason": string | null,"whatsapp": string | null
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "accepts_cod"?: boolean,"brand_color"?: string | null,"call_phone"?: string | null,"category": string,"city": string,"contact_email"?: string | null,"contact_phone"?: string | null,"country": string,"created_at"?: string,"description"?: string | null,"display_font"?: string | null,"district"?: string | null,"id"?: string,"is_physical"?: boolean,"lat"?: number | null,"lng"?: number | null,"maps_url"?: string | null,"name": string,"owner_id": string,"owner_name"?: string | null,"payments"?: (Database["public"]['Enums']["payment_method"])[],"response_time"?: string,"sample_prices"?: NonNullable<Json>,"signature"?: string | null,"slug": string,"status"?: Database["public"]['Enums']["shop_status"],"status_changed_at"?: string | null,"status_reason"?: string | null,"whatsapp"?: string | null
+                  }
+                  Update: {
+                    "accepts_cod"?: boolean,"brand_color"?: string | null,"call_phone"?: string | null,"category"?: string,"city"?: string,"contact_email"?: string | null,"contact_phone"?: string | null,"country"?: string,"created_at"?: string,"description"?: string | null,"display_font"?: string | null,"district"?: string | null,"id"?: string,"is_physical"?: boolean,"lat"?: number | null,"lng"?: number | null,"maps_url"?: string | null,"name"?: string,"owner_id"?: string,"owner_name"?: string | null,"payments"?: (Database["public"]['Enums']["payment_method"])[],"response_time"?: string,"sample_prices"?: NonNullable<Json>,"signature"?: string | null,"slug"?: string,"status"?: Database["public"]['Enums']["shop_status"],"status_changed_at"?: string | null,"status_reason"?: string | null,"whatsapp"?: string | null
                   }
                   Relationships: [
                     {
@@ -229,14 +307,14 @@ isOneToOne: false
                   ]
                 },"subscription_payments": {
                   Row: {
-                    "admin_note": string | null,"amount": number,"annual": boolean,"contacted_at": string | null,"created_at": string,"decided_at": string | null,"declared_at": string | null,"id": string,"operator_ref": string | null,"payer_phone": string | null,"plan": Database["public"]['Enums']["plan_id"],"ref": string,"shop_id": string,"status": Database["public"]['Enums']["subscription_payment_status"]
+                    "admin_note": string | null,"amount": number,"annual": boolean,"contacted_at": string | null,"created_at": string,"decided_at": string | null,"declared_at": string | null,"id": string,"method": Database["public"]['Enums']["payment_method"],"operator_ref": string | null,"payer_phone": string | null,"plan": Database["public"]['Enums']["plan_id"],"ref": string,"shop_id": string,"status": Database["public"]['Enums']["subscription_payment_status"]
                   }
                   ComputedFields: never
                   Insert: {
-                    "admin_note"?: string | null,"amount"?: number,"annual"?: boolean,"contacted_at"?: string | null,"created_at"?: string,"decided_at"?: string | null,"declared_at"?: string | null,"id"?: string,"operator_ref"?: string | null,"payer_phone"?: string | null,"plan": Database["public"]['Enums']["plan_id"],"ref"?: string,"shop_id": string,"status"?: Database["public"]['Enums']["subscription_payment_status"]
+                    "admin_note"?: string | null,"amount"?: number,"annual"?: boolean,"contacted_at"?: string | null,"created_at"?: string,"decided_at"?: string | null,"declared_at"?: string | null,"id"?: string,"method"?: Database["public"]['Enums']["payment_method"],"operator_ref"?: string | null,"payer_phone"?: string | null,"plan": Database["public"]['Enums']["plan_id"],"ref"?: string,"shop_id": string,"status"?: Database["public"]['Enums']["subscription_payment_status"]
                   }
                   Update: {
-                    "admin_note"?: string | null,"amount"?: number,"annual"?: boolean,"contacted_at"?: string | null,"created_at"?: string,"decided_at"?: string | null,"declared_at"?: string | null,"id"?: string,"operator_ref"?: string | null,"payer_phone"?: string | null,"plan"?: Database["public"]['Enums']["plan_id"],"ref"?: string,"shop_id"?: string,"status"?: Database["public"]['Enums']["subscription_payment_status"]
+                    "admin_note"?: string | null,"amount"?: number,"annual"?: boolean,"contacted_at"?: string | null,"created_at"?: string,"decided_at"?: string | null,"declared_at"?: string | null,"id"?: string,"method"?: Database["public"]['Enums']["payment_method"],"operator_ref"?: string | null,"payer_phone"?: string | null,"plan"?: Database["public"]['Enums']["plan_id"],"ref"?: string,"shop_id"?: string,"status"?: Database["public"]['Enums']["subscription_payment_status"]
                   }
                   Relationships: [
                     {
@@ -299,13 +377,42 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"tryons": {
+                  Row: {
+                    "created_at": string,"id": string,"product_ids": (string)[],"shop_id": string,"status": string,"user_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "created_at"?: string,"id"?: string,"product_ids": (string)[],"shop_id": string,"status"?: string,"user_id": string
+                  }
+                  Update: {
+                    "created_at"?: string,"id"?: string,"product_ids"?: (string)[],"shop_id"?: string,"status"?: string,"user_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "tryons_shop_id_fkey"
+      columns: ["shop_id"]
+isOneToOne: false
+      referencedRelation: "shops"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "tryons_user_id_fkey"
+      columns: ["user_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    }
+                  ]
                 }
           }
           Views: {
             [_ in never]: never
           }
           Functions: {
-            "admin_confirm_payment":
+            "admin_apply_edit":
+{ Args: { "p_changes": Json,"p_note"?: string,"p_request": string }; Returns: undefined
+                           },
+"admin_confirm_payment":
 { Args: { "p_payment": string }; Returns: undefined
                            },
 "admin_grant_reward":
@@ -314,8 +421,14 @@ isOneToOne: false
 "admin_mark_contacted":
 { Args: { "p_payment": string }; Returns: undefined
                            },
+"admin_reject_edit":
+{ Args: { "p_note"?: string,"p_request": string }; Returns: undefined
+                           },
 "admin_reject_payment":
 { Args: { "p_note"?: string,"p_payment": string }; Returns: undefined
+                           },
+"admin_review_video":
+{ Args: { "p_approve": boolean,"p_note"?: string,"p_video": string }; Returns: undefined
                            },
 "admin_revoke_reward":
 { Args: { "p_note"?: string,"p_reward": string }; Returns: undefined
@@ -328,8 +441,53 @@ isOneToOne: false
 "admin_set_shop_status":
 { Args: { "p_reason"?: string,"p_shop": string,"p_status": Database["public"]['Enums']["shop_status"] }; Returns: undefined
                            },
+"admin_shop_contacts":
+{ Args: Record<PropertyKey, never>; Returns: {
+              "contact_email": string,"contact_phone": string,"id": string,"owner_name": string
+            }[]
+                           },
+"admin_unpublish_video":
+{ Args: { "p_note"?: string,"p_video": string }; Returns: undefined
+                           },
+"claim_next_video":
+{ Args: Record<PropertyKey, never>; Returns: {
+              "admin_note": string | null,
+"attempts": number,
+"created_at": string,
+"decided_at": string | null,
+"description": string,
+"duration_s": number | null,
+"error": string | null,
+"id": string,
+"is_active": boolean,
+"poster_path": string | null,
+"ref": string,
+"rendered_at": string | null,
+"script": Json | null,
+"shop_id": string,
+"started_at": string | null,
+"status": Database["public"]['Enums']["video_status"],
+"video_path": string | null
+            }[]
+                          SetofOptions: {
+        from: "*"
+        to: "shop_videos"
+        isOneToOne: false
+        isSetofReturn: true
+      } },
+"claim_tryon":
+{ Args: { "p_products": (string)[],"p_shop": string }; Returns: string
+                           },
 "close_my_shop":
 { Args: { "p_cancel_subscription": boolean,"p_remove_payouts": boolean,"p_shop": string,"p_unpublish": boolean }; Returns: undefined
+                           },
+"featured_shops":
+{ Args: { "p_category"?: string,"p_limit"?: number,"p_week"?: string }; Returns: {
+              "brand_color": string,"category": string,"city": string,"country": string,"name": string,"slug": string
+            }[]
+                           },
+"finish_tryon":
+{ Args: { "p_id": string,"p_ok": boolean }; Returns: undefined
                            },
 "is_admin":
 { Args: Record<PropertyKey, never>; Returns: boolean
@@ -337,7 +495,13 @@ isOneToOne: false
 "is_end_user":
 { Args: Record<PropertyKey, never>; Returns: boolean
                            },
+"is_site_user":
+{ Args: Record<PropertyKey, never>; Returns: boolean
+                           },
 "plan_monthly_price":
+{ Args: { "p": Database["public"]['Enums']["plan_id"] }; Returns: number
+                           },
+"plan_video_quota":
 { Args: { "p": Database["public"]['Enums']["plan_id"] }; Returns: number
                            },
 "seller_my_stats":
@@ -350,10 +514,22 @@ isOneToOne: false
                            },
 "shop_is_live":
 { Args: { "p_shop": string }; Returns: boolean
+                           },
+"shop_tier":
+{ Args: { "p_slug": string }; Returns: Database["public"]['Enums']["plan_id"]
+                           },
+"tryon_quota":
+{ Args: { "p_shop": string }; Returns: number
+                           },
+"tryon_remaining":
+{ Args: { "p_shop": string }; Returns: number
+                           },
+"valid_sample_prices":
+{ Args: { "p": Json }; Returns: boolean
                            }
           }
           Enums: {
-            "order_status": "pending_payment"|"confirmed"|"shipped"|"delivered"|"not_received"|"refunded"|"cancelled","payment_method": "orange_money"|"wave"|"mtn_momo"|"moov_money"|"card"|"cash_on_delivery","payout_type": "orange_money"|"wave"|"mtn_momo"|"moov_money"|"card"|"bank","plan_id": "essentiel"|"pro"|"business","reward_kind": "month"|"semester"|"year"|"gift","shop_status": "pending"|"approved"|"suspended"|"rejected"|"closed","subscription_payment_status": "contact_pending"|"awaiting_payment"|"declared"|"confirmed"|"rejected","ticket_kind": "contact"|"report"|"refund","ticket_status": "open"|"in_progress"|"resolved","user_role": "client"|"seller"|"admin"
+            "edit_status": "review"|"applied"|"rejected"|"cancelled","media_kind": "photo"|"pano"|"spin"|"model3d","media_status": "approved"|"review"|"rejected","order_status": "pending_payment"|"confirmed"|"shipped"|"delivered"|"not_received"|"refunded"|"cancelled","payment_method": "orange_money"|"wave"|"mtn_momo"|"moov_money"|"card"|"cash_on_delivery","payout_type": "orange_money"|"wave"|"mtn_momo"|"moov_money"|"card"|"bank","plan_id": "essentiel"|"pro"|"business","reward_kind": "month"|"semester"|"year"|"gift","shop_status": "pending"|"approved"|"suspended"|"rejected"|"closed","subscription_payment_status": "contact_pending"|"awaiting_payment"|"declared"|"confirmed"|"rejected","ticket_kind": "contact"|"report"|"refund","ticket_status": "open"|"in_progress"|"resolved","user_role": "client"|"seller"|"admin","video_status": "queued"|"rendering"|"review"|"approved"|"rejected"|"failed"|"cancelled"
           }
           CompositeTypes: {
             [_ in never]: never
@@ -473,7 +649,7 @@ export const Constants = {
           }
         },"public": {
           Enums: {
-            "order_status": ["pending_payment", "confirmed", "shipped", "delivered", "not_received", "refunded", "cancelled"],"payment_method": ["orange_money", "wave", "mtn_momo", "moov_money", "card", "cash_on_delivery"],"payout_type": ["orange_money", "wave", "mtn_momo", "moov_money", "card", "bank"],"plan_id": ["essentiel", "pro", "business"],"reward_kind": ["month", "semester", "year", "gift"],"shop_status": ["pending", "approved", "suspended", "rejected", "closed"],"subscription_payment_status": ["contact_pending", "awaiting_payment", "declared", "confirmed", "rejected"],"ticket_kind": ["contact", "report", "refund"],"ticket_status": ["open", "in_progress", "resolved"],"user_role": ["client", "seller", "admin"]
+            "edit_status": ["review", "applied", "rejected", "cancelled"],"media_kind": ["photo", "pano", "spin", "model3d"],"media_status": ["approved", "review", "rejected"],"order_status": ["pending_payment", "confirmed", "shipped", "delivered", "not_received", "refunded", "cancelled"],"payment_method": ["orange_money", "wave", "mtn_momo", "moov_money", "card", "cash_on_delivery"],"payout_type": ["orange_money", "wave", "mtn_momo", "moov_money", "card", "bank"],"plan_id": ["essentiel", "pro", "business"],"reward_kind": ["month", "semester", "year", "gift"],"shop_status": ["pending", "approved", "suspended", "rejected", "closed"],"subscription_payment_status": ["contact_pending", "awaiting_payment", "declared", "confirmed", "rejected"],"ticket_kind": ["contact", "report", "refund"],"ticket_status": ["open", "in_progress", "resolved"],"user_role": ["client", "seller", "admin"],"video_status": ["queued", "rendering", "review", "approved", "rejected", "failed", "cancelled"]
           }
         }
 } as const

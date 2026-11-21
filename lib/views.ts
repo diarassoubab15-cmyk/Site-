@@ -35,6 +35,24 @@ export const subPaymentStatusFr: Record<string, SubPaymentStatus> = {
   rejected: "refusé",
 };
 
+/** Vidéo de boutique, telle qu'affichée (vendeur et admin). */
+export type VideoView = {
+  id: string;
+  ref: string;
+  shopId: string;
+  shopName?: string;
+  description: string;
+  status: "queued" | "rendering" | "review" | "approved" | "rejected" | "failed" | "cancelled";
+  videoUrl: string | null;
+  posterUrl: string | null;
+  isActive: boolean;
+  headline?: string;
+  scriptSource?: string;
+  adminNote?: string;
+  error?: string;
+  createdAt: string;
+};
+
 export type ActionResult<T = undefined> = { ok: true; data?: T } | { ok: false; error: string; login?: boolean };
 
 /** Données réelles passées par le serveur aux composants (mode Supabase). */
@@ -55,11 +73,34 @@ export type LiveSeller = {
   payment: DemoSubPayment | null;
   /** Coordonnées Orange Money : envoyées par le serveur UNIQUEMENT après le contact avec l'admin. */
   payInfo: { number: string; name: string } | null;
+  /** Opérateurs proposés pour payer l'abonnement (ceux dont l'admin a configuré un numéro). */
+  payMethods?: ("orange_money" | "wave" | "mtn_momo" | "moov_money")[];
   owner: { name: string; phone: string };
   /** Fin de couverture : abonnement payé prolongé par les mois offerts. */
   coveredUntil: string | null;
   rewards: import("./rewards").RewardView[];
   stats: { delivered: number; revenue: number; openOrders: number; rating: number | null; reviews: number; rank: number | null; competitors: number } | null;
+  videos: VideoView[];
+  videoQuota: { used: number; limit: number };
 };
 
-export type LiveAdmin = { sellers: DemoSeller[]; tickets: (Ticket & { shopId?: string })[]; payments: DemoSubPayment[]; rewards: import("./rewards").RewardView[] };
+export type LiveAdmin = { sellers: DemoSeller[]; tickets: (Ticket & { shopId?: string })[]; payments: DemoSubPayment[]; rewards: import("./rewards").RewardView[]; videos: VideoView[]; edits: EditRequestView[] };
+
+/** Fiche telle qu'elle peut être modifiée par une demande écrite. */
+export type EditableFields = { name: string; short: string | null; description: string | null; price: number; compareAt: number | null; specs: [string, string][] };
+export type EditChangesView = Partial<{ name: string; short: string; description: string; price: number; compareAt: number | null; specs: [string, string][] }>;
+export type EditRequestView = {
+  id: string;
+  productId: string;
+  productName: string;
+  productSlug: string;
+  shopName: string;
+  message: string;
+  status: "review" | "applied" | "rejected" | "cancelled";
+  proposal: { changes: EditChangesView; note: string } | null;
+  ai: boolean;
+  applied: EditChangesView | null;
+  adminNote: string | null;
+  createdAt: string;
+  current: EditableFields;
+};

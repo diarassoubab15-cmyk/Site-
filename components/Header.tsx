@@ -1,11 +1,13 @@
 import Link from "next/link";
 import { Logo } from "./Logo";
+import { CartBadge } from "./SettingsPanels";
 
 const nav = [
-  { href: "/marketplace", label: "Marketplace" },
-  { href: "/vendre", label: "Vendre" },
+  { href: "/award", label: "Award" },
+  { href: "/categories", label: "Catégories" },
+  { href: "/marketplace", label: "Produits" },
   { href: "/tarifs", label: "Tarifs" },
-  { href: "/securite", label: "Sécurité" },
+  { href: "/reglages", label: "Réglages" },
   { href: "/support", label: "Aide & SAV" },
 ];
 
@@ -22,14 +24,16 @@ export function Header() {
           ))}
         </nav>
         <div className="hidden items-center gap-3 md:flex">
+          <CartBadge />
           <Link href="/connexion" className="text-sm text-bone hover:text-white">
             Connexion
           </Link>
           <Link href="/vendre" className="btn">
-            Ouvrir ma boutique
+            Créer ma boutique
           </Link>
         </div>
         {/* Menu mobile sans JavaScript */}
+        <div className="ml-auto flex items-center gap-1 md:hidden"><CartBadge /></div>
         <details className="group relative md:hidden">
           <summary className="btn list-none px-3 py-2 [&::-webkit-details-marker]:hidden" aria-label="Ouvrir le menu">
             <span className="group-open:hidden">Menu</span>

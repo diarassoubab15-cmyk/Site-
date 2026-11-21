@@ -1,0 +1,154 @@
+<!doctype html>
+<!--
+  Modèle d'animation NEXORA pour HyperFrames (1280 × 720, 12 s).
+  Les textes arrivent par le bloc JSON « data » et sont posés avec textContent :
+  aucun texte du vendeur ne peut être interprété comme du HTML ou du code.
+-->
+<html lang="fr" data-resolution="landscape">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1280, height=720" />
+    <script src="./vendor/gsap.min.js"></script>
+    <style>
+      @font-face { font-family: "Inter"; font-weight: 400; src: url("./fonts/inter-400.woff2") format("woff2"); }
+      @font-face { font-family: "Inter"; font-weight: 600; src: url("./fonts/inter-600.woff2") format("woff2"); }
+      @font-face { font-family: "Instrument Serif"; font-style: normal; src: url("./fonts/serif-400.woff2") format("woff2"); }
+      @font-face { font-family: "Instrument Serif"; font-style: italic; src: url("./fonts/serif-400-italic.woff2") format("woff2"); }
+      :root { --accent: #9281f7; --accent2: #baa7ff; --ink: #fff; --muted: #a1a4a5; --line: #292d30; }
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body { width: 1280px; height: 720px; overflow: hidden; background: #000; }
+      #root { position: relative; width: 100%; height: 100%; color: var(--ink); font-family: "Inter", sans-serif; }
+      .glow { position: absolute; width: 900px; height: 900px; border-radius: 50%; left: 50%; top: 50%; margin: -450px;
+              background: radial-gradient(circle, color-mix(in srgb, var(--accent) 38%, transparent) 0%, color-mix(in srgb, var(--accent) 6%, transparent) 45%, transparent 70%); }
+      .grid { position: absolute; inset: 0; opacity: .5;
+              background-image: linear-gradient(var(--line) 1px, transparent 1px), linear-gradient(90deg, var(--line) 1px, transparent 1px);
+              background-size: 64px 64px; mask-image: radial-gradient(circle at 50% 50%, #000 0%, transparent 65%); }
+      .scene { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 0 120px; }
+      .badge { display: inline-flex; align-items: center; gap: 10px; border: 1px solid var(--line); border-radius: 999px; padding: 8px 18px; font-size: 18px; color: #f0f0f0; margin-bottom: 34px; }
+      .badge i { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); display: inline-block; }
+      .headline { font-family: "Instrument Serif", serif; font-size: 96px; line-height: 1; letter-spacing: -0.01em; }
+      .tagline { margin-top: 28px; font-family: "Instrument Serif", serif; font-style: italic; font-size: 40px; color: var(--muted); max-width: 980px; line-height: 1.15; }
+      .icon { width: 120px; height: 120px; border-radius: 28px; display: flex; align-items: center; justify-content: center; margin-bottom: 36px;
+              background: linear-gradient(135deg, var(--accent), color-mix(in srgb, var(--accent) 55%, #000)); box-shadow: 0 0 80px color-mix(in srgb, var(--accent) 45%, transparent); }
+      .icon svg { width: 60px; height: 60px; stroke: #fff; fill: none; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+      .title { font-size: 64px; font-weight: 600; letter-spacing: -0.04em; line-height: 1.05; }
+      .text { margin-top: 22px; font-size: 30px; color: var(--muted); max-width: 900px; line-height: 1.35; }
+      .dots { position: absolute; bottom: 56px; left: 0; right: 0; display: flex; justify-content: center; gap: 10px; }
+      .dots span { width: 36px; height: 4px; border-radius: 4px; background: var(--line); }
+      .dots span.on { background: var(--accent); }
+      .closing { font-family: "Instrument Serif", serif; font-size: 76px; line-height: 1.05; }
+      .where { margin-top: 20px; font-size: 26px; color: var(--muted); }
+      .brand { margin-top: 48px; display: flex; align-items: center; gap: 14px; font-size: 22px; font-weight: 600; letter-spacing: .3em; }
+      .brand svg { width: 34px; height: 34px; }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-duration="12" data-width="1280" data-height="720">
+      <div class="grid clip" data-start="0" data-duration="12" data-track-index="0"></div>
+      <div class="glow clip" id="glow" data-start="0" data-duration="12" data-track-index="1"></div>
+
+      <section class="scene clip" id="s0" data-start="0" data-duration="12" data-track-index="2">
+        <div class="badge" id="badge"><i></i><span id="category"></span></div>
+        <h1 class="headline" id="headline"></h1>
+        <p class="tagline" id="tagline"></p>
+      </section>
+
+      <section class="scene clip" id="s1" data-start="0" data-duration="12" data-track-index="3">
+        <div class="icon" id="i1"></div><h2 class="title" id="t1"></h2><p class="text" id="x1"></p>
+      </section>
+      <section class="scene clip" id="s2" data-start="0" data-duration="12" data-track-index="4">
+        <div class="icon" id="i2"></div><h2 class="title" id="t2"></h2><p class="text" id="x2"></p>
+      </section>
+      <section class="scene clip" id="s3" data-start="0" data-duration="12" data-track-index="5">
+        <div class="icon" id="i3"></div><h2 class="title" id="t3"></h2><p class="text" id="x3"></p>
+      </section>
+
+      <section class="scene clip" id="s4" data-start="0" data-duration="12" data-track-index="6">
+        <h2 class="closing" id="closing"></h2>
+        <p class="where" id="where"></p>
+        <div class="brand">
+          <svg viewBox="0 0 24 24" fill="none"><path d="M12 1.5 21.5 7v10L12 22.5 2.5 17V7L12 1.5Z" stroke="#fff" stroke-width="1.5"/><path d="M8 16V8l8 8V8" stroke="#9281f7" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          NEXORA
+        </div>
+      </section>
+
+      <div class="dots clip" id="dots" data-start="0" data-duration="12" data-track-index="7"><span></span><span></span><span></span></div>
+    </div>
+
+    <script id="data" type="application/json">/*__DATA__*/</script>
+    <script>
+      const D = JSON.parse(document.getElementById("data").textContent);
+      const $ = (id) => document.getElementById(id);
+      // Textes : toujours en texte brut.
+      $("category").textContent = D.category;
+      $("headline").textContent = D.headline;
+      $("tagline").textContent = D.tagline;
+      $("closing").textContent = D.closing;
+      $("where").textContent = D.where;
+      D.scenes.forEach((s, i) => { $("t" + (i + 1)).textContent = s.title; $("x" + (i + 1)).textContent = s.text; });
+
+      // Couleurs : seulement des valeurs d'une liste fermée (choisies côté serveur).
+      document.documentElement.style.setProperty("--accent", D.colors.accent);
+      document.documentElement.style.setProperty("--accent2", D.colors.accent2);
+
+      // Icônes : tracés d'une bibliothèque fixe (aucun SVG venant du vendeur).
+      const ICONS = {
+        maison: "M3 11 12 4l9 7M5 10v10h14V10M10 20v-6h4v6",
+        cle: "M14 7a4 4 0 1 1-3.5 6.5L4 20H2v-3l1-1h2v-2h2l2.5-2.5A4 4 0 0 1 14 7ZM16 8h.01",
+        terrain: "M3 20h18M5 20l4-9 4 6 3-4 4 7M9 7l1.5-3L12 7",
+        canape: "M4 11V8a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v3M2 13a2 2 0 0 1 4 0v2h12v-2a2 2 0 0 1 4 0v5H2zM5 18v2M19 18v2",
+        outil: "M14.5 6.5a4 4 0 0 0-5.3 5.3L3 18l3 3 6.2-6.2a4 4 0 0 0 5.3-5.3l-2.5 2.5-2.5-.5-.5-2.5z",
+        crayon: "M4 20l4-1 11-11-3-3L5 16l-1 4ZM14 6l3 3",
+        tissu: "M8 3 4 6l2 4 2-1v12h8V9l2 1 2-4-4-3c0 2-2 3-4 3S8 5 8 3Z",
+        flacon: "M9 3h6M10 3v4L7 11v9a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1v-9l-3-4V3M7 14h10",
+        ecran: "M3 5h18v11H3zM8 20h8M12 16v4",
+        panier: "M3 9h18l-2 11H5L3 9ZM8 9l4-6 4 6M9 13v4M15 13v4",
+        camion: "M2 7h11v9H2zM13 10h4l3 3v3h-7M6 19a2 2 0 1 0 0-.01M17 19a2 2 0 1 0 0-.01",
+        etoile: "M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z",
+        bouclier: "M12 3 4 6v6c0 5 3.5 8 8 9 4.5-1 8-4 8-9V6l-8-3ZM9 12l2 2 4-4",
+        coeur: "M12 20s-7-4.4-9-9a5 5 0 0 1 9-3 5 5 0 0 1 9 3c-2 4.6-9 9-9 9Z",
+        feuille: "M5 19c0-9 6-14 15-14 0 9-5 15-14 15M5 19l7-7",
+        telephone: "M8 2h8a1 1 0 0 1 1 1v18a1 1 0 0 1-1 1H8a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1ZM11 18h2",
+      };
+      const NS = "http://www.w3.org/2000/svg";
+      D.scenes.forEach((s, i) => {
+        const svg = document.createElementNS(NS, "svg");
+        svg.setAttribute("viewBox", "0 0 24 24");
+        const p = document.createElementNS(NS, "path");
+        p.setAttribute("d", ICONS[s.icon] || ICONS.etoile);
+        svg.appendChild(p);
+        $("i" + (i + 1)).appendChild(svg);
+      });
+
+      // Rythme selon l'ambiance (élégant : lent ; dynamique : vif ; chaleureux : entre les deux).
+      const pace = { "élégant": 1.25, "dynamique": 0.8, "chaleureux": 1 }[D.mood] || 1;
+      const ease = D.mood === "dynamique" ? "back.out(1.6)" : "power3.out";
+
+      const tl = gsap.timeline({ paused: true });
+      gsap.set(["#s1", "#s2", "#s3", "#s4"], { autoAlpha: 0 });
+      gsap.set("#dots", { autoAlpha: 0 });
+      tl.fromTo("#glow", { autoAlpha: 0, scale: 0.6 }, { autoAlpha: 1, scale: 1, duration: 1.6, ease: "power2.out" }, 0)
+        .fromTo("#badge", { autoAlpha: 0, y: 16 }, { autoAlpha: 1, y: 0, duration: 0.5 * pace, ease }, 0.2)
+        .fromTo("#headline", { autoAlpha: 0, y: 40 }, { autoAlpha: 1, y: 0, duration: 0.8 * pace, ease }, 0.45)
+        .fromTo("#tagline", { autoAlpha: 0, y: 24 }, { autoAlpha: 1, y: 0, duration: 0.7 * pace, ease }, 1.0)
+        .to("#s0", { autoAlpha: 0, y: -30, duration: 0.45, ease: "power2.in" }, 3.0)
+        .to("#dots", { autoAlpha: 1, duration: 0.3 }, 3.2);
+      [1, 2, 3].forEach((n, k) => {
+        const t = 3.3 + k * 2.15;
+        tl.set("#dots span:nth-child(" + n + ")", { className: "on" }, t)
+          .fromTo("#s" + n, { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.01 }, t)
+          .fromTo("#i" + n, { scale: 0.4, rotate: -12, autoAlpha: 0 }, { scale: 1, rotate: 0, autoAlpha: 1, duration: 0.6 * pace, ease }, t)
+          .fromTo("#t" + n, { autoAlpha: 0, y: 30 }, { autoAlpha: 1, y: 0, duration: 0.55 * pace, ease }, t + 0.2)
+          .fromTo("#x" + n, { autoAlpha: 0, y: 20 }, { autoAlpha: 1, y: 0, duration: 0.55 * pace, ease }, t + 0.4)
+          .to("#s" + n, { autoAlpha: 0, x: -40, duration: 0.35, ease: "power2.in" }, t + 1.75);
+        if (k > 0) tl.set("#dots span:nth-child(" + k + ")", { className: "" }, t);
+      });
+      tl.to("#dots", { autoAlpha: 0, duration: 0.3 }, 9.6)
+        .fromTo("#s4", { autoAlpha: 0, scale: 0.96 }, { autoAlpha: 1, scale: 1, duration: 0.8 * pace, ease }, 9.75)
+        .to("#glow", { scale: 1.15, duration: 2.2, ease: "sine.inOut" }, 9.75)
+        .to("#root", { autoAlpha: 0, duration: 0.35 }, 11.6);
+      window.__timelines["main"] = tl;
+      tl.seek(0);
+    </script>
+  </body>
+</html>

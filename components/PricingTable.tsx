@@ -19,9 +19,10 @@ export function PricingTable() {
         {plans.map((p) => {
           const price = annual ? Math.round((p.monthly * ANNUAL_MONTHS_PAID) / 12 / 100) * 100 : p.monthly;
           return (
-            <article key={p.id} className={`card flex flex-col ${p.highlighted ? "border-iris/60" : ""}`}>
+            <article key={p.id} className="hub-tile" style={{ ["--c" as string]: p.color, ["--cl" as string]: p.color, gap: 0, minHeight: 0 }} data-plan={p.id}>
+              <span className="hub-glow" aria-hidden="true" />
               <div className="flex items-center justify-between">
-                <h2 className="text-xl font-medium text-white">{p.name}</h2>
+                <h2 className="font-display text-4xl text-white">{p.name}</h2>
                 {p.highlighted && <span className="badge text-iris-glow">le plus choisi</span>}
               </div>
               <p className="mt-2 min-h-12 text-sm text-ash">{p.pitch}</p>
@@ -30,10 +31,13 @@ export function PricingTable() {
                 <span className="text-sm text-ash">FCFA / mois</span>
               </p>
               <p className="mt-1 h-5 text-xs text-iron">{annual ? `soit ${formatPrice(p.monthly * ANNUAL_MONTHS_PAID)} par an` : "sans engagement"}</p>
-              <p className="mt-6 font-mono text-xs text-iris">{p.products}</p>
+              <p className="mt-6 font-mono text-xs" style={{ color: p.color }}>{p.products}</p>
               <ul className="mt-4 flex-1 space-y-3 text-sm text-bone">
                 {p.features.map((f) => (
-                  <li key={f} className="flex gap-3"><span className="text-pulse" aria-hidden="true">✓</span>{f}</li>
+                  <li key={f.text} className={`flex gap-3 ${f.soon ? "text-ash" : ""}`}>
+                    <span style={{ color: f.soon ? undefined : p.color }} className={f.soon ? "text-iron" : ""} aria-hidden="true">{f.soon ? "○" : "✓"}</span>
+                    <span>{f.text}{f.soon && <span className="badge ml-2 align-middle text-[10px] text-iron">bientôt</span>}</span>
+                  </li>
                 ))}
               </ul>
               <Link href={`/vendre?forfait=${p.id}${annual ? "&annuel=1" : ""}`} className={`${p.highlighted ? "btn-solid" : "btn"} mt-8 w-full`}>

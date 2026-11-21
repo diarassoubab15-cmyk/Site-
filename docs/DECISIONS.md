@@ -41,14 +41,73 @@
 - Mini tableau de bord par boutique dans /vendeur, propre au vendeur ; l'admin ne le pilote pas (il garde seulement l'arbitrage des litiges et l'autorisation/suspension).
 - La demande mentionnait aussi « meilleur de la semaine » : non retenu (mois, semestre, année), à confirmer avec le propriétaire.
 
+## Vidéos HyperFrames (novembre 2026)
+- Accueil + chaque catégorie : vidéos de 12 s rendues avec HyperFrames (fichiers statiques dans public/videos). Textes provisoires :
+  le propriétaire enverra des descriptions plus détaillées pour chaque partie (immobilier, mobilier, conception…).
+- Vidéo de boutique « à partir de la description » : IA (Claude, sorties structurées) + modèles ; repli sans IA si pas de clé.
+- Le propriétaire valide chaque vidéo avant publication ; quotas mensuels par forfait (1 / 3 / 10).
+- Pas d'hébergement pour l'instant : phase de test privée de quelques mois avec des boutiques de son entourage, site non publié.
+  Le programme de fabrication tourne sur n'importe quelle machine ; un petit serveur plus tard.
+- La catégorie « immobilier » existe désormais dans le catalogue, avec sa vidéo.
+
+## Produits, photos et visite 360° (novembre 2026)
+- Feuille de route choisie : 1) produits + photos, 2) visite 360° immobilier, 3) rotation 360° d'objets à partir de vraies photos,
+  4) modifications par texte du vendeur (validées par l'admin), 5) modèle 3D généré par IA, marqué « aperçu IA » et validé par l'admin.
+  Étapes 1 et 2 livrées (migration 0006).
+- Visite 360° : vraies photos panoramiques par pièce (pas de reconstruction IA), affichées dans une sphère Three.js chargée à la demande.
+- Compression des images sur l'appareil du vendeur avant l'envoi (WebP) : connexions lentes et forfaits mobiles.
+- Envoi direct du navigateur vers le stockage, protégé par les règles de stockage (dossier = identifiant de la boutique autorisée).
+- Sur mobile, la fiche produit montre la photo, puis le prix et le bouton, puis la description.
+- Étape 3 livrée : rotation 360° par série de vraies photos (pas de 3D ni d'IA), affichée à partir de 8 vues,
+  ordre de prise de vue respecté à l'envoi. Migration 0007 : le vendeur peut lire les fichiers de sa boutique
+  dans le stockage, sans quoi la suppression ne supprimait rien (les fichiers restaient en ligne).
+- Étape 4 livrée (migration 0008) : demandes de modification écrites. L'IA ne fait que proposer ; la proposition est
+  écrite avec la clé serveur (le vendeur ne peut pas la fabriquer), bornée et filtrée (seuls les champs qui changent),
+  affichée comme texte ; l'admin a le dernier mot et peut corriger chaque champ. La demande du vendeur est passée
+  à l'IA comme une donnée entre balises, jamais comme une consigne. Sans clé ou en cas de panne : version sans IA.
+- Le vendeur garde aussi le formulaire de modification directe de sa fiche.
+
 ## Animations et 3D (skill animations-3d-nexora)
 - Couleurs : on garde noir + violet (choix du propriétaire), pas la charte bleu/orange du skill.
 - Écran d'ouverture 1,3 s, une fois par session, piloté par un script intégré (lib/motion-script.ts) et non par React,
   pour finir à l'heure même sur téléphone lent. Jamais sur /admin, /vendeur, /compte, /connexion, ni en mouvement réduit.
 - Apparition des cartes au défilement en CSS + IntersectionObserver ([data-reveal]) : sans JavaScript, rien n'est caché.
 - 3D (Three.js, sans React Three Fiber) uniquement sur la bannière d'accueil, chargée en différé, seulement sur
-  ordinateur capable (≥ 1024 px, ≥ 4 Go, ≥ 4 cœurs, pas d'économie de données). Sinon : cube CSS.
+  ordinateur capable (≥ 1024 px, ≥ 4 Go, ≥ 4 cœurs, pas d'économie de données, vraie carte graphique). Sinon : logo SVG.
+- Novembre 2026 : le cube est remplacé par le logo NEXORA en verre, d'après le skill « Premium 3D Glass » fourni par le
+  propriétaire (verre, studio, extrusion biseautée). Seuls ces réglages sont repris, pas le site vitrine du skill ni sa
+  copie de Three.js r160 ; dispersion native de Three.js r187. Surveillance des images/s avec retour au SVG si lent.
 - Pas de GSAP ni de Framer Motion : aucun besoin qui le justifie, 0 Ko ajouté.
+
+## Refonte motion design (21 novembre 2026)
+- Le propriétaire trouve la 3D décorative dépassée : logo verre 3D et écran d'ouverture retirés, remplacés par un logo
+  en motion design (SVG + CSS, geste au doigt en JS avec ressort). Three.js reste pour la visite 360°.
+- Skills utilisés : web-animation-design, emil-design-engineering, make-interfaces-feel-better, audit-as-a11y-eng (audit-suite),
+  frontend-design (Anthropic), vercel-react-view-transitions et web-design-guidelines (Vercel), installés dans le projet.
+- Accueil = logo + tuiles Award (or), Catégories (violet), Créer ma boutique (vert), Réglages (bleu) ; « Ma boutique »
+  et « Admin » selon le compte. La couleur d'une tuile est celle de sa page.
+- Award : transition logo → or (0,9 s, directe en mouvement réduit) ; classement par moyenne lissée des avis vérifiés.
+- Catégories : slugs inchangés (mode, electronique, maison…) pour ne casser aucune adresse ; libellés renommés
+  (Vêtements, Technologie, Meubles & déco) ; Automobile ajoutée (avec sa vidéo HyperFrames).
+- Créer ma boutique : inspiré des meilleures pratiques e-commerce (étapes courtes, aperçu en direct), sans copie.
+  Google Maps sans clé : lien collé ou position du téléphone, carte chargée seulement à la demande (vie privée, données).
+- Faille corrigée (migration 0009) : nom, e-mail et téléphone des responsables étaient lisibles via l'API publique.
+- Forfaits : Base 15 000, Pro 25 000, Ultra 50 000 FCFA (identifiants internes inchangés). Fonctions non construites
+  marquées « bientôt ». Abonnement payable par 4 opérateurs Mobile Money, contact de l'admin toujours obligatoire.
+- Réglages : panier sur l'appareil (localStorage), une commande par article ; paiement préféré sur le profil.
+- Essayage : 5 essais par client (Base), 15 (Pro), illimité (Ultra) ; photo jamais conservée ; fournisseur d'IA
+  branché par adaptateur HTTP, à choisir par le propriétaire (clé payante).
+- Étape 5 (« aperçu 3D par IA ») remplacée, à la demande du propriétaire, par une présentation animée en motion design
+  des produits (Ultra), faite à partir des photos du vendeur : pas d'IA, pas de 3D, pas de validation ni de coût par produit.
+  La colonne model3d de la migration 0006 reste en réserve, inutilisée.
+- « Boutique animée » (Pro) et « Vitrine Ultra » faites en motion design (SVG + CSS) : couleurs, animations et polices
+  dans des listes fermées plutôt qu'un thème « créé sur mesure » (texte du forfait ajusté en conséquence) : rendu
+  toujours lisible, léger et sûr. Le nom de la boutique reste un vrai titre h1 pour Google et les lecteurs d'écran.
+- « À la une » (Ultra) : rotation hebdomadaire automatique et équitable (empreinte boutique + semaine ISO) plutôt qu'un
+  choix manuel ; toujours signalée « Mise en avant · Ultra » et séparée du palmarès Award, qui reste fondé sur les seuls
+  avis vérifiés (ne pas faire passer une mise en avant payante pour une récompense).
+- Audit d'accessibilité (reviews/audit-as-a11y-eng.md) : focus des fenêtres plein écran, rôle du logo, contraste du gris
+  secondaire (#7c8088, 5,3:1) corrigés.
 
 ## Historique
 - Novembre 2026 : branchement Supabase testé de bout en bout sur un Supabase local (20 vérifications navigateur + 14 attaques SQL).

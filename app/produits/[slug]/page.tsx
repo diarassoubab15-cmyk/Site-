@@ -6,11 +6,17 @@ import { BuyBox } from "@/components/BuyBox";
 import { JsonLd } from "@/components/JsonLd";
 import { ProductCard } from "@/components/ProductCard";
 import { ProductThumb } from "@/components/ProductThumb";
+import { ProductGallery } from "@/components/ProductGallery";
+import { PanoTour } from "@/components/PanoTour";
+import { SpinViewer } from "@/components/SpinViewer";
+import { TryOn, type TryOnItem } from "@/components/TryOn";
+import { getShopType } from "@/lib/shop-types";
 import { ReviewSection } from "@/components/ReviewSection";
 import { Stars } from "@/components/Stars";
 import { getCategory } from "@/lib/data";
-import { allSlugs, getProductPage } from "@/lib/catalog";
-import { formatDate, formatPrice } from "@/lib/format";
+import { allSlugs, getProductPage, getShopTier, listCards } from "@/lib/catalog";
+import { ProductShowcase } from "@/components/ProductShowcase";
+import { formatDate, formatPrice, formatPriceUnit } from "@/lib/format";
 import { absoluteUrl, site } from "@/lib/site";
 
 type Props = { params: Promise<{ slug: string }> };
@@ -39,28 +45,34 @@ export default async function ProductPage({ params }: Props) {
   if (!page) notFound();
   const { product, shop, rating, reviews: list, related } = page;
   const cat = getCategory(product.category) ?? { slug: product.category, name: product.category };
+  // Présentation animée en motion design : boutiques Ultra, produits avec au moins une vraie photo.
+  const tier = product.images?.length ? await getShopTier(shop.slug) : null;
+  const typeColor = getShopType(product.category)?.color ?? "#9281f7";
+  // Essayage virtuel : vêtements de la même boutique qui ont une vraie photo.
+  const tryItems: TryOnItem[] =
+    product.category === "mode" && product.images?.length
+      ? (await listCards({ category: "mode" }))
+          .filter((c) => c.shop.slug === shop.slug && c.product.images?.length)
+          .map((c) => ({ slug: c.product.slug, name: c.product.name, image: c.product.images![0], price: c.product.price, payments: shop.payments }))
+      : [];
 
   return (
     <section className="container-x py-16">
       {/* Une seule URL par produit (pas de doublon par catégorie) : meilleur référencement */}
       <Breadcrumbs items={[{ name: "Accueil", href: "/" }, { name: cat.name, href: `/marketplace/${cat.slug}` }, { name: product.name, href: `/produits/${product.slug}` }]} />
-      <div className="grid gap-10 lg:grid-cols-[1.1fr_1fr]">
-        <div className="space-y-8">
-          <div className="pop"><ProductThumb product={product} large /></div>
-          <div>
-            <h2 className="mb-4 text-xl font-medium text-white">Description</h2>
-            <p className="leading-relaxed text-bone">{product.description}</p>
-          </div>
-          <dl className="overflow-hidden rounded-[16px] border border-line">
-            {product.specs.map(([k, v]) => (
-              <div key={k} className="grid grid-cols-[140px_1fr] border-b border-line px-5 py-3 text-sm last:border-0">
-                <dt className="text-ash">{k}</dt>
-                <dd className="text-bone">{v}</dd>
-              </div>
-            ))}
-          </dl>
+      {/* Sur mobile : photo, puis prix et bouton, puis description. Sur grand écran : deux colonnes. */}
+      <div className="grid gap-10 lg:grid-cols-[1.1fr_1fr] lg:grid-rows-[auto_1fr]">
+        <div className="pop space-y-6 lg:col-start-1 lg:row-start-1">{product.images?.length ? <ProductGallery product={product} /> : <ProductThumb product={product} large />}
+          {tier === "business" && (
+            <ProductShowcase
+              d={{
+                name: product.name, short: product.short, images: product.images!, specs: product.specs, price: product.price,
+                unit: product.priceUnit, wholesale: product.wholesale, shopName: shop.name, cod: shop.acceptsCashOnDelivery, color: typeColor,
+              }}
+            />
+          )}
         </div>
-        <div className="space-y-6 lg:sticky lg:top-24 lg:self-start">
+        <div className="space-y-6 lg:col-start-2 lg:row-span-2 lg:row-start-1 lg:sticky lg:top-24 lg:self-start">
           <div>
             <h1 className="text-3xl font-medium tracking-tight text-white sm:text-4xl">{product.name}</h1>
             <p className="mt-3 text-ash">{product.short}</p>
@@ -77,7 +89,36 @@ export default async function ProductPage({ params }: Props) {
             </span>
             <span className="text-iron" aria-hidden="true">›</span>
           </Link>
-          <BuyBox product={product} shop={shop} />
+          {product.panos?.length ? <PanoTour panos={product.panos} title={product.name} /> : null}
+          {(product.spin?.length ?? 0) >= 8 ? <SpinViewer frames={product.spin!} title={product.name} /> : null}
+          {product.category === "immobilier" ? (
+            <div className="card space-y-4">
+              <p className="font-mono text-2xl text-white">{formatPriceUnit(product.price, product.priceUnit)}</p>
+              <p className="text-sm text-ash">Intéressé ? Demandez une visite ou posez vos questions : votre message est transmis au vendeur par NEXORA.</p>
+              <Link href={`/support?boutique=${shop.slug}#contact`} className="btn-solid w-full" data-haptic>Demander une visite</Link>
+            </div>
+          ) : (
+            <div id="achat" className="scroll-mt-24 space-y-6">
+              {tryItems.length > 0 && (
+                <TryOn shopSlug={shop.slug} shopName={shop.name} color={getShopType("mode")!.color} items={tryItems} initial={product.slug} />
+              )}
+              <BuyBox product={product} shop={shop} />
+            </div>
+          )}
+        </div>
+        <div className="space-y-8 lg:col-start-1 lg:row-start-2">
+          <div>
+            <h2 className="mb-4 text-xl font-medium text-white">Description</h2>
+            <p className="leading-relaxed text-bone">{product.description}</p>
+          </div>
+          <dl className="overflow-hidden rounded-[16px] border border-line">
+            {product.specs.map(([k, v]) => (
+              <div key={k} className="grid grid-cols-[140px_1fr] border-b border-line px-5 py-3 text-sm last:border-0">
+                <dt className="text-ash">{k}</dt>
+                <dd className="text-bone">{v}</dd>
+              </div>
+            ))}
+          </dl>
         </div>
       </div>
 
