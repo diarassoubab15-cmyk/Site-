@@ -65,7 +65,8 @@ Sécurité : les textes du vendeur sont insérés comme texte brut (jamais comme
 - **Immobilier** : prix au mois, à la nuit ou au jour, bouton « Demander une visite » (message transmis par NEXORA) et **visite 360°** : une photo panoramique par pièce (format 2:1, prise avec une caméra 360° ou une application « photo sphère »), nommée par le vendeur. L'acheteur tourne dans la pièce au doigt, zoome, passe d'une pièce à l'autre. La 3D n'est téléchargée qu'à l'ouverture de la visite.
 - Les fichiers vont dans le stockage Supabase `product-media`, dans le dossier de la boutique : un vendeur ne peut écrire que dans le dossier de **sa** boutique autorisée, images seulement. Les modèles 3D (étape « aperçu IA » à venir) ne peuvent être déposés que par NEXORA.
 - **Rotation 360° des objets** (toutes les catégories sauf l'immobilier) : le vendeur pose l'objet sur un fond uni et prend 24 à 36 photos en tournant autour. Il les envoie d'un coup ; elles sont rangées dans l'ordre de prise de vue (nom des fichiers, IMG_2 avant IMG_10). À partir de 8 photos, la fiche affiche « Rotation 360° » : l'acheteur fait tourner l'objet au doigt, au curseur ou aux flèches du clavier. Aucune 3D : on affiche la bonne photo, ce qui fonctionne sur tous les téléphones. Les photos ne sont téléchargées qu'à l'ouverture (24 photos ≈ 1 Mo). Bouton « Tout supprimer » pour refaire la série.
-- Prévu ensuite : modifications demandées par texte (validées par l'admin), modèle 3D généré par IA marqué « aperçu IA » et validé par l'admin.
+- **Modifications demandées par écrit** : sur la page d'un produit, le vendeur écrit ce qu'il veut changer (« baisse le prix à 15 000, ajoute que c'est fait main »). NEXORA prépare la modification (avec Claude si `ANTHROPIC_API_KEY` est renseignée ; sans clé, seul un nouveau prix est repris) et le vendeur voit l'avant → après. L'admin la retrouve dans `/admin` → **Modifications de fiche demandées**, corrige si besoin, puis applique ou refuse avec un message. Rien ne change sur la fiche sans lui. Champs concernés : nom, accroche, description, prix, prix barré, caractéristiques. Limites : 5 demandes en attente et 30 par mois par boutique. Le serveur a besoin de `SUPABASE_SERVICE_ROLE_KEY` pour enregistrer la proposition (sinon l'admin modifie à la main).
+- Prévu ensuite : modèle 3D généré par IA marqué « aperçu IA » et validé par l'admin.
 
 ## Deux modes de fonctionnement
 
@@ -140,7 +141,8 @@ Sans l'étape 3, la base refuse toute déclaration de paiement. Montants calcul�
 - seul l'admin peut offrir ou retirer des mois et consulter le classement complet ; un vendeur ne voit que ses propres chiffres ;
 - fermeture de boutique : suppression des comptes de paiement et arrêt de l'abonnement ;
 - suppression de compte : l'historique des commandes est conservé mais anonymisé ;
-- photos et panoramas : dépôt uniquement dans le dossier de sa boutique autorisée, quotas par produit, jamais de modèle 3D ni de marque « IA » posés par un vendeur (58 scénarios d'attaque dans `supabase/tests/media_test.sql`).
+- photos et panoramas : dépôt uniquement dans le dossier de sa boutique autorisée, quotas par produit, jamais de modèle 3D ni de marque « IA » posés par un vendeur (58 scénarios d'attaque dans `supabase/tests/media_test.sql`) ;
+- modifications par écrit : le vendeur demande et annule, jamais il n'écrit la proposition ni ne l'applique ; seul l'admin applique, champ par champ (14 scénarios dans `supabase/tests/edits_test.sql`).
 
 ## Reste à brancher
 

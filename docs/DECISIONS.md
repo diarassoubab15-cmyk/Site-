@@ -61,6 +61,11 @@
 - Étape 3 livrée : rotation 360° par série de vraies photos (pas de 3D ni d'IA), affichée à partir de 8 vues,
   ordre de prise de vue respecté à l'envoi. Migration 0007 : le vendeur peut lire les fichiers de sa boutique
   dans le stockage, sans quoi la suppression ne supprimait rien (les fichiers restaient en ligne).
+- Étape 4 livrée (migration 0008) : demandes de modification écrites. L'IA ne fait que proposer ; la proposition est
+  écrite avec la clé serveur (le vendeur ne peut pas la fabriquer), bornée et filtrée (seuls les champs qui changent),
+  affichée comme texte ; l'admin a le dernier mot et peut corriger chaque champ. La demande du vendeur est passée
+  à l'IA comme une donnée entre balises, jamais comme une consigne. Sans clé ou en cas de panne : version sans IA.
+- Le vendeur garde aussi le formulaire de modification directe de sa fiche.
 
 ## Animations et 3D (skill animations-3d-nexora)
 - Couleurs : on garde noir + violet (choix du propriétaire), pas la charte bleu/orange du skill.

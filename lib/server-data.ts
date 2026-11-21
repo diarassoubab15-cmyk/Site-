@@ -4,7 +4,7 @@ import { currentUser } from "./supabase/server";
 import type { NotificationPrefs, Ticket } from "./demo-store";
 import type { PaymentMethodId } from "./payments";
 import { paymentMethods } from "./payments";
-import { orderStatusFr, shopStatusFr, subPaymentStatusFr, ticketKindFr, ticketStatusFr, type LiveAccount, type LiveAdmin, type LiveSeller } from "./views";
+import { orderStatusFr, shopStatusFr, subPaymentStatusFr, ticketKindFr, ticketStatusFr, type LiveAccount, type EditRequestView, type LiveAdmin, type LiveSeller } from "./views";
 import type { DemoSubPayment } from "./demo-store";
 import { adminPaymentInfo } from "./payment-info";
 import { periodOf, type RewardView } from "./rewards";
@@ -135,16 +135,18 @@ export async function loadAdmin(): Promise<LiveAdmin | null> {
   const u = await currentUser();
   if (!u || u.profile?.role !== "admin") return null;
   const { sb } = u;
-  const [{ data: shops }, { data: tickets }, { data: pays }, { data: rw }, { data: vids }] = await Promise.all([
+  const [{ data: shops }, { data: tickets }, { data: pays }, { data: rw }, { data: vids }, { data: edits }] = await Promise.all([
     sb.from("shops").select("id, name, owner_name, contact_email, contact_phone, city, country, category, status, created_at").order("created_at", { ascending: false }),
     sb.from("tickets").select("*").order("created_at", { ascending: false }).limit(200),
     sb.from("subscription_payments").select("*").order("created_at", { ascending: false }).limit(100),
     sb.from("rewards").select("*").order("created_at", { ascending: false }).limit(200),
     sb.from("shop_videos").select("*").in("status", ["queued", "rendering", "review", "approved"]).order("created_at", { ascending: false }).limit(100),
+    sb.from("product_edit_requests").select(EDIT_COLS).eq("status", "review").order("created_at").limit(100),
   ]);
   const shopById = new Map((shops ?? []).map((s) => [s.id, s]));
   return {
     videos: (vids ?? []).map((v) => videoView(v, shopById.get(v.shop_id)?.name ?? "")),
+    edits: (edits ?? []).map((e) => editView(e, shopById.get(e.shop_id)?.name ?? "")),
     rewards: (rw ?? []).map((r) => rewardView(r, shopById.get(r.shop_id)?.name ?? "")),
     payments: (pays ?? []).map((p) => {
       const s = shopById.get(p.shop_id);
@@ -208,4 +210,32 @@ export async function loadSellerProducts(): Promise<{ shop: { id: string; status
         .sort((a, b) => a.position - b.position),
     })),
   };
+}
+
+// ------------------------------------------------------------------ modifications demandées par écrit
+const EDIT_COLS = "id, product_id, shop_id, message, status, proposal, ai, applied, admin_note, created_at, products(name, slug, short, description, price, compare_at, specs)";
+type EditRow = {
+  id: string; product_id: string; shop_id: string; message: string; status: EditRequestView["status"]; proposal: unknown; ai: boolean; applied: unknown;
+  admin_note: string | null; created_at: string;
+  products: { name: string; slug: string; short: string | null; description: string | null; price: number; compare_at: number | null; specs: unknown } | null;
+};
+function editView(e: EditRow, shopName: string): EditRequestView {
+  const p = e.products;
+  return {
+    id: e.id, productId: e.product_id, productName: p?.name ?? "", productSlug: p?.slug ?? "", shopName, message: e.message, status: e.status,
+    proposal: (e.proposal as EditRequestView["proposal"]) ?? null, ai: e.ai, applied: (e.applied as EditRequestView["applied"]) ?? null,
+    adminNote: e.admin_note, createdAt: e.created_at,
+    current: {
+      name: p?.name ?? "", short: p?.short ?? null, description: p?.description ?? null, price: p?.price ?? 0, compareAt: p?.compare_at ?? null,
+      specs: Array.isArray(p?.specs) ? (p.specs as [string, string][]) : [],
+    },
+  };
+}
+
+/** Demandes de modification d'un produit (vendeur propriétaire ; la RLS filtre). */
+export async function loadEditRequests(productId: string): Promise<EditRequestView[]> {
+  const u = await currentUser();
+  if (!u) return [];
+  const { data } = await u.sb.from("product_edit_requests").select(EDIT_COLS).eq("product_id", productId).order("created_at", { ascending: false }).limit(20);
+  return (data ?? []).map((e) => editView(e as EditRow, ""));
 }

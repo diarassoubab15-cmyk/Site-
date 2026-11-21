@@ -549,3 +549,72 @@ export const updateProductMedia = action(
     return { ok: true };
   },
 );
+
+// ------------------------------------------------------------------ modifications demandées par écrit
+const changesSchema = z
+  .object({
+    name: z.string().trim().min(2).max(120),
+    short: z.string().trim().max(200),
+    description: z.string().trim().max(5000),
+    price: z.number().int().min(1).max(1_000_000_000),
+    compareAt: z.number().int().positive().nullable(),
+    specs: z.array(z.tuple([z.string().trim().min(1).max(40), z.string().trim().min(1).max(120)])).max(20),
+  })
+  .partial()
+  .strict();
+
+/** Le vendeur écrit ce qu'il veut changer ; le serveur prépare une proposition ; l'admin décide. */
+export const requestProductEdit = action(
+  z.object({ productId: z.string().uuid(), message: z.string().trim().min(5, "Décrivez la modification (5 caractères au moins)").max(1000, "1 000 caractères au maximum") }),
+  async ({ productId, message }, { sb }) => {
+    const { data: product } = await sb.from("products").select("shop_id, name, short, description, price, compare_at, specs, category").eq("id", productId).maybeSingle();
+    if (!product) return fail("Produit introuvable");
+    const { data: req, error } = await sb.from("product_edit_requests").insert({ product_id: productId, shop_id: product.shop_id, message }).select("id").single();
+    if (error) return dbError(error);
+    // La proposition est écrite avec la clé serveur : le vendeur ne peut pas la fabriquer lui-même.
+    const { makeProposal } = await import("@/lib/edit-proposal");
+    const current = {
+      name: product.name, short: product.short, description: product.description, price: product.price, compareAt: product.compare_at,
+      specs: Array.isArray(product.specs) ? (product.specs as [string, string][]) : [],
+    };
+    try {
+      const { proposal, ai } = await makeProposal(message, current, product.category);
+      await supabaseService().from("product_edit_requests").update({ proposal, ai }).eq("id", req.id);
+    } catch (e) {
+      console.error("proposition non enregistrée :", (e as Error).message);   // l'admin traitera la demande à la main
+    }
+    revalidatePath("/vendeur/produits");
+    revalidatePath("/admin");
+    return { ok: true };
+  },
+);
+
+export const cancelProductEdit = action(z.object({ id: z.string().uuid() }), async ({ id }, { sb }) => {
+  const { error } = await sb.from("product_edit_requests").update({ status: "cancelled" }).eq("id", id).eq("status", "review");
+  if (error) return dbError(error);
+  revalidatePath("/vendeur/produits");
+  revalidatePath("/admin");
+  return { ok: true };
+});
+
+export const adminApplyEdit = action(
+  z.object({ id: z.string().uuid(), changes: changesSchema, note: z.string().trim().max(500).optional() }),
+  async ({ id, changes, note }, { sb }) => {
+    if (!Object.keys(changes).length) return fail("Aucun changement à appliquer : modifiez au moins un champ, ou refusez la demande.");
+    const { error } = await sb.rpc("admin_apply_edit", { p_request: id, p_changes: changes, p_note: note || undefined });
+    if (error) return dbError(error);
+    const { data } = await sb.from("product_edit_requests").select("products(slug)").eq("id", id).single();
+    const slug = (data?.products as { slug: string } | null)?.slug;
+    if (slug) revalidatePath(`/produits/${slug}`);
+    revalidatePath("/marketplace", "layout");
+    revalidatePath("/admin");
+    return { ok: true };
+  },
+);
+
+export const adminRejectEdit = action(z.object({ id: z.string().uuid(), note: z.string().trim().max(500).optional() }), async ({ id, note }, { sb }) => {
+  const { error } = await sb.rpc("admin_reject_edit", { p_request: id, p_note: note || undefined });
+  if (error) return dbError(error);
+  revalidatePath("/admin");
+  return { ok: true };
+});

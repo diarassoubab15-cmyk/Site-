@@ -82,4 +82,23 @@ export type LiveSeller = {
   videoQuota: { used: number; limit: number };
 };
 
-export type LiveAdmin = { sellers: DemoSeller[]; tickets: (Ticket & { shopId?: string })[]; payments: DemoSubPayment[]; rewards: import("./rewards").RewardView[]; videos: VideoView[] };
+export type LiveAdmin = { sellers: DemoSeller[]; tickets: (Ticket & { shopId?: string })[]; payments: DemoSubPayment[]; rewards: import("./rewards").RewardView[]; videos: VideoView[]; edits: EditRequestView[] };
+
+/** Fiche telle qu'elle peut être modifiée par une demande écrite. */
+export type EditableFields = { name: string; short: string | null; description: string | null; price: number; compareAt: number | null; specs: [string, string][] };
+export type EditChangesView = Partial<{ name: string; short: string; description: string; price: number; compareAt: number | null; specs: [string, string][] }>;
+export type EditRequestView = {
+  id: string;
+  productId: string;
+  productName: string;
+  productSlug: string;
+  shopName: string;
+  message: string;
+  status: "review" | "applied" | "rejected" | "cancelled";
+  proposal: { changes: EditChangesView; note: string } | null;
+  ai: boolean;
+  applied: EditChangesView | null;
+  adminNote: string | null;
+  createdAt: string;
+  current: EditableFields;
+};

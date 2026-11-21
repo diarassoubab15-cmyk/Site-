@@ -11,6 +11,7 @@ import { CountUp } from "./CountUp";
 import { AdminPayments } from "./AdminPayments";
 import { AdminRewards } from "./AdminRewards";
 import { AdminVideos } from "./AdminVideos";
+import { AdminEdits } from "./AdminEdits";
 
 const tabs: { id: SellerStatus | "tous"; label: string }[] = [
   { id: "en attente", label: "À vérifier" },
@@ -89,6 +90,7 @@ export function AdminView({ live }: { live?: LiveAdmin | null }) {
       <AdminPayments live={live?.payments} />
 
       <AdminVideos live={live?.videos} />
+      <AdminEdits live={live?.edits} />
 
       <AdminRewards live={live?.rewards} sellers={sellers} />
 

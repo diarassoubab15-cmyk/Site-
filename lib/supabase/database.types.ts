@@ -115,6 +115,38 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"product_edit_requests": {
+                  Row: {
+                    "admin_note": string | null,"ai": boolean,"applied": Json | null,"author_id": string | null,"created_at": string,"decided_at": string | null,"id": string,"message": string,"product_id": string,"proposal": Json | null,"shop_id": string,"status": Database["public"]['Enums']["edit_status"]
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "admin_note"?: string | null,"ai"?: boolean,"applied"?: Json | null,"author_id"?: string | null,"created_at"?: string,"decided_at"?: string | null,"id"?: string,"message": string,"product_id": string,"proposal"?: Json | null,"shop_id": string,"status"?: Database["public"]['Enums']["edit_status"]
+                  }
+                  Update: {
+                    "admin_note"?: string | null,"ai"?: boolean,"applied"?: Json | null,"author_id"?: string | null,"created_at"?: string,"decided_at"?: string | null,"id"?: string,"message"?: string,"product_id"?: string,"proposal"?: Json | null,"shop_id"?: string,"status"?: Database["public"]['Enums']["edit_status"]
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "product_edit_requests_author_id_fkey"
+      columns: ["author_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "product_edit_requests_product_id_fkey"
+      columns: ["product_id"]
+isOneToOne: false
+      referencedRelation: "products"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "product_edit_requests_shop_id_fkey"
+      columns: ["shop_id"]
+isOneToOne: false
+      referencedRelation: "shops"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"product_media": {
                   Row: {
                     "ai_generated": boolean,"created_at": string,"height": number | null,"id": string,"kind": Database["public"]['Enums']["media_kind"],"label": string | null,"path": string,"position": number,"product_id": string,"shop_id": string,"status": Database["public"]['Enums']["media_status"],"width": number | null
@@ -351,7 +383,10 @@ isOneToOne: false
             [_ in never]: never
           }
           Functions: {
-            "admin_confirm_payment":
+            "admin_apply_edit":
+{ Args: { "p_changes": Json,"p_note"?: string,"p_request": string }; Returns: undefined
+                           },
+"admin_confirm_payment":
 { Args: { "p_payment": string }; Returns: undefined
                            },
 "admin_grant_reward":
@@ -359,6 +394,9 @@ isOneToOne: false
                            },
 "admin_mark_contacted":
 { Args: { "p_payment": string }; Returns: undefined
+                           },
+"admin_reject_edit":
+{ Args: { "p_note"?: string,"p_request": string }; Returns: undefined
                            },
 "admin_reject_payment":
 { Args: { "p_note"?: string,"p_payment": string }; Returns: undefined
@@ -437,7 +475,7 @@ isOneToOne: false
                            }
           }
           Enums: {
-            "media_kind": "photo"|"pano"|"spin"|"model3d","media_status": "approved"|"review"|"rejected","order_status": "pending_payment"|"confirmed"|"shipped"|"delivered"|"not_received"|"refunded"|"cancelled","payment_method": "orange_money"|"wave"|"mtn_momo"|"moov_money"|"card"|"cash_on_delivery","payout_type": "orange_money"|"wave"|"mtn_momo"|"moov_money"|"card"|"bank","plan_id": "essentiel"|"pro"|"business","reward_kind": "month"|"semester"|"year"|"gift","shop_status": "pending"|"approved"|"suspended"|"rejected"|"closed","subscription_payment_status": "contact_pending"|"awaiting_payment"|"declared"|"confirmed"|"rejected","ticket_kind": "contact"|"report"|"refund","ticket_status": "open"|"in_progress"|"resolved","user_role": "client"|"seller"|"admin","video_status": "queued"|"rendering"|"review"|"approved"|"rejected"|"failed"|"cancelled"
+            "edit_status": "review"|"applied"|"rejected"|"cancelled","media_kind": "photo"|"pano"|"spin"|"model3d","media_status": "approved"|"review"|"rejected","order_status": "pending_payment"|"confirmed"|"shipped"|"delivered"|"not_received"|"refunded"|"cancelled","payment_method": "orange_money"|"wave"|"mtn_momo"|"moov_money"|"card"|"cash_on_delivery","payout_type": "orange_money"|"wave"|"mtn_momo"|"moov_money"|"card"|"bank","plan_id": "essentiel"|"pro"|"business","reward_kind": "month"|"semester"|"year"|"gift","shop_status": "pending"|"approved"|"suspended"|"rejected"|"closed","subscription_payment_status": "contact_pending"|"awaiting_payment"|"declared"|"confirmed"|"rejected","ticket_kind": "contact"|"report"|"refund","ticket_status": "open"|"in_progress"|"resolved","user_role": "client"|"seller"|"admin","video_status": "queued"|"rendering"|"review"|"approved"|"rejected"|"failed"|"cancelled"
           }
           CompositeTypes: {
             [_ in never]: never
@@ -557,7 +595,7 @@ export const Constants = {
           }
         },"public": {
           Enums: {
-            "media_kind": ["photo", "pano", "spin", "model3d"],"media_status": ["approved", "review", "rejected"],"order_status": ["pending_payment", "confirmed", "shipped", "delivered", "not_received", "refunded", "cancelled"],"payment_method": ["orange_money", "wave", "mtn_momo", "moov_money", "card", "cash_on_delivery"],"payout_type": ["orange_money", "wave", "mtn_momo", "moov_money", "card", "bank"],"plan_id": ["essentiel", "pro", "business"],"reward_kind": ["month", "semester", "year", "gift"],"shop_status": ["pending", "approved", "suspended", "rejected", "closed"],"subscription_payment_status": ["contact_pending", "awaiting_payment", "declared", "confirmed", "rejected"],"ticket_kind": ["contact", "report", "refund"],"ticket_status": ["open", "in_progress", "resolved"],"user_role": ["client", "seller", "admin"],"video_status": ["queued", "rendering", "review", "approved", "rejected", "failed", "cancelled"]
+            "edit_status": ["review", "applied", "rejected", "cancelled"],"media_kind": ["photo", "pano", "spin", "model3d"],"media_status": ["approved", "review", "rejected"],"order_status": ["pending_payment", "confirmed", "shipped", "delivered", "not_received", "refunded", "cancelled"],"payment_method": ["orange_money", "wave", "mtn_momo", "moov_money", "card", "cash_on_delivery"],"payout_type": ["orange_money", "wave", "mtn_momo", "moov_money", "card", "bank"],"plan_id": ["essentiel", "pro", "business"],"reward_kind": ["month", "semester", "year", "gift"],"shop_status": ["pending", "approved", "suspended", "rejected", "closed"],"subscription_payment_status": ["contact_pending", "awaiting_payment", "declared", "confirmed", "rejected"],"ticket_kind": ["contact", "report", "refund"],"ticket_status": ["open", "in_progress", "resolved"],"user_role": ["client", "seller", "admin"],"video_status": ["queued", "rendering", "review", "approved", "rejected", "failed", "cancelled"]
           }
         }
 } as const
