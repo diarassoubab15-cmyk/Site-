@@ -42,6 +42,22 @@ Copier `.env.example` en `.env.local` et remplir les valeurs.
 
 Si le verre 3D descend sous ~18 images/s une fois affiché, il s'arrête seul et le logo SVG reprend sa place. `/?verre=force` l'affiche sur n'importe quelle machine (contrôle visuel).
 
+## Vidéos (HyperFrames)
+
+Les vidéos animées sont fabriquées avec [HyperFrames](https://github.com/heygen-com/hyperframes) (HTML → MP4, licence Apache 2.0), version figée `0.9.19`, statistiques d'usage désactivées. Il faut **Node 22, FFmpeg et Chrome/Chromium** sur la machine qui fabrique.
+
+**Accueil et catégories** : `npm run videos:site` (ou `npm run videos:site -- accueil mode`) régénère `public/videos/*.mp4` et leurs couvertures. Les textes sont dans `videos/site-videos.ts`. Environ 250 Ko par vidéo de 12 s, 20 s de fabrication.
+
+**Vidéo de chaque boutique** :
+1. Dans `/vendeur`, le vendeur décrit son activité. Quota mensuel : Essentiel 1, Pro 3, Business 10.
+2. Le programme de fabrication `npm run videos:worker` (en continu, ou `-- --once`) prend la demande, rédige le scénario (avec Claude si `ANTHROPIC_API_KEY` est renseignée, sinon sans IA), rend la vidéo avec le modèle `videos/template/` et la dépose dans le stockage Supabase `shop-videos`.
+3. L'admin la voit dans `/admin` → **Vidéos de boutique**, la publie ou la refuse. Rien n'est publié sans lui.
+4. La vidéo publiée s'affiche sur la page de la boutique.
+
+Le programme de fabrication tourne sur n'importe quelle machine (l'ordinateur de l'admin pendant la phase de test, un petit serveur ensuite) : il lit `NEXT_PUBLIC_SUPABASE_URL` et `SUPABASE_SERVICE_ROLE_KEY` dans `.env.local`.
+
+Sécurité : les textes du vendeur sont insérés comme texte brut (jamais comme HTML ou code), les balises et liens sont retirés, la description est traitée comme une donnée par l'IA, les couleurs et icônes viennent de listes fermées. Lecture sur le site : rien n'est téléchargé avant que la vidéo soit visible, pas de lecture automatique en mode économie de données ou mouvement réduit.
+
 ## Deux modes de fonctionnement
 
 | | Mode démo | Mode Supabase |
@@ -65,12 +81,12 @@ Copier les clés affichées dans `.env.local` (`NEXT_PUBLIC_SUPABASE_URL`, `NEXT
 - `npm run db:reset` : recrée la base (migrations + données de démo de `supabase/seed.sql`).
 - `npm run db:seed:generate` : régénère `seed.sql` à partir de `lib/data.ts`.
 - `npm run db:types` : régénère les types TypeScript après une modification du schéma.
-- `supabase/tests/` : 36 scénarios d'attaque à rejouer sur la base (voir son README).
+- `supabase/tests/` : 48 scénarios d'attaque à rejouer sur la base (voir son README).
 
 ## Mettre en ligne avec Supabase
 
 1. **Créer le projet** sur supabase.com (région la plus proche de vos clients).
-2. **Créer les tables** : exécuter dans l'éditeur SQL, dans l'ordre, `supabase/migrations/0001_init.sql`, `0002_app.sql`, `0003_subscription_payments.sql` puis `0004_rewards.sql`. Ne **pas** exécuter `seed.sql` (données de démonstration).
+2. **Créer les tables** : exécuter dans l'éditeur SQL, dans l'ordre, `supabase/migrations/0001_init.sql`, `0002_app.sql`, `0003_subscription_payments.sql`, `0004_rewards.sql` puis `0005_shop_videos.sql`. Ne **pas** exécuter `seed.sql` (données de démonstration).
 3. **Variables** sur l'hébergeur : `NEXT_PUBLIC_SITE_URL`, `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY` (secrète, jamais côté navigateur), et pour les abonnements : `NEXT_PUBLIC_ADMIN_WHATSAPP`, `NEXT_PUBLIC_ADMIN_PHONE`, `NEXT_PUBLIC_ADMIN_PHONE_DISPLAY`, `ADMIN_ORANGE_MONEY_NUMBER`, `ADMIN_ORANGE_MONEY_NAME`.
 4. **Authentification** (Authentication) :
    - *URL Configuration* : Site URL = votre domaine ; Redirect URLs = `https://votre-domaine/auth/callback`.

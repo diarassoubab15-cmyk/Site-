@@ -5,6 +5,7 @@ import { useState, useTransition } from "react";
 import { NotificationPrefs } from "./NotificationPrefs";
 import { SubscriptionPanel } from "./SubscriptionPanel";
 import { SellerStats } from "./SellerStats";
+import { SellerVideos } from "./SellerVideos";
 import { plans } from "@/lib/plans";
 import { formatPrice } from "@/lib/format";
 import { paymentMethods, type PaymentMethodId } from "@/lib/payments";
@@ -115,6 +116,8 @@ export function SellerView({ live }: { live?: LiveSeller | null }) {
         {!closed && <SellerStats shop={shop} live={live} />}
 
         {!closed && <SubscriptionPanel shop={shop} live={live} />}
+
+        {!closed && shop.status === "autorisé" && <SellerVideos live={live} online={(!!live?.coveredUntil && new Date(live.coveredUntil).getTime() > Date.now() + 60_000) || (!!live?.subscription?.active && !live.subscription.until)} />}
 
         {supabaseEnabled && shop.status === "autorisé" && (
           <section className="card" aria-labelledby="cmdv">

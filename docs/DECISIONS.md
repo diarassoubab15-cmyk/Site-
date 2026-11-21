@@ -41,6 +41,15 @@
 - Mini tableau de bord par boutique dans /vendeur, propre au vendeur ; l'admin ne le pilote pas (il garde seulement l'arbitrage des litiges et l'autorisation/suspension).
 - La demande mentionnait aussi « meilleur de la semaine » : non retenu (mois, semestre, année), à confirmer avec le propriétaire.
 
+## Vidéos HyperFrames (novembre 2026)
+- Accueil + chaque catégorie : vidéos de 12 s rendues avec HyperFrames (fichiers statiques dans public/videos). Textes provisoires :
+  le propriétaire enverra des descriptions plus détaillées pour chaque partie (immobilier, mobilier, conception…).
+- Vidéo de boutique « à partir de la description » : IA (Claude, sorties structurées) + modèles ; repli sans IA si pas de clé.
+- Le propriétaire valide chaque vidéo avant publication ; quotas mensuels par forfait (1 / 3 / 10).
+- Pas d'hébergement pour l'instant : phase de test privée de quelques mois avec des boutiques de son entourage, site non publié.
+  Le programme de fabrication tourne sur n'importe quelle machine ; un petit serveur plus tard.
+- La catégorie « immobilier » a son modèle vidéo mais n'existe pas encore dans le catalogue : à créer avec les descriptions.
+
 ## Animations et 3D (skill animations-3d-nexora)
 - Couleurs : on garde noir + violet (choix du propriétaire), pas la charte bleu/orange du skill.
 - Écran d'ouverture 1,3 s, une fois par session, piloté par un script intégré (lib/motion-script.ts) et non par React,

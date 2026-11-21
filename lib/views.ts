@@ -35,6 +35,24 @@ export const subPaymentStatusFr: Record<string, SubPaymentStatus> = {
   rejected: "refusé",
 };
 
+/** Vidéo de boutique, telle qu'affichée (vendeur et admin). */
+export type VideoView = {
+  id: string;
+  ref: string;
+  shopId: string;
+  shopName?: string;
+  description: string;
+  status: "queued" | "rendering" | "review" | "approved" | "rejected" | "failed" | "cancelled";
+  videoUrl: string | null;
+  posterUrl: string | null;
+  isActive: boolean;
+  headline?: string;
+  scriptSource?: string;
+  adminNote?: string;
+  error?: string;
+  createdAt: string;
+};
+
 export type ActionResult<T = undefined> = { ok: true; data?: T } | { ok: false; error: string; login?: boolean };
 
 /** Données réelles passées par le serveur aux composants (mode Supabase). */
@@ -60,6 +78,8 @@ export type LiveSeller = {
   coveredUntil: string | null;
   rewards: import("./rewards").RewardView[];
   stats: { delivered: number; revenue: number; openOrders: number; rating: number | null; reviews: number; rank: number | null; competitors: number } | null;
+  videos: VideoView[];
+  videoQuota: { used: number; limit: number };
 };
 
-export type LiveAdmin = { sellers: DemoSeller[]; tickets: (Ticket & { shopId?: string })[]; payments: DemoSubPayment[]; rewards: import("./rewards").RewardView[] };
+export type LiveAdmin = { sellers: DemoSeller[]; tickets: (Ticket & { shopId?: string })[]; payments: DemoSubPayment[]; rewards: import("./rewards").RewardView[]; videos: VideoView[] };

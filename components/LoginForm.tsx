@@ -63,8 +63,9 @@ export function LoginForm({ user, next = "/compte" }: { user?: { email: string; 
       const sb = supabaseBrowser();
       const { error } = await sb.auth.verifyOtp(mode === "email" ? { email: target, token: code, type: "email" } : { phone: target, token: code, type: "sms" });
       if (error) return setError("Code incorrect ou expiré.");
-      router.push(next);
-      router.refresh();
+      // Navigation complète (et non router.push + refresh, qui peuvent s'annuler l'un l'autre) :
+      // la page suivante repart avec la nouvelle session.
+      window.location.assign(next);
     });
   }
 

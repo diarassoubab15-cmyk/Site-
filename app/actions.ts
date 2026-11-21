@@ -404,3 +404,39 @@ export const adminRevokeReward = action(z.object({ id: z.string().uuid(), note: 
   revalidatePath("/", "layout");
   return { ok: true };
 });
+
+// ------------------------------------------------------------------ vidéos de boutique
+export const requestShopVideo = action<{ description: string }, string>(
+  z.object({ description: z.string().trim().min(20, "Décrivez votre boutique en 20 caractères au moins").max(1500, "1 500 caractères au maximum") }),
+  async ({ description }, { user, sb }) => {
+    const { data: shop } = await sb.from("shops").select("id").eq("owner_id", user.id).neq("status", "closed").maybeSingle();
+    if (!shop) return fail("Aucune boutique active");
+    const { data, error } = await sb.from("shop_videos").insert({ shop_id: shop.id, description }).select("ref").single();
+    if (error) return fail(error.code === "23505" ? "Une vidéo est déjà en cours de fabrication." : error.message.split("\n")[0]);
+    revalidatePath("/vendeur");
+    return { ok: true, data: data.ref };
+  },
+);
+
+export const cancelShopVideo = action(z.object({ id: z.string().uuid() }), async ({ id }, { sb }) => {
+  const { error } = await sb.from("shop_videos").update({ status: "cancelled" }).eq("id", id);
+  if (error) return dbError(error);
+  revalidatePath("/vendeur");
+  return { ok: true };
+});
+
+export const adminReviewVideo = action(z.object({ id: z.string().uuid(), approve: z.boolean(), note: z.string().trim().max(500).optional() }), async ({ id, approve, note }, { sb }) => {
+  const { error } = await sb.rpc("admin_review_video", { p_video: id, p_approve: approve, p_note: note || undefined });
+  if (error) return dbError(error);
+  revalidatePath("/admin");
+  revalidatePath("/", "layout");
+  return { ok: true };
+});
+
+export const adminUnpublishVideo = action(z.object({ id: z.string().uuid(), note: z.string().trim().max(500).optional() }), async ({ id, note }, { sb }) => {
+  const { error } = await sb.rpc("admin_unpublish_video", { p_video: id, p_note: note || undefined });
+  if (error) return dbError(error);
+  revalidatePath("/admin");
+  revalidatePath("/", "layout");
+  return { ok: true };
+});

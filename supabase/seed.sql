@@ -1,36 +1,36 @@
 -- Généré par scripts/generate-seed.mjs. Ne pas modifier à la main.
 -- Données de démonstration (boutiques, produits, avis). À ne PAS charger en production.
 
-insert into auth.users (instance_id, id, aud, role, email, email_confirmed_at, raw_app_meta_data, raw_user_meta_data, created_at, updated_at)
-values ('00000000-0000-0000-0000-000000000000', 'a0000000-0000-4000-8000-000000000000', 'authenticated', 'authenticated', 'vendeur1@demo.nexora', now(), '{"provider":"email","providers":["email"]}', '{}', now(), now());
+insert into auth.users (instance_id, id, aud, role, email, email_confirmed_at, raw_app_meta_data, raw_user_meta_data, created_at, updated_at, confirmation_token, recovery_token, email_change_token_new, email_change, email_change_token_current, reauthentication_token, phone_change, phone_change_token)
+values ('00000000-0000-0000-0000-000000000000', 'a0000000-0000-4000-8000-000000000000', 'authenticated', 'authenticated', 'vendeur1@demo.nexora', now(), '{"provider":"email","providers":["email"]}', '{}', now(), now(), '', '', '', '', '', '', '', '');
 update profiles set role = 'seller', full_name = 'Atelier Kenté', city = 'Abidjan', country = 'Côte d''Ivoire' where id = 'a0000000-0000-4000-8000-000000000000';
 insert into shops (id, owner_id, slug, name, description, category, city, country, accepts_cod, status, owner_name, contact_email, response_time, payments, created_at)
 values ('50000000-0000-4000-8000-000000000000', 'a0000000-0000-4000-8000-000000000000', 'atelier-kente', 'Atelier Kenté', 'Créations en wax et bazin cousues à la main à Treichville depuis 2016.', 'mode', 'Abidjan', 'Côte d''Ivoire', true, 'approved', 'Atelier Kenté', 'vendeur1@demo.nexora', 'répond en ~1 h', '{orange_money,wave,mtn_momo,card}', '2024-02-11');
 insert into subscriptions (shop_id, plan, active) values ('50000000-0000-4000-8000-000000000000', 'pro', true);
 
-insert into auth.users (instance_id, id, aud, role, email, email_confirmed_at, raw_app_meta_data, raw_user_meta_data, created_at, updated_at)
-values ('00000000-0000-0000-0000-000000000000', 'a0000001-0000-4000-8000-000000000000', 'authenticated', 'authenticated', 'vendeur2@demo.nexora', now(), '{"provider":"email","providers":["email"]}', '{}', now(), now());
+insert into auth.users (instance_id, id, aud, role, email, email_confirmed_at, raw_app_meta_data, raw_user_meta_data, created_at, updated_at, confirmation_token, recovery_token, email_change_token_new, email_change, email_change_token_current, reauthentication_token, phone_change, phone_change_token)
+values ('00000000-0000-0000-0000-000000000000', 'a0000001-0000-4000-8000-000000000000', 'authenticated', 'authenticated', 'vendeur2@demo.nexora', now(), '{"provider":"email","providers":["email"]}', '{}', now(), now(), '', '', '', '', '', '', '', '');
 update profiles set role = 'seller', full_name = 'Karité de Koudougou', city = 'Koudougou', country = 'Burkina Faso' where id = 'a0000001-0000-4000-8000-000000000000';
 insert into shops (id, owner_id, slug, name, description, category, city, country, accepts_cod, status, owner_name, contact_email, response_time, payments, created_at)
 values ('50000001-0000-4000-8000-000000000000', 'a0000001-0000-4000-8000-000000000000', 'karite-de-koudougou', 'Karité de Koudougou', 'Coopérative de 40 femmes productrices de beurre de karité brut et de savons.', 'beaute', 'Koudougou', 'Burkina Faso', true, 'approved', 'Karité de Koudougou', 'vendeur2@demo.nexora', 'répond en ~3 h', '{orange_money,moov_money,card}', '2024-05-03');
 insert into subscriptions (shop_id, plan, active) values ('50000001-0000-4000-8000-000000000000', 'pro', true);
 
-insert into auth.users (instance_id, id, aud, role, email, email_confirmed_at, raw_app_meta_data, raw_user_meta_data, created_at, updated_at)
-values ('00000000-0000-0000-0000-000000000000', 'a0000002-0000-4000-8000-000000000000', 'authenticated', 'authenticated', 'vendeur3@demo.nexora', now(), '{"provider":"email","providers":["email"]}', '{}', now(), now());
+insert into auth.users (instance_id, id, aud, role, email, email_confirmed_at, raw_app_meta_data, raw_user_meta_data, created_at, updated_at, confirmation_token, recovery_token, email_change_token_new, email_change, email_change_token_current, reauthentication_token, phone_change, phone_change_token)
+values ('00000000-0000-0000-0000-000000000000', 'a0000002-0000-4000-8000-000000000000', 'authenticated', 'authenticated', 'vendeur3@demo.nexora', now(), '{"provider":"email","providers":["email"]}', '{}', now(), now(), '', '', '', '', '', '', '', '');
 update profiles set role = 'seller', full_name = 'Dakar Tech', city = 'Dakar', country = 'Sénégal' where id = 'a0000002-0000-4000-8000-000000000000';
 insert into shops (id, owner_id, slug, name, description, category, city, country, accepts_cod, status, owner_name, contact_email, response_time, payments, created_at)
 values ('50000002-0000-4000-8000-000000000000', 'a0000002-0000-4000-8000-000000000000', 'dakar-tech', 'Dakar Tech', 'Accessoires téléphone, kits solaires et électronique garantie 12 mois.', 'electronique', 'Dakar', 'Sénégal', true, 'approved', 'Dakar Tech', 'vendeur3@demo.nexora', 'répond en ~30 min', '{wave,orange_money,card}', '2023-11-20');
 insert into subscriptions (shop_id, plan, active) values ('50000002-0000-4000-8000-000000000000', 'pro', true);
 
-insert into auth.users (instance_id, id, aud, role, email, email_confirmed_at, raw_app_meta_data, raw_user_meta_data, created_at, updated_at)
-values ('00000000-0000-0000-0000-000000000000', 'a0000003-0000-4000-8000-000000000000', 'authenticated', 'authenticated', 'vendeur4@demo.nexora', now(), '{"provider":"email","providers":["email"]}', '{}', now(), now());
+insert into auth.users (instance_id, id, aud, role, email, email_confirmed_at, raw_app_meta_data, raw_user_meta_data, created_at, updated_at, confirmation_token, recovery_token, email_change_token_new, email_change, email_change_token_current, reauthentication_token, phone_change, phone_change_token)
+values ('00000000-0000-0000-0000-000000000000', 'a0000003-0000-4000-8000-000000000000', 'authenticated', 'authenticated', 'vendeur4@demo.nexora', now(), '{"provider":"email","providers":["email"]}', '{}', now(), now(), '', '', '', '', '', '', '', '');
 update profiles set role = 'seller', full_name = 'Maison Bamako', city = 'Bamako', country = 'Mali' where id = 'a0000003-0000-4000-8000-000000000000';
 insert into shops (id, owner_id, slug, name, description, category, city, country, accepts_cod, status, owner_name, contact_email, response_time, payments, created_at)
 values ('50000003-0000-4000-8000-000000000000', 'a0000003-0000-4000-8000-000000000000', 'maison-bamako', 'Maison Bamako', 'Bogolan, vannerie et mobilier fabriqués par des artisans maliens.', 'maison', 'Bamako', 'Mali', false, 'approved', 'Maison Bamako', 'vendeur4@demo.nexora', 'répond en ~4 h', '{orange_money,moov_money,card}', '2024-08-14');
 insert into subscriptions (shop_id, plan, active) values ('50000003-0000-4000-8000-000000000000', 'pro', true);
 
-insert into auth.users (instance_id, id, aud, role, email, email_confirmed_at, raw_app_meta_data, raw_user_meta_data, created_at, updated_at)
-values ('00000000-0000-0000-0000-000000000000', 'a0000004-0000-4000-8000-000000000000', 'authenticated', 'authenticated', 'vendeur5@demo.nexora', now(), '{"provider":"email","providers":["email"]}', '{}', now(), now());
+insert into auth.users (instance_id, id, aud, role, email, email_confirmed_at, raw_app_meta_data, raw_user_meta_data, created_at, updated_at, confirmation_token, recovery_token, email_change_token_new, email_change, email_change_token_current, reauthentication_token, phone_change, phone_change_token)
+values ('00000000-0000-0000-0000-000000000000', 'a0000004-0000-4000-8000-000000000000', 'authenticated', 'authenticated', 'vendeur5@demo.nexora', now(), '{"provider":"email","providers":["email"]}', '{}', now(), now(), '', '', '', '', '', '', '', '');
 update profiles set role = 'seller', full_name = 'Terroir du Cameroun', city = 'Douala', country = 'Cameroun' where id = 'a0000004-0000-4000-8000-000000000000';
 insert into shops (id, owner_id, slug, name, description, category, city, country, accepts_cod, status, owner_name, contact_email, response_time, payments, created_at)
 values ('50000004-0000-4000-8000-000000000000', 'a0000004-0000-4000-8000-000000000000', 'terroir-cameroun', 'Terroir du Cameroun', 'Café de l''Ouest, poivre de Penja et cacao en direct des producteurs.', 'alimentation', 'Douala', 'Cameroun', true, 'approved', 'Terroir du Cameroun', 'vendeur5@demo.nexora', 'répond en ~2 h', '{mtn_momo,orange_money,card}', '2024-01-09');
@@ -61,8 +61,8 @@ values ('60000010-0000-4000-8000-000000000000', '50000000-0000-4000-8000-0000000
 insert into products (id, shop_id, slug, name, short, description, category, price, compare_at, stock, wholesale_min, wholesale_price, specs, glyph, tone)
 values ('60000011-0000-4000-8000-000000000000', '50000002-0000-4000-8000-000000000000', 'ecouteurs-sans-fil-pro', 'Écouteurs sans fil Pro', 'Réduction de bruit, 30 h d''autonomie avec le boîtier.', 'Écouteurs Bluetooth 5.3 avec réduction de bruit active, résistance à la sueur et 30 h d''autonomie avec le boîtier de charge.', 'electronique', 21000, null, 50, null, null, '[["Bluetooth","5.3"],["Autonomie","30 h avec boîtier"],["Garantie","12 mois vendeur"]]', '◎', '#70b8ff');
 
-insert into auth.users (instance_id, id, aud, role, email, email_confirmed_at, raw_app_meta_data, raw_user_meta_data, created_at, updated_at)
-values ('00000000-0000-0000-0000-000000000000', 'b0000000-0000-4000-8000-000000000000', 'authenticated', 'authenticated', 'client1@demo.nexora', now(), '{"provider":"email","providers":["email"]}', '{}', now(), now());
+insert into auth.users (instance_id, id, aud, role, email, email_confirmed_at, raw_app_meta_data, raw_user_meta_data, created_at, updated_at, confirmation_token, recovery_token, email_change_token_new, email_change, email_change_token_current, reauthentication_token, phone_change, phone_change_token)
+values ('00000000-0000-0000-0000-000000000000', 'b0000000-0000-4000-8000-000000000000', 'authenticated', 'authenticated', 'client1@demo.nexora', now(), '{"provider":"email","providers":["email"]}', '{}', now(), now(), '', '', '', '', '', '', '', '');
 update profiles set full_name = 'Aïcha K', city = 'Abidjan' where id = 'b0000000-0000-4000-8000-000000000000';
 insert into orders (id, buyer_id, shop_id, product_id, qty, total, method, shipping_name, shipping_phone, shipping_city, created_at)
 values ('c0000000-0000-4000-8000-000000000000', 'b0000000-0000-4000-8000-000000000000', '50000000-0000-4000-8000-000000000000', '60000000-0000-4000-8000-000000000000', 1, 1, 'cash_on_delivery', 'Aïcha K.', '+000', 'Abidjan', '2026-10-02');
@@ -70,8 +70,8 @@ update orders set status = 'delivered' where id = 'c0000000-0000-4000-8000-00000
 insert into reviews (order_id, product_id, author_id, rating, title, body, seller_reply, created_at)
 values ('c0000000-0000-4000-8000-000000000000', '60000000-0000-4000-8000-000000000000', 'b0000000-0000-4000-8000-000000000000', 5, 'Magnifique et bien cousue', 'La robe est encore plus belle qu''en photo, les finitions sont propres. J''ai payé à la livraison, le livreur était à l''heure.', 'Merci Aïcha, au plaisir de vous habiller à nouveau !', '2026-10-02');
 
-insert into auth.users (instance_id, id, aud, role, email, email_confirmed_at, raw_app_meta_data, raw_user_meta_data, created_at, updated_at)
-values ('00000000-0000-0000-0000-000000000000', 'b0000001-0000-4000-8000-000000000000', 'authenticated', 'authenticated', 'client2@demo.nexora', now(), '{"provider":"email","providers":["email"]}', '{}', now(), now());
+insert into auth.users (instance_id, id, aud, role, email, email_confirmed_at, raw_app_meta_data, raw_user_meta_data, created_at, updated_at, confirmation_token, recovery_token, email_change_token_new, email_change, email_change_token_current, reauthentication_token, phone_change, phone_change_token)
+values ('00000000-0000-0000-0000-000000000000', 'b0000001-0000-4000-8000-000000000000', 'authenticated', 'authenticated', 'client2@demo.nexora', now(), '{"provider":"email","providers":["email"]}', '{}', now(), now(), '', '', '', '', '', '', '', '');
 update profiles set full_name = 'Mariam D', city = 'Bouaké' where id = 'b0000001-0000-4000-8000-000000000000';
 insert into orders (id, buyer_id, shop_id, product_id, qty, total, method, shipping_name, shipping_phone, shipping_city, created_at)
 values ('c0000001-0000-4000-8000-000000000000', 'b0000001-0000-4000-8000-000000000000', '50000000-0000-4000-8000-000000000000', '60000000-0000-4000-8000-000000000000', 1, 1, 'cash_on_delivery', 'Mariam D.', '+000', 'Bouaké', '2026-09-18');
@@ -79,8 +79,8 @@ update orders set status = 'delivered' where id = 'c0000001-0000-4000-8000-00000
 insert into reviews (order_id, product_id, author_id, rating, title, body, seller_reply, created_at)
 values ('c0000001-0000-4000-8000-000000000000', '60000000-0000-4000-8000-000000000000', 'b0000001-0000-4000-8000-000000000000', 4, 'Taille un peu grand', 'Très joli tissu. Prenez une taille en dessous. Le vendeur a accepté l''échange sans discuter.', null, '2026-09-18');
 
-insert into auth.users (instance_id, id, aud, role, email, email_confirmed_at, raw_app_meta_data, raw_user_meta_data, created_at, updated_at)
-values ('00000000-0000-0000-0000-000000000000', 'b0000002-0000-4000-8000-000000000000', 'authenticated', 'authenticated', 'client3@demo.nexora', now(), '{"provider":"email","providers":["email"]}', '{}', now(), now());
+insert into auth.users (instance_id, id, aud, role, email, email_confirmed_at, raw_app_meta_data, raw_user_meta_data, created_at, updated_at, confirmation_token, recovery_token, email_change_token_new, email_change, email_change_token_current, reauthentication_token, phone_change, phone_change_token)
+values ('00000000-0000-0000-0000-000000000000', 'b0000002-0000-4000-8000-000000000000', 'authenticated', 'authenticated', 'client3@demo.nexora', now(), '{"provider":"email","providers":["email"]}', '{}', now(), now(), '', '', '', '', '', '', '', '');
 update profiles set full_name = 'Fatou S', city = 'Dakar' where id = 'b0000002-0000-4000-8000-000000000000';
 insert into orders (id, buyer_id, shop_id, product_id, qty, total, method, shipping_name, shipping_phone, shipping_city, created_at)
 values ('c0000002-0000-4000-8000-000000000000', 'b0000002-0000-4000-8000-000000000000', '50000001-0000-4000-8000-000000000000', '60000002-0000-4000-8000-000000000000', 1, 1, 'cash_on_delivery', 'Fatou S.', '+000', 'Dakar', '2026-10-21');
@@ -88,8 +88,8 @@ update orders set status = 'delivered' where id = 'c0000002-0000-4000-8000-00000
 insert into reviews (order_id, product_id, author_id, rating, title, body, seller_reply, created_at)
 values ('c0000002-0000-4000-8000-000000000000', '60000002-0000-4000-8000-000000000000', 'b0000002-0000-4000-8000-000000000000', 5, 'Vrai karité brut', 'Odeur naturelle, texture parfaite. Payé avec Wave en deux clics.', null, '2026-10-21');
 
-insert into auth.users (instance_id, id, aud, role, email, email_confirmed_at, raw_app_meta_data, raw_user_meta_data, created_at, updated_at)
-values ('00000000-0000-0000-0000-000000000000', 'b0000003-0000-4000-8000-000000000000', 'authenticated', 'authenticated', 'client4@demo.nexora', now(), '{"provider":"email","providers":["email"]}', '{}', now(), now());
+insert into auth.users (instance_id, id, aud, role, email, email_confirmed_at, raw_app_meta_data, raw_user_meta_data, created_at, updated_at, confirmation_token, recovery_token, email_change_token_new, email_change, email_change_token_current, reauthentication_token, phone_change, phone_change_token)
+values ('00000000-0000-0000-0000-000000000000', 'b0000003-0000-4000-8000-000000000000', 'authenticated', 'authenticated', 'client4@demo.nexora', now(), '{"provider":"email","providers":["email"]}', '{}', now(), now(), '', '', '', '', '', '', '', '');
 update profiles set full_name = 'Jean-Marc O', city = 'Lomé' where id = 'b0000003-0000-4000-8000-000000000000';
 insert into orders (id, buyer_id, shop_id, product_id, qty, total, method, shipping_name, shipping_phone, shipping_city, created_at)
 values ('c0000003-0000-4000-8000-000000000000', 'b0000003-0000-4000-8000-000000000000', '50000001-0000-4000-8000-000000000000', '60000002-0000-4000-8000-000000000000', 1, 1, 'cash_on_delivery', 'Jean-Marc O.', '+000', 'Lomé', '2026-08-30');
@@ -97,8 +97,8 @@ update orders set status = 'delivered' where id = 'c0000003-0000-4000-8000-00000
 insert into reviews (order_id, product_id, author_id, rating, title, body, seller_reply, created_at)
 values ('c0000003-0000-4000-8000-000000000000', '60000002-0000-4000-8000-000000000000', 'b0000003-0000-4000-8000-000000000000', 5, 'Commande en gros sans souci', 'J''ai pris 30 pots pour ma boutique, le prix de gros s''applique tout seul au panier.', null, '2026-08-30');
 
-insert into auth.users (instance_id, id, aud, role, email, email_confirmed_at, raw_app_meta_data, raw_user_meta_data, created_at, updated_at)
-values ('00000000-0000-0000-0000-000000000000', 'b0000004-0000-4000-8000-000000000000', 'authenticated', 'authenticated', 'client5@demo.nexora', now(), '{"provider":"email","providers":["email"]}', '{}', now(), now());
+insert into auth.users (instance_id, id, aud, role, email, email_confirmed_at, raw_app_meta_data, raw_user_meta_data, created_at, updated_at, confirmation_token, recovery_token, email_change_token_new, email_change, email_change_token_current, reauthentication_token, phone_change, phone_change_token)
+values ('00000000-0000-0000-0000-000000000000', 'b0000004-0000-4000-8000-000000000000', 'authenticated', 'authenticated', 'client5@demo.nexora', now(), '{"provider":"email","providers":["email"]}', '{}', now(), now(), '', '', '', '', '', '', '', '');
 update profiles set full_name = 'Moussa T', city = 'Thiès' where id = 'b0000004-0000-4000-8000-000000000000';
 insert into orders (id, buyer_id, shop_id, product_id, qty, total, method, shipping_name, shipping_phone, shipping_city, created_at)
 values ('c0000004-0000-4000-8000-000000000000', 'b0000004-0000-4000-8000-000000000000', '50000002-0000-4000-8000-000000000000', '60000004-0000-4000-8000-000000000000', 1, 1, 'cash_on_delivery', 'Moussa T.', '+000', 'Thiès', '2026-10-11');
@@ -106,8 +106,8 @@ update orders set status = 'delivered' where id = 'c0000004-0000-4000-8000-00000
 insert into reviews (order_id, product_id, author_id, rating, title, body, seller_reply, created_at)
 values ('c0000004-0000-4000-8000-000000000000', '60000004-0000-4000-8000-000000000000', 'b0000004-0000-4000-8000-000000000000', 4, 'Fonctionne bien', 'Installé en une heure. Une ampoule défectueuse, remplacée par le vendeur en 3 jours.', 'Désolé pour l''ampoule, merci pour votre patience.', '2026-10-11');
 
-insert into auth.users (instance_id, id, aud, role, email, email_confirmed_at, raw_app_meta_data, raw_user_meta_data, created_at, updated_at)
-values ('00000000-0000-0000-0000-000000000000', 'b0000005-0000-4000-8000-000000000000', 'authenticated', 'authenticated', 'client6@demo.nexora', now(), '{"provider":"email","providers":["email"]}', '{}', now(), now());
+insert into auth.users (instance_id, id, aud, role, email, email_confirmed_at, raw_app_meta_data, raw_user_meta_data, created_at, updated_at, confirmation_token, recovery_token, email_change_token_new, email_change, email_change_token_current, reauthentication_token, phone_change, phone_change_token)
+values ('00000000-0000-0000-0000-000000000000', 'b0000005-0000-4000-8000-000000000000', 'authenticated', 'authenticated', 'client6@demo.nexora', now(), '{"provider":"email","providers":["email"]}', '{}', now(), now(), '', '', '', '', '', '', '', '');
 update profiles set full_name = 'Clarisse B', city = 'Ziguinchor' where id = 'b0000005-0000-4000-8000-000000000000';
 insert into orders (id, buyer_id, shop_id, product_id, qty, total, method, shipping_name, shipping_phone, shipping_city, created_at)
 values ('c0000005-0000-4000-8000-000000000000', 'b0000005-0000-4000-8000-000000000000', '50000002-0000-4000-8000-000000000000', '60000004-0000-4000-8000-000000000000', 1, 1, 'cash_on_delivery', 'Clarisse B.', '+000', 'Ziguinchor', '2026-09-05');
@@ -115,8 +115,8 @@ update orders set status = 'delivered' where id = 'c0000005-0000-4000-8000-00000
 insert into reviews (order_id, product_id, author_id, rating, title, body, seller_reply, created_at)
 values ('c0000005-0000-4000-8000-000000000000', '60000004-0000-4000-8000-000000000000', 'b0000005-0000-4000-8000-000000000000', 5, 'Enfin de la lumière le soir', 'La batterie tient toute la nuit. Livraison en 4 jours.', null, '2026-09-05');
 
-insert into auth.users (instance_id, id, aud, role, email, email_confirmed_at, raw_app_meta_data, raw_user_meta_data, created_at, updated_at)
-values ('00000000-0000-0000-0000-000000000000', 'b0000006-0000-4000-8000-000000000000', 'authenticated', 'authenticated', 'client7@demo.nexora', now(), '{"provider":"email","providers":["email"]}', '{}', now(), now());
+insert into auth.users (instance_id, id, aud, role, email, email_confirmed_at, raw_app_meta_data, raw_user_meta_data, created_at, updated_at, confirmation_token, recovery_token, email_change_token_new, email_change, email_change_token_current, reauthentication_token, phone_change, phone_change_token)
+values ('00000000-0000-0000-0000-000000000000', 'b0000006-0000-4000-8000-000000000000', 'authenticated', 'authenticated', 'client7@demo.nexora', now(), '{"provider":"email","providers":["email"]}', '{}', now(), now(), '', '', '', '', '', '', '', '');
 update profiles set full_name = 'Paul E', city = 'Yaoundé' where id = 'b0000006-0000-4000-8000-000000000000';
 insert into orders (id, buyer_id, shop_id, product_id, qty, total, method, shipping_name, shipping_phone, shipping_city, created_at)
 values ('c0000006-0000-4000-8000-000000000000', 'b0000006-0000-4000-8000-000000000000', '50000004-0000-4000-8000-000000000000', '60000008-0000-4000-8000-000000000000', 1, 1, 'cash_on_delivery', 'Paul E.', '+000', 'Yaoundé', '2026-10-28');
@@ -124,8 +124,8 @@ update orders set status = 'delivered' where id = 'c0000006-0000-4000-8000-00000
 insert into reviews (order_id, product_id, author_id, rating, title, body, seller_reply, created_at)
 values ('c0000006-0000-4000-8000-000000000000', '60000008-0000-4000-8000-000000000000', 'b0000006-0000-4000-8000-000000000000', 5, 'Excellent café', 'Torréfaction récente, ça se sent. Je recommande en grains.', null, '2026-10-28');
 
-insert into auth.users (instance_id, id, aud, role, email, email_confirmed_at, raw_app_meta_data, raw_user_meta_data, created_at, updated_at)
-values ('00000000-0000-0000-0000-000000000000', 'b0000007-0000-4000-8000-000000000000', 'authenticated', 'authenticated', 'client8@demo.nexora', now(), '{"provider":"email","providers":["email"]}', '{}', now(), now());
+insert into auth.users (instance_id, id, aud, role, email, email_confirmed_at, raw_app_meta_data, raw_user_meta_data, created_at, updated_at, confirmation_token, recovery_token, email_change_token_new, email_change, email_change_token_current, reauthentication_token, phone_change, phone_change_token)
+values ('00000000-0000-0000-0000-000000000000', 'b0000007-0000-4000-8000-000000000000', 'authenticated', 'authenticated', 'client8@demo.nexora', now(), '{"provider":"email","providers":["email"]}', '{}', now(), now(), '', '', '', '', '', '', '', '');
 update profiles set full_name = 'Ibrahima N', city = 'Dakar' where id = 'b0000007-0000-4000-8000-000000000000';
 insert into orders (id, buyer_id, shop_id, product_id, qty, total, method, shipping_name, shipping_phone, shipping_city, created_at)
 values ('c0000007-0000-4000-8000-000000000000', 'b0000007-0000-4000-8000-000000000000', '50000002-0000-4000-8000-000000000000', '60000005-0000-4000-8000-000000000000', 1, 1, 'cash_on_delivery', 'Ibrahima N.', '+000', 'Dakar', '2026-09-12');
@@ -133,8 +133,8 @@ update orders set status = 'delivered' where id = 'c0000007-0000-4000-8000-00000
 insert into reviews (order_id, product_id, author_id, rating, title, body, seller_reply, created_at)
 values ('c0000007-0000-4000-8000-000000000000', '60000005-0000-4000-8000-000000000000', 'b0000007-0000-4000-8000-000000000000', 3, 'Correct', 'Charge bien mais un peu lourde. Conforme à la description.', null, '2026-09-12');
 
-insert into auth.users (instance_id, id, aud, role, email, email_confirmed_at, raw_app_meta_data, raw_user_meta_data, created_at, updated_at)
-values ('00000000-0000-0000-0000-000000000000', 'b0000008-0000-4000-8000-000000000000', 'authenticated', 'authenticated', 'client9@demo.nexora', now(), '{"provider":"email","providers":["email"]}', '{}', now(), now());
+insert into auth.users (instance_id, id, aud, role, email, email_confirmed_at, raw_app_meta_data, raw_user_meta_data, created_at, updated_at, confirmation_token, recovery_token, email_change_token_new, email_change, email_change_token_current, reauthentication_token, phone_change, phone_change_token)
+values ('00000000-0000-0000-0000-000000000000', 'b0000008-0000-4000-8000-000000000000', 'authenticated', 'authenticated', 'client9@demo.nexora', now(), '{"provider":"email","providers":["email"]}', '{}', now(), now(), '', '', '', '', '', '', '', '');
 update profiles set full_name = 'Sophie M', city = 'Abidjan' where id = 'b0000008-0000-4000-8000-000000000000';
 insert into orders (id, buyer_id, shop_id, product_id, qty, total, method, shipping_name, shipping_phone, shipping_city, created_at)
 values ('c0000008-0000-4000-8000-000000000000', 'b0000008-0000-4000-8000-000000000000', '50000003-0000-4000-8000-000000000000', '60000006-0000-4000-8000-000000000000', 1, 1, 'orange_money', 'Sophie M.', '+000', 'Abidjan', '2026-10-15');
@@ -142,8 +142,8 @@ update orders set status = 'delivered' where id = 'c0000008-0000-4000-8000-00000
 insert into reviews (order_id, product_id, author_id, rating, title, body, seller_reply, created_at)
 values ('c0000008-0000-4000-8000-000000000000', '60000006-0000-4000-8000-000000000000', 'b0000008-0000-4000-8000-000000000000', 5, 'Très beau travail', 'Solide et joli, bien emballé.', null, '2026-10-15');
 
-insert into auth.users (instance_id, id, aud, role, email, email_confirmed_at, raw_app_meta_data, raw_user_meta_data, created_at, updated_at)
-values ('00000000-0000-0000-0000-000000000000', 'b0000009-0000-4000-8000-000000000000', 'authenticated', 'authenticated', 'client10@demo.nexora', now(), '{"provider":"email","providers":["email"]}', '{}', now(), now());
+insert into auth.users (instance_id, id, aud, role, email, email_confirmed_at, raw_app_meta_data, raw_user_meta_data, created_at, updated_at, confirmation_token, recovery_token, email_change_token_new, email_change, email_change_token_current, reauthentication_token, phone_change, phone_change_token)
+values ('00000000-0000-0000-0000-000000000000', 'b0000009-0000-4000-8000-000000000000', 'authenticated', 'authenticated', 'client10@demo.nexora', now(), '{"provider":"email","providers":["email"]}', '{}', now(), now(), '', '', '', '', '', '', '', '');
 update profiles set full_name = 'Awa C', city = 'Bamako' where id = 'b0000009-0000-4000-8000-000000000000';
 insert into orders (id, buyer_id, shop_id, product_id, qty, total, method, shipping_name, shipping_phone, shipping_city, created_at)
 values ('c0000009-0000-4000-8000-000000000000', 'b0000009-0000-4000-8000-000000000000', '50000003-0000-4000-8000-000000000000', '60000007-0000-4000-8000-000000000000', 1, 1, 'orange_money', 'Awa C.', '+000', 'Bamako', '2026-07-22');

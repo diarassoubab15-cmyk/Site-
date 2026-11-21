@@ -4,6 +4,8 @@ import { ProductCard } from "@/components/ProductCard";
 import { PaymentMethods } from "@/components/PaymentMethods";
 import { categories } from "@/lib/data";
 import { listCards } from "@/lib/catalog";
+import { VideoPlayer } from "@/components/VideoPlayer";
+import { siteVideo } from "@/lib/site-videos";
 import { onlineMethods } from "@/lib/payments";
 
 const promises = [
@@ -92,6 +94,18 @@ export default async function Home() {
         <div className="container-x flex flex-col items-start justify-between gap-5 py-8 md:flex-row md:items-center">
           <h2 id="paiements" className="text-sm text-ash">Moyens de paiement acceptés sur toute la marketplace</h2>
           <PaymentMethods methods={[...onlineMethods, "cash_on_delivery"]} />
+        </div>
+      </section>
+
+      {/* VIDÉO (HyperFrames) */}
+      <section className="container-x pt-24" aria-labelledby="video-accueil">
+        <div className="grid items-center gap-10 lg:grid-cols-[1fr_1.4fr]">
+          <div>
+            <p className="eyebrow">En 12 secondes</p>
+            <h2 id="video-accueil" className="h-section mt-4">NEXORA, simplement.</h2>
+            <p className="mt-6 max-w-md text-ash">Vendeurs vérifiés, paiement Mobile Money ou à la livraison, argent versé directement au vendeur.</p>
+          </div>
+          <VideoPlayer {...siteVideo("accueil")!} label="Présentation de NEXORA" />
         </div>
       </section>
 

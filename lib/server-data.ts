@@ -8,6 +8,17 @@ import { orderStatusFr, shopStatusFr, subPaymentStatusFr, ticketKindFr, ticketSt
 import type { DemoSubPayment } from "./demo-store";
 import { adminPaymentInfo } from "./payment-info";
 import { periodOf, type RewardView } from "./rewards";
+import { storageUrl } from "./site-videos";
+import type { VideoView } from "./views";
+
+const VIDEO_QUOTA: Record<string, number> = { essentiel: 1, pro: 3, business: 10 };
+type VideoRow = { id: string; ref: string; shop_id: string; description: string; status: string; video_path: string | null; poster_path: string | null; is_active: boolean; script: unknown; admin_note: string | null; error: string | null; created_at: string };
+const videoView = (v: VideoRow, shopName?: string): VideoView => ({
+  id: v.id, ref: v.ref, shopId: v.shop_id, shopName, description: v.description, status: v.status as VideoView["status"],
+  videoUrl: v.video_path ? storageUrl(v.video_path) : null, posterUrl: v.poster_path ? storageUrl(v.poster_path) : null, isActive: v.is_active,
+  headline: (v.script as { headline?: string } | null)?.headline, scriptSource: (v.script as { source?: string } | null)?.source,
+  adminNote: v.admin_note ?? undefined, error: v.error ?? undefined, createdAt: v.created_at.slice(0, 10),
+});
 
 type RewardRow = { id: string; shop_id: string; kind: string; period_key: string; title: string; free_months: number; starts_on: string | null; ends_on: string | null; note: string | null; revoked_at: string | null; created_at: string };
 const rewardView = (r: RewardRow, shopName = ""): RewardView => ({
@@ -79,7 +90,7 @@ export async function loadSeller(): Promise<LiveSeller | null> {
   const { data: shops } = await sb.from("shops").select("id, name, status, created_at").eq("owner_id", user.id).order("created_at", { ascending: false }).limit(1);
   const shop = shops?.[0];
   const prefs = await prefsOf(sb, user.id);
-  if (!shop) return { shop: null, payouts: [], orders: [], prefs, subscription: null, payment: null, payInfo: null, owner, coveredUntil: null, rewards: [], stats: null };
+  if (!shop) return { shop: null, payouts: [], orders: [], prefs, subscription: null, payment: null, payInfo: null, owner, coveredUntil: null, rewards: [], stats: null, videos: [], videoQuota: { used: 0, limit: 0 } };
   const [{ data: sub }, { data: payouts }, { data: orders }, { data: pays }] = await Promise.all([
     sb.from("subscriptions").select("plan, annual, active, current_period_end").eq("shop_id", shop.id).maybeSingle(),
     sb.from("payout_accounts").select("id, type, last4").eq("shop_id", shop.id),
@@ -88,16 +99,21 @@ export async function loadSeller(): Promise<LiveSeller | null> {
   ]);
   const now = new Date();
   const month = periodOf("month", `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, "0")}`)!;
-  const [{ data: covered }, { data: rw }, { data: st }] = await Promise.all([
+  const [{ data: covered }, { data: rw }, { data: st }, { data: vids }] = await Promise.all([
     sb.rpc("shop_covered_until", { p_shop: shop.id }),
     sb.from("rewards").select("*").eq("shop_id", shop.id).is("revoked_at", null).order("created_at", { ascending: false }),
     sb.rpc("seller_my_stats", { p_from: month.from, p_to: month.to }),
+    sb.from("shop_videos").select("*").eq("shop_id", shop.id).order("created_at", { ascending: false }).limit(20),
   ]);
+  const monthStart = month.from.slice(0, 10);
+  const videosUsed = (vids ?? []).filter((v) => v.status !== "failed" && v.created_at.slice(0, 10) >= monthStart).length;
   const s0 = st?.[0];
   const payment = pays?.[0] ? paymentView(pays[0]) : null;
   return {
     owner,
     coveredUntil: covered && covered !== "infinity" ? String(covered) : null,
+    videos: (vids ?? []).map((v) => videoView(v)),
+    videoQuota: { used: videosUsed, limit: VIDEO_QUOTA[sub?.plan ?? "essentiel"] ?? 1 },
     rewards: (rw ?? []).map((r) => rewardView(r, shop.name)),
     stats: s0 ? { delivered: s0.delivered, revenue: Number(s0.revenue), openOrders: s0.open_orders, rating: s0.rating === null ? null : Number(s0.rating), reviews: s0.reviews, rank: shop.status === "approved" ? s0.rank : null, competitors: s0.competitors } : null,
     subscription: sub ? { plan: sub.plan, annual: sub.annual, active: sub.active, until: sub.current_period_end } : null,
@@ -119,14 +135,16 @@ export async function loadAdmin(): Promise<LiveAdmin | null> {
   const u = await currentUser();
   if (!u || u.profile?.role !== "admin") return null;
   const { sb } = u;
-  const [{ data: shops }, { data: tickets }, { data: pays }, { data: rw }] = await Promise.all([
+  const [{ data: shops }, { data: tickets }, { data: pays }, { data: rw }, { data: vids }] = await Promise.all([
     sb.from("shops").select("id, name, owner_name, contact_email, contact_phone, city, country, category, status, created_at").order("created_at", { ascending: false }),
     sb.from("tickets").select("*").order("created_at", { ascending: false }).limit(200),
     sb.from("subscription_payments").select("*").order("created_at", { ascending: false }).limit(100),
     sb.from("rewards").select("*").order("created_at", { ascending: false }).limit(200),
+    sb.from("shop_videos").select("*").in("status", ["queued", "rendering", "review", "approved"]).order("created_at", { ascending: false }).limit(100),
   ]);
   const shopById = new Map((shops ?? []).map((s) => [s.id, s]));
   return {
+    videos: (vids ?? []).map((v) => videoView(v, shopById.get(v.shop_id)?.name ?? "")),
     rewards: (rw ?? []).map((r) => rewardView(r, shopById.get(r.shop_id)?.name ?? "")),
     payments: (pays ?? []).map((p) => {
       const s = shopById.get(p.shop_id);

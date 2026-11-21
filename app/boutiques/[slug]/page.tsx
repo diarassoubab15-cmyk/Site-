@@ -6,6 +6,7 @@ import { JsonLd } from "@/components/JsonLd";
 import { PaymentMethods } from "@/components/PaymentMethods";
 import { ProductCard } from "@/components/ProductCard";
 import { Stars } from "@/components/Stars";
+import { VideoPlayer } from "@/components/VideoPlayer";
 import { allSlugs, getShopPage } from "@/lib/catalog";
 import { formatDate } from "@/lib/format";
 import { absoluteUrl } from "@/lib/site";
@@ -28,7 +29,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function ShopPage({ params }: Props) {
   const page = await getShopPage((await params).slug);
   if (!page) notFound();
-  const { shop, cards: items, rating, awards } = page;
+  const { shop, cards: items, rating, awards, video } = page;
   return (
     <section className="container-x py-16">
       <Breadcrumbs items={[{ name: "Accueil", href: "/" }, { name: "Boutiques", href: "/marketplace" }, { name: shop.name, href: `/boutiques/${shop.slug}` }]} />
@@ -53,6 +54,11 @@ export default async function ShopPage({ params }: Props) {
           <Link href={`/support?boutique=${shop.slug}#signaler`} className="btn-danger">Signaler cette boutique</Link>
         </div>
       </div>
+      {video && (
+        <section className="mt-10" aria-label="Vidéo de la boutique">
+          <VideoPlayer src={video.src} poster={video.poster} label={`Présentation de ${shop.name}`} className="mx-auto max-w-4xl" />
+        </section>
+      )}
       <h2 className="mb-8 mt-16 text-2xl font-medium text-white">Produits ({items.length})</h2>
       <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4" data-reveal suppressHydrationWarning>
         {items.map((c) => <ProductCard key={c.product.slug} item={c} />)}

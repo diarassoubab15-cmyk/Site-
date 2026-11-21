@@ -207,6 +207,26 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"shop_videos": {
+                  Row: {
+                    "admin_note": string | null,"attempts": number,"created_at": string,"decided_at": string | null,"description": string,"duration_s": number | null,"error": string | null,"id": string,"is_active": boolean,"poster_path": string | null,"ref": string,"rendered_at": string | null,"script": Json | null,"shop_id": string,"started_at": string | null,"status": Database["public"]['Enums']["video_status"],"video_path": string | null
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "admin_note"?: string | null,"attempts"?: number,"created_at"?: string,"decided_at"?: string | null,"description": string,"duration_s"?: number | null,"error"?: string | null,"id"?: string,"is_active"?: boolean,"poster_path"?: string | null,"ref"?: string,"rendered_at"?: string | null,"script"?: Json | null,"shop_id": string,"started_at"?: string | null,"status"?: Database["public"]['Enums']["video_status"],"video_path"?: string | null
+                  }
+                  Update: {
+                    "admin_note"?: string | null,"attempts"?: number,"created_at"?: string,"decided_at"?: string | null,"description"?: string,"duration_s"?: number | null,"error"?: string | null,"id"?: string,"is_active"?: boolean,"poster_path"?: string | null,"ref"?: string,"rendered_at"?: string | null,"script"?: Json | null,"shop_id"?: string,"started_at"?: string | null,"status"?: Database["public"]['Enums']["video_status"],"video_path"?: string | null
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "shop_videos_shop_id_fkey"
+      columns: ["shop_id"]
+isOneToOne: false
+      referencedRelation: "shops"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"shops": {
                   Row: {
                     "accepts_cod": boolean,"category": string,"city": string,"contact_email": string | null,"contact_phone": string | null,"country": string,"created_at": string,"description": string | null,"id": string,"name": string,"owner_id": string,"owner_name": string | null,"payments": (Database["public"]['Enums']["payment_method"])[],"response_time": string,"slug": string,"status": Database["public"]['Enums']["shop_status"],"status_changed_at": string | null,"status_reason": string | null
@@ -317,6 +337,9 @@ isOneToOne: false
 "admin_reject_payment":
 { Args: { "p_note"?: string,"p_payment": string }; Returns: undefined
                            },
+"admin_review_video":
+{ Args: { "p_approve": boolean,"p_note"?: string,"p_video": string }; Returns: undefined
+                           },
 "admin_revoke_reward":
 { Args: { "p_note"?: string,"p_reward": string }; Returns: undefined
                            },
@@ -328,6 +351,35 @@ isOneToOne: false
 "admin_set_shop_status":
 { Args: { "p_reason"?: string,"p_shop": string,"p_status": Database["public"]['Enums']["shop_status"] }; Returns: undefined
                            },
+"admin_unpublish_video":
+{ Args: { "p_note"?: string,"p_video": string }; Returns: undefined
+                           },
+"claim_next_video":
+{ Args: Record<PropertyKey, never>; Returns: {
+              "admin_note": string | null,
+"attempts": number,
+"created_at": string,
+"decided_at": string | null,
+"description": string,
+"duration_s": number | null,
+"error": string | null,
+"id": string,
+"is_active": boolean,
+"poster_path": string | null,
+"ref": string,
+"rendered_at": string | null,
+"script": Json | null,
+"shop_id": string,
+"started_at": string | null,
+"status": Database["public"]['Enums']["video_status"],
+"video_path": string | null
+            }[]
+                          SetofOptions: {
+        from: "*"
+        to: "shop_videos"
+        isOneToOne: false
+        isSetofReturn: true
+      } },
 "close_my_shop":
 { Args: { "p_cancel_subscription": boolean,"p_remove_payouts": boolean,"p_shop": string,"p_unpublish": boolean }; Returns: undefined
                            },
@@ -338,6 +390,9 @@ isOneToOne: false
 { Args: Record<PropertyKey, never>; Returns: boolean
                            },
 "plan_monthly_price":
+{ Args: { "p": Database["public"]['Enums']["plan_id"] }; Returns: number
+                           },
+"plan_video_quota":
 { Args: { "p": Database["public"]['Enums']["plan_id"] }; Returns: number
                            },
 "seller_my_stats":
@@ -353,7 +408,7 @@ isOneToOne: false
                            }
           }
           Enums: {
-            "order_status": "pending_payment"|"confirmed"|"shipped"|"delivered"|"not_received"|"refunded"|"cancelled","payment_method": "orange_money"|"wave"|"mtn_momo"|"moov_money"|"card"|"cash_on_delivery","payout_type": "orange_money"|"wave"|"mtn_momo"|"moov_money"|"card"|"bank","plan_id": "essentiel"|"pro"|"business","reward_kind": "month"|"semester"|"year"|"gift","shop_status": "pending"|"approved"|"suspended"|"rejected"|"closed","subscription_payment_status": "contact_pending"|"awaiting_payment"|"declared"|"confirmed"|"rejected","ticket_kind": "contact"|"report"|"refund","ticket_status": "open"|"in_progress"|"resolved","user_role": "client"|"seller"|"admin"
+            "order_status": "pending_payment"|"confirmed"|"shipped"|"delivered"|"not_received"|"refunded"|"cancelled","payment_method": "orange_money"|"wave"|"mtn_momo"|"moov_money"|"card"|"cash_on_delivery","payout_type": "orange_money"|"wave"|"mtn_momo"|"moov_money"|"card"|"bank","plan_id": "essentiel"|"pro"|"business","reward_kind": "month"|"semester"|"year"|"gift","shop_status": "pending"|"approved"|"suspended"|"rejected"|"closed","subscription_payment_status": "contact_pending"|"awaiting_payment"|"declared"|"confirmed"|"rejected","ticket_kind": "contact"|"report"|"refund","ticket_status": "open"|"in_progress"|"resolved","user_role": "client"|"seller"|"admin","video_status": "queued"|"rendering"|"review"|"approved"|"rejected"|"failed"|"cancelled"
           }
           CompositeTypes: {
             [_ in never]: never
@@ -473,7 +528,7 @@ export const Constants = {
           }
         },"public": {
           Enums: {
-            "order_status": ["pending_payment", "confirmed", "shipped", "delivered", "not_received", "refunded", "cancelled"],"payment_method": ["orange_money", "wave", "mtn_momo", "moov_money", "card", "cash_on_delivery"],"payout_type": ["orange_money", "wave", "mtn_momo", "moov_money", "card", "bank"],"plan_id": ["essentiel", "pro", "business"],"reward_kind": ["month", "semester", "year", "gift"],"shop_status": ["pending", "approved", "suspended", "rejected", "closed"],"subscription_payment_status": ["contact_pending", "awaiting_payment", "declared", "confirmed", "rejected"],"ticket_kind": ["contact", "report", "refund"],"ticket_status": ["open", "in_progress", "resolved"],"user_role": ["client", "seller", "admin"]
+            "order_status": ["pending_payment", "confirmed", "shipped", "delivered", "not_received", "refunded", "cancelled"],"payment_method": ["orange_money", "wave", "mtn_momo", "moov_money", "card", "cash_on_delivery"],"payout_type": ["orange_money", "wave", "mtn_momo", "moov_money", "card", "bank"],"plan_id": ["essentiel", "pro", "business"],"reward_kind": ["month", "semester", "year", "gift"],"shop_status": ["pending", "approved", "suspended", "rejected", "closed"],"subscription_payment_status": ["contact_pending", "awaiting_payment", "declared", "confirmed", "rejected"],"ticket_kind": ["contact", "report", "refund"],"ticket_status": ["open", "in_progress", "resolved"],"user_role": ["client", "seller", "admin"],"video_status": ["queued", "rendering", "review", "approved", "rejected", "failed", "cancelled"]
           }
         }
 } as const

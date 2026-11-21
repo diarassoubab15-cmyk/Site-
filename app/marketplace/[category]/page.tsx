@@ -4,6 +4,8 @@ import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { CatalogView } from "@/components/CatalogView";
 import { categories, getCategory } from "@/lib/data";
 import { listCards } from "@/lib/catalog";
+import { VideoPlayer } from "@/components/VideoPlayer";
+import { siteVideo } from "@/lib/site-videos";
 
 type Props = { params: Promise<{ category: string }>; searchParams: Promise<{ q?: string }> };
 
@@ -25,8 +27,13 @@ export default async function CategoryPage({ params, searchParams }: Props) {
   return (
     <section className="container-x py-16">
       <Breadcrumbs items={[{ name: "Accueil", href: "/" }, { name: "Marketplace", href: "/marketplace" }, { name: cat.name, href: `/marketplace/${cat.slug}` }]} />
-      <h1 className="h-section">{cat.name}</h1>
-      <p className="mb-10 mt-4 max-w-2xl text-ash">{cat.description}</p>
+      <div className="mb-10 grid items-center gap-8 lg:grid-cols-[1fr_1.1fr]">
+        <div>
+          <h1 className="h-section">{cat.name}</h1>
+          <p className="mt-4 max-w-2xl text-ash">{cat.description}</p>
+        </div>
+        {siteVideo(cat.slug) && <VideoPlayer {...siteVideo(cat.slug)!} label={`Présentation : ${cat.name}`} />}
+      </div>
       <CatalogView items={items} active={cat.slug} q={q} />
     </section>
   );

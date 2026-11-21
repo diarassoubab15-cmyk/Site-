@@ -8,6 +8,7 @@ import type { Product, Review, Shop } from "./data";
 import type { PaymentMethodId } from "./payments";
 import { supabaseEnabled } from "./supabase/env";
 import { supabasePublic } from "./supabase/server";
+import { storageUrl } from "./site-videos";
 
 export type Rating = { average: number; count: number };
 export type CardItem = { product: Product; shop: Pick<Shop, "slug" | "name" | "verified" | "acceptsCashOnDelivery">; rating: Rating };
@@ -121,7 +122,7 @@ export async function getShopPage(slug: string) {
   if (!supabaseEnabled) {
     const shop = demo.getShop(slug);
     if (!shop) return null;
-    return { shop, cards: demo.productsByShop(slug).map(demoCard), rating: demo.shopRating(slug), awards: [] as string[] };
+    return { shop, cards: demo.productsByShop(slug).map(demoCard), rating: demo.shopRating(slug), awards: [] as string[], video: null as { src: string; poster: string } | null };
   }
   const sb = supabasePublic();
   const { data: s } = await sb.from("shops").select("id, slug, name, city, country, description, created_at, accepts_cod, response_time, payments").eq("slug", slug).eq("status", "approved").maybeSingle();
@@ -131,8 +132,10 @@ export async function getShopPage(slug: string) {
   const all = cards.filter((c) => c.rating.count);
   const count = all.reduce((n, c) => n + c.rating.count, 0);
   const average = count ? Math.round((all.reduce((n, c) => n + c.rating.average * c.rating.count, 0) / count) * 10) / 10 : 0;
+  const { data: vid } = await sb.from("shop_videos").select("video_path, poster_path").eq("shop_id", s.id).eq("status", "approved").eq("is_active", true).maybeSingle();
+  const video = vid?.video_path && vid.poster_path ? { src: storageUrl(vid.video_path), poster: storageUrl(vid.poster_path) } : null;
   const { data: aw } = await sb.from("rewards").select("title").eq("shop_id", s.id).is("revoked_at", null).neq("kind", "gift").order("created_at", { ascending: false }).limit(5);
-  return { shop: toShop(s as ShopRow), cards, rating: { average, count }, awards: (aw ?? []).map((a) => a.title) };
+  return { shop: toShop(s as ShopRow), cards, rating: { average, count }, awards: (aw ?? []).map((a) => a.title), video };
 }
 
 export async function allSlugs() {
