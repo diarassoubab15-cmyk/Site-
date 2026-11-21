@@ -100,6 +100,9 @@
 - Étape 5 (« aperçu 3D par IA ») remplacée, à la demande du propriétaire, par une présentation animée en motion design
   des produits (Ultra), faite à partir des photos du vendeur : pas d'IA, pas de 3D, pas de validation ni de coût par produit.
   La colonne model3d de la migration 0006 reste en réserve, inutilisée.
+- « Boutique animée » (Pro) et « Vitrine Ultra » faites en motion design (SVG + CSS) : couleurs, animations et polices
+  dans des listes fermées plutôt qu'un thème « créé sur mesure » (texte du forfait ajusté en conséquence) : rendu
+  toujours lisible, léger et sûr. Le nom de la boutique reste un vrai titre h1 pour Google et les lecteurs d'écran.
 - Audit d'accessibilité (reviews/audit-as-a11y-eng.md) : focus des fenêtres plein écran, rôle du logo, contraste du gris
   secondaire (#7c8088, 5,3:1) corrigés.
 

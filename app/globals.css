@@ -441,6 +441,56 @@ body {
   .showcase *, .showcase-bar > span { animation: none !important; }
 }
 
+
+/* ==================================================================== BOUTIQUE ANIMÉE (Pro) et VITRINE ULTRA (--b = couleur de la marque) */
+.shop-hero { position: relative; isolation: isolate; overflow: hidden; margin-bottom: 1.5rem; padding: 3.5rem 1.25rem 3rem; border-radius: 24px;
+  border: 1px solid color-mix(in srgb, var(--b) 40%, transparent); background: radial-gradient(120% 90% at 50% 0%, color-mix(in srgb, var(--b) 16%, #000) 0%, #000 70%); }
+.shop-hero.is-ultra { min-height: min(78svh, 680px); display: flex; align-items: center; justify-content: center; }
+.shop-hero-bg { position: absolute; inset: 0; z-index: 0; }
+.shop-hero-glow { position: absolute; left: 50%; top: 40%; width: 70%; aspect-ratio: 1; margin-left: -35%; margin-top: -35%; border-radius: 9999px;
+  background: radial-gradient(circle, color-mix(in srgb, var(--b) 32%, transparent) 0%, transparent 65%); animation: glowDrift 9s ease-in-out infinite; }
+@keyframes glowDrift { 0%, 100% { transform: translate(-8%, -4%) scale(1); } 50% { transform: translate(8%, 6%) scale(1.12); } }
+.shop-monogram { overflow: visible; }
+.shop-monogram-ring { fill: none; stroke: var(--b); stroke-width: 1.6; stroke-dasharray: 1; transform: rotate(-90deg); transform-origin: center;
+  animation: drawIn 1100ms cubic-bezier(0.23, 1, 0.32, 1) backwards; }
+.shop-monogram text { fill: #fff; font-family: var(--hf); font-weight: var(--hw); font-size: 34px; animation: fadeIn 500ms ease-out 450ms backwards; }
+.shop-hero-kicker { margin-top: 1.25rem; font-size: 0.8rem; color: var(--b); animation: fadeIn 500ms ease-out 200ms backwards; }
+.shop-hero-name { margin-top: 0.5rem; font-family: var(--hf); font-weight: var(--hw); font-size: clamp(2.5rem, 9vw, 5.25rem); line-height: 1; color: #fff; letter-spacing: -0.01em; }
+.is-ultra .shop-hero-name { font-size: clamp(3rem, 12vw, 7.5rem); }
+.shop-letter { display: inline-block; animation: letterIn 620ms cubic-bezier(0.23, 1, 0.32, 1) backwards; }
+@keyframes letterIn { from { opacity: 0; transform: translateY(0.35em) rotate(4deg); } }
+.shop-hero-tagline { margin-top: 1rem; max-width: 36rem; color: #f0f0f0; animation: fadeUp 600ms cubic-bezier(0.23, 1, 0.32, 1) 700ms backwards; }
+.shop-hero-meta { margin-top: 0.75rem; font-size: 0.85rem; color: #a1a4a5; animation: fadeIn 500ms ease-out 900ms backwards; }
+.shop-brand-card { border-color: color-mix(in srgb, var(--b) 35%, #292d30) !important; }
+
+/* Signatures Ultra */
+.sig { position: absolute; inset: 0; width: 100%; height: 100%; animation: fadeIn 900ms ease-out 300ms backwards; }
+.sig-vague { top: auto; height: 55%; }
+.sig-wave { fill: var(--b); }
+.sig-wave-0 { opacity: 0.14; animation: waveSlide 14s linear infinite; }
+.sig-wave-1 { opacity: 0.1; animation: waveSlide 20s linear infinite reverse; transform: translateY(30px); }
+.sig-wave-2 { opacity: 0.07; animation: waveSlide 28s linear infinite; transform: translateY(60px); }
+@keyframes waveSlide { from { translate: 0 0; } to { translate: -1200px 0; } }
+.sig-stars-turn { transform-origin: 50% 50%; transform-box: view-box; animation: frameTurn 90s linear infinite; }
+.sig-star { fill: var(--b); transform-box: fill-box; transform-origin: center; animation: twinkle 3s ease-in-out infinite; }
+.sig-link { fill: none; stroke: var(--b); stroke-width: 0.12; opacity: 0.35; }
+.sig-ribbons { overflow: hidden; }
+.sig-ribbon { position: absolute; left: -50%; width: 200%; height: 22%; border-radius: 9999px; filter: blur(18px);
+  background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--b) 55%, transparent), transparent); transform: rotate(-12deg); }
+.sig-ribbon-0 { top: 20%; opacity: 0.5; animation: ribbon 11s cubic-bezier(0.455, 0.03, 0.515, 0.955) infinite alternate; }
+.sig-ribbon-1 { top: 48%; opacity: 0.3; animation: ribbon 15s cubic-bezier(0.455, 0.03, 0.515, 0.955) infinite alternate-reverse; }
+.sig-ribbon-2 { top: 72%; opacity: 0.22; animation: ribbon 19s cubic-bezier(0.455, 0.03, 0.515, 0.955) infinite alternate; }
+@keyframes ribbon { from { transform: rotate(-12deg) translateX(-18%); } to { transform: rotate(-12deg) translateX(18%); } }
+.sig-pulse { display: flex; align-items: center; justify-content: center; }
+.sig-ring { position: absolute; width: 18rem; height: 18rem; border-radius: 9999px; border: 1px solid var(--b); opacity: 0;
+  animation: ringOut 4.4s cubic-bezier(0.215, 0.61, 0.355, 1) infinite; }
+@keyframes ringOut { 0% { transform: scale(0.3); opacity: 0.6; } 100% { transform: scale(2.6); opacity: 0; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .shop-hero *, .shop-hero-glow { animation: none !important; }
+  .sig-ring:first-child { opacity: 0.35; }
+}
+
 /* Mouvement réduit : tout s'affiche immédiatement. */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {

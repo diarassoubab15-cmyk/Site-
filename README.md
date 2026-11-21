@@ -70,6 +70,13 @@ Sécurité : les textes du vendeur sont insérés comme texte brut (jamais comme
 - **Modifications demandées par écrit** : sur la page d'un produit, le vendeur écrit ce qu'il veut changer (« baisse le prix à 15 000, ajoute que c'est fait main »). NEXORA prépare la modification (avec Claude si `ANTHROPIC_API_KEY` est renseignée ; sans clé, seul un nouveau prix est repris) et le vendeur voit l'avant → après. L'admin la retrouve dans `/admin` → **Modifications de fiche demandées**, corrige si besoin, puis applique ou refuse avec un message. Rien ne change sur la fiche sans lui. Champs concernés : nom, accroche, description, prix, prix barré, caractéristiques. Limites : 5 demandes en attente et 30 par mois par boutique. Le serveur a besoin de `SUPABASE_SERVICE_ROLE_KEY` pour enregistrer la proposition (sinon l'admin modifie à la main).
 - Prévu ensuite : modèle 3D généré par IA marqué « aperçu IA » et validé par l'admin.
 
+## Boutique animée (Pro) et Vitrine Ultra
+
+Dans « Ma boutique » → **Apparence de la boutique** (aperçu en direct) :
+- **Pro** : couleur de la marque (10 couleurs vives, lisibles sur fond noir) ; la page de la boutique s'ouvre sur un en-tête animé : monogramme qui se dessine, nom révélé lettre par lettre, halo qui dérive.
+- **Ultra (Vitrine Ultra)** : en plus, en-tête presque plein écran, **animation signature** au choix (Vague, Constellation, Ruban, Pulsation) et **police** du nom (Élégante, Moderne, Technique).
+- Sans choix de couleur, celle du type de boutique est utilisée. Les réglages peuvent être préparés à tout forfait et s'affichent dès que le forfait les inclut (migration 0014, listes fermées vérifiées par la base). Tout est fixe en « mouvement réduit ».
+
 ## Présentation animée des produits (Ultra)
 
 Pour les boutiques au forfait Ultra, chaque produit qui a une photo reçoit sur sa fiche une **présentation animée en motion design** (4 scènes façon « stories » : photo et nom, caractéristiques, prix, mosaïque et « Commander »), construite à partir des vraies photos et des informations du vendeur. Aucune IA, aucune 3D, rien à valider ni à payer par produit. Lecture seulement quand elle est visible ; toucher à gauche/droite, flèches du clavier, pause ; fixe en « mouvement réduit ». Le forfait public d'une boutique est lu par la fonction `shop_tier` (migration 0013), qui ne révèle rien d'autre de l'abonnement.

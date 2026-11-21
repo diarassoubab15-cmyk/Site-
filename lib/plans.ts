@@ -44,7 +44,7 @@ export const plans: Plan[] = [
     color: "#9281f7",
     features: [
       { text: "Tout le forfait Base" },
-      { text: "Boutique animée en motion design, aux couleurs de votre marque", soon: true },
+      { text: "Boutique animée en motion design, aux couleurs de votre marque" },
       { text: "3 vidéos animées par mois" },
       { text: "Statistiques de ventes et classement de votre boutique" },
       { text: "15 essais virtuels par client" },
@@ -61,7 +61,7 @@ export const plans: Plan[] = [
     color: "#e3b341",
     features: [
       { text: "Tout le forfait Pro" },
-      { text: "Vitrine Ultra : thème et animation signature créés pour votre boutique", soon: true },
+      { text: "Vitrine Ultra : en-tête plein écran, animation signature (4 styles) et police au choix" },
       { text: "À la une de votre catégorie et dans la page Award, chaque semaine", soon: true },
       { text: "Présentation animée en motion design de chaque produit, créée à partir de vos photos" },
       { text: "10 vidéos animées par mois" },

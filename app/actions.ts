@@ -743,3 +743,23 @@ export const tryOn = action<z.infer<typeof tryOnSchema>, { image: string; remain
     return fail("L'essayage n'a pas abouti. Votre essai n'est pas décompté : réessayez avec une photo de face, en pied, bien éclairée.");
   }
 });
+
+// ------------------------------------------------------------------ apparence de la boutique (Pro / Ultra)
+const shopThemeSchema = z.object({
+  brandColor: z.enum(["#ff5fa2", "#ff6b6b", "#ff9f43", "#e3b341", "#84cc16", "#3ad389", "#22d3ee", "#3b9eff", "#9281f7", "#e879f9"]).nullable(),
+  signature: z.enum(["vague", "constellation", "ruban", "pulsation"]).nullable(),
+  displayFont: z.enum(["serif", "sans", "mono"]).nullable(),
+});
+export const updateShopTheme = action(shopThemeSchema, async (f, { user, sb }) => {
+  const { data, error } = await sb
+    .from("shops")
+    .update({ brand_color: f.brandColor, signature: f.signature, display_font: f.displayFont })
+    .eq("owner_id", user.id)
+    .neq("status", "closed")
+    .select("slug")
+    .single();
+  if (error) return dbError(error);
+  revalidatePath(`/boutiques/${data.slug}`);
+  revalidatePath("/vendeur");
+  return { ok: true };
+});

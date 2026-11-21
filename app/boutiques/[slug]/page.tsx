@@ -10,7 +10,9 @@ import { VideoPlayer } from "@/components/VideoPlayer";
 import { ShopMap } from "@/components/ShopMap";
 import { getShopType } from "@/lib/shop-types";
 import { mapsEmbedUrl, telLink, waLink } from "@/lib/maps";
-import { allSlugs, getShopPage } from "@/lib/catalog";
+import { allSlugs, getShopPage, getShopTier } from "@/lib/catalog";
+import { ShopHero } from "@/components/ShopHero";
+import type { Signature } from "@/lib/shop-theme";
 import { formatDate, formatPrice } from "@/lib/format";
 import { absoluteUrl } from "@/lib/site";
 
@@ -35,13 +37,23 @@ export default async function ShopPage({ params }: Props) {
   const { shop, cards: items, rating, awards, video } = page;
   const type = shop.category ? getShopType(shop.category) : undefined;
   const place = [shop.district, shop.city, shop.country].filter(Boolean).join(", ");
+  // Boutique animée (Pro) et Vitrine Ultra : couleur de la marque, à défaut celle de son type de boutique.
+  const tier = await getShopTier(shop.slug);
+  const animated = tier === "pro" || tier === "business";
+  const brand = shop.brandColor ?? type?.color ?? "#9281f7";
   return (
     <section className="container-x py-16">
       <Breadcrumbs items={[{ name: "Accueil", href: "/" }, type ? { name: type.name, href: `/categories/${type.slug}` } : { name: "Boutiques", href: "/categories" }, { name: shop.name, href: `/boutiques/${shop.slug}` }]} />
-      <div className="card pop grid gap-8 md:grid-cols-[1fr_auto]">
+      {animated && (
+        <ShopHero
+          name={shop.name} tagline={shop.description || undefined} place={place} typeName={type?.name} color={brand} tier={tier!}
+          signature={shop.signature as Signature | undefined} font={shop.displayFont} verified={shop.verified}
+        />
+      )}
+      <div className={`card pop grid gap-8 md:grid-cols-[1fr_auto] ${animated ? "shop-brand-card" : ""}`} style={animated ? { ["--b" as string]: brand } : undefined}>
         <div>
           <div className="flex flex-wrap items-center gap-3">
-            <h1 className="text-3xl font-medium tracking-tight text-white">{shop.name}</h1>
+            {animated ? <h2 className="text-xl font-medium text-white">La boutique</h2> : <h1 className="text-3xl font-medium tracking-tight text-white">{shop.name}</h1>}
             {shop.verified && <span className="badge text-pulse">✓ vendeur vérifié</span>}
           </div>
           {awards.length > 0 && (

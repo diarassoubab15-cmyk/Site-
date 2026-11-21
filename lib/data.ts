@@ -30,6 +30,10 @@ export type Shop = {
   whatsapp?: string;
   callPhone?: string;
   samplePrices?: { name: string; price: number }[];
+  /** Apparence (Pro / Ultra) */
+  brandColor?: string;
+  signature?: string;
+  displayFont?: string;
 };
 
 export type Product = {
