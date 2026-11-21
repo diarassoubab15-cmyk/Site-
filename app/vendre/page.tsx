@@ -13,7 +13,7 @@ export const metadata: Metadata = {
 const how = [
   ["Demande", "Vous décrivez votre boutique en 4 étapes courtes. Le brouillon se sauvegarde tout seul."],
   ["Vérification", "L'administrateur vérifie votre identité et votre activité sous 24 à 48 h."],
-  ["Abonnement", "Une fois autorisé, vous réglez votre forfait en Mobile Money ou par carte."],
+  ["Abonnement", "Une fois autorisé, vous contactez l'administrateur sur WhatsApp ou par téléphone, puis vous réglez votre forfait par Orange Money."],
   ["Ventes", "Vos clients paient : l'argent arrive directement sur votre compte."],
 ];
 

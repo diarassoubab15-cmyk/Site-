@@ -12,7 +12,7 @@ export default function Conditions() {
       <h2>Vendeurs</h2>
       <p>Chaque boutique doit être autorisée par l&apos;administrateur avant de vendre. Elle peut être suspendue en cas de fraude, de non-livraison ou de refus de rembourser.</p>
       <h2>Abonnements</h2>
-      <p>Trois forfaits payants, sans engagement ni commission sur les ventes. Le premier prélèvement a lieu après l&apos;autorisation de la boutique. La fermeture de la boutique arrête tout prélèvement futur.</p>
+      <p>Trois forfaits payants, sans engagement ni commission sur les ventes, réglés par Orange Money. Le paiement n&apos;est possible qu&apos;après l&apos;autorisation de la boutique et un échange préalable avec l&apos;administrateur (WhatsApp ou téléphone). La boutique est visible pendant la période payée ; sans renouvellement, elle est masquée jusqu&apos;au paiement suivant. Aucun prélèvement automatique.</p>
       <h2>Protection acheteur</h2>
       <p>En cas de produit non reçu, l&apos;acheteur ouvre un litige sous 30 jours. Le vendeur dispose de 72 h pour rembourser ou prouver la livraison ; à défaut, l&apos;administrateur peut exiger le remboursement et suspendre le vendeur.</p>
       <h2>Paiement à la livraison</h2>

@@ -9,6 +9,7 @@ import { currentUser, supabaseServer, supabaseService } from "@/lib/supabase/ser
 import { slugify } from "@/lib/format";
 import { shopStatusDb, ticketKindDb, type ActionResult } from "@/lib/views";
 import type { SellerStatus } from "@/lib/demo-store";
+import { periodOf, rewardTitle, type RankingRow } from "@/lib/rewards";
 
 const PAYMENT = z.enum(["orange_money", "wave", "mtn_momo", "moov_money", "card", "cash_on_delivery"]);
 const PAYOUT = z.enum(["orange_money", "wave", "mtn_momo", "moov_money", "card", "bank"]);
@@ -279,3 +280,127 @@ export async function getBuyerContext(slug: string): Promise<{ loggedIn: boolean
   }
   return { loggedIn: true, known, reviewableOrderId };
 }
+
+// ------------------------------------------------------------------ abonnements (Orange Money, contact admin obligatoire)
+const PLAN = z.enum(["essentiel", "pro", "business"]);
+
+async function myShopId(sb: Awaited<ReturnType<typeof requireUser>>["sb"], userId: string) {
+  const { data } = await sb.from("shops").select("id").eq("owner_id", userId).neq("status", "closed").maybeSingle();
+  return data?.id ?? null;
+}
+
+/** Étape 1 : le vendeur demande à payer. Il devra ensuite contacter l'admin (WhatsApp ou appel). */
+export const requestSubscriptionPayment = action<{ plan: "essentiel" | "pro" | "business"; annual: boolean }, string>(
+  z.object({ plan: PLAN, annual: z.boolean() }),
+  async ({ plan, annual }, { user, sb }) => {
+    const shopId = await myShopId(sb, user.id);
+    if (!shopId) return fail("Aucune boutique active");
+    const { data, error } = await sb.from("subscription_payments").insert({ shop_id: shopId, plan, annual }).select("ref").single();
+    if (error) return fail(error.code === "23505" ? "Vous avez déjà une demande de paiement en cours." : error.message.split("\n")[0]);
+    revalidatePath("/vendeur");
+    return { ok: true, data: data.ref };
+  },
+);
+
+/** Étape 3 : après avoir payé, le vendeur saisit le numéro de transaction reçu par SMS. */
+export const declareSubscriptionPayment = action(
+  z.object({ id: z.string().uuid(), operatorRef: z.string().trim().min(4, "Numéro de transaction trop court").max(40), payerPhone: PHONE }),
+  async ({ id, operatorRef, payerPhone }, { sb }) => {
+    const { error } = await sb.from("subscription_payments").update({ status: "declared", operator_ref: operatorRef, payer_phone: payerPhone }).eq("id", id);
+    if (error) return fail(error.code === "23505" ? "Ce numéro de transaction a déjà été utilisé." : error.message.split("\n")[0]);
+    revalidatePath("/vendeur");
+    revalidatePath("/admin");
+    return { ok: true };
+  },
+);
+
+export const cancelSubscriptionPayment = action(z.object({ id: z.string().uuid() }), async ({ id }, { sb }) => {
+  const { error } = await sb.from("subscription_payments").update({ status: "rejected" }).eq("id", id);
+  if (error) return dbError(error);
+  revalidatePath("/vendeur");
+  return { ok: true };
+});
+
+/** Étape 2 (admin) : l'échange WhatsApp ou téléphonique a eu lieu ; le vendeur peut maintenant payer. */
+export const adminMarkContacted = action(z.object({ id: z.string().uuid() }), async ({ id }, { sb }) => {
+  const { error } = await sb.rpc("admin_mark_contacted", { p_payment: id });
+  if (error) return dbError(error);
+  revalidatePath("/admin");
+  return { ok: true };
+});
+
+/** Étape 4 (admin) : argent reçu sur Orange Money, l'abonnement est prolongé et la boutique devient visible. */
+export const adminConfirmPayment = action(z.object({ id: z.string().uuid() }), async ({ id }, { sb }) => {
+  const { error } = await sb.rpc("admin_confirm_payment", { p_payment: id });
+  if (error) return dbError(error);
+  revalidatePath("/admin");
+  revalidatePath("/", "layout");
+  return { ok: true };
+});
+
+export const adminRejectPayment = action(z.object({ id: z.string().uuid(), note: z.string().trim().max(500).optional() }), async ({ id, note }, { sb }) => {
+  const { error } = await sb.rpc("admin_reject_payment", { p_payment: id, p_note: note || undefined });
+  if (error) return dbError(error);
+  revalidatePath("/admin");
+  return { ok: true };
+});
+
+// ------------------------------------------------------------------ récompenses (admin seul)
+
+const KIND = z.enum(["month", "semester", "year"]);
+
+/** Classement d'une période. La base refuse l'appel si l'utilisateur n'est pas l'admin. */
+export async function adminRanking(raw: unknown): Promise<ActionResult<RankingRow[]>> {
+  const parsed = z.object({ kind: KIND, key: z.string().max(10) }).safeParse(raw);
+  if (!parsed.success) return fail("Période invalide");
+  const period = periodOf(parsed.data.kind, parsed.data.key);
+  if (!period) return fail("Période invalide");
+  const u = await currentUser();
+  if (!u) return fail("Connectez-vous", true);
+  const { data, error } = await u.sb.rpc("admin_seller_ranking", { p_from: period.from, p_to: period.to });
+  if (error) return dbError(error);
+  return {
+    ok: true,
+    data: (data ?? []).map((r) => ({
+      shopId: r.shop_id, shopName: r.shop_name, owner: r.owner_name ?? "", phone: r.contact_phone ?? "",
+      delivered: r.delivered, revenue: Number(r.revenue), rating: r.rating === null ? null : Number(r.rating), reviews: r.reviews, disputes: r.disputes,
+    })),
+  };
+}
+
+export const adminGrantReward = action(
+  z.object({
+    shopId: z.string().uuid(),
+    kind: z.enum(["month", "semester", "year", "gift"]),
+    periodKey: z.string().max(10).optional(),
+    freeMonths: z.number().int().min(0).max(12),
+    startMonth: z.string().regex(/^\d{4}-\d{2}$/).optional(), // mois choisi (ex. 2027-01) ; absent = à la suite de l'abonnement
+    title: z.string().trim().min(2).max(120).optional(), // pour un cadeau libre
+    note: z.string().trim().max(500).optional(),
+  }),
+  async (r, { sb }) => {
+    let title = r.title ?? "Mois offerts par NEXORA";
+    let periodKey = "gift";
+    if (r.kind !== "gift") {
+      if (!r.periodKey || !periodOf(r.kind, r.periodKey)) return fail("Période invalide");
+      periodKey = r.periodKey;
+      title = rewardTitle(r.kind, r.periodKey);
+    }
+    const { error } = await sb.rpc("admin_grant_reward", {
+      p_shop: r.shopId, p_kind: r.kind, p_period_key: periodKey, p_title: title, p_free_months: r.freeMonths,
+      p_start: r.startMonth ? `${r.startMonth}-01` : undefined, p_note: r.note || undefined,
+    });
+    if (error) return dbError(error);
+    revalidatePath("/admin");
+    revalidatePath("/", "layout");
+    return { ok: true };
+  },
+);
+
+export const adminRevokeReward = action(z.object({ id: z.string().uuid(), note: z.string().trim().max(500).optional() }), async ({ id, note }, { sb }) => {
+  const { error } = await sb.rpc("admin_revoke_reward", { p_reward: id, p_note: note || undefined });
+  if (error) return dbError(error);
+  revalidatePath("/admin");
+  revalidatePath("/", "layout");
+  return { ok: true };
+});

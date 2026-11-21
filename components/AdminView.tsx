@@ -8,6 +8,8 @@ import { toast } from "@/lib/toast";
 import type { LiveAdmin } from "@/lib/views";
 import { adminResolveTicket, adminSetShopStatus } from "@/app/actions";
 import { CountUp } from "./CountUp";
+import { AdminPayments } from "./AdminPayments";
+import { AdminRewards } from "./AdminRewards";
 
 const tabs: { id: SellerStatus | "tous"; label: string }[] = [
   { id: "en attente", label: "À vérifier" },
@@ -32,6 +34,8 @@ export function AdminView({ live }: { live?: LiveAdmin | null }) {
   const list = sellers.filter((s) => tab === "tous" || s.status === tab);
   const count = (st: SellerStatus) => sellers.filter((s) => s.status === st).length;
   const openTickets = tickets.filter((t) => t.status !== "résolu");
+  const payments = supabaseEnabled ? live?.payments ?? [] : demo.subPayments;
+  const paymentsToHandle = payments.filter((p) => p.status === "contact" || p.status === "déclaré").length;
 
   function run(real: () => Promise<{ ok: boolean; error?: string }>, fake: () => void, success = "Enregistré") {
     setError("");
@@ -73,13 +77,17 @@ export function AdminView({ live }: { live?: LiveAdmin | null }) {
     <div className="space-y-10">
       {error && <p className="rounded-[6px] border border-alarm/40 px-4 py-3 text-sm text-alarm" role="alert">{error}</p>}
       <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-        {([["À vérifier", count("en attente"), "text-amber"], ["Vendeurs autorisés", count("autorisé"), "text-pulse"], ["Suspendus", count("suspendu"), "text-alarm"], ["Litiges ouverts", openTickets.length, "text-iris-glow"]] as const).map(([l, n, c]) => (
+        {([["À vérifier", count("en attente"), "text-amber"], ["Vendeurs autorisés", count("autorisé"), "text-pulse"], ["Paiements à traiter", paymentsToHandle, "text-sky"], ["Litiges ouverts", openTickets.length, "text-iris-glow"]] as const).map(([l, n, c]) => (
           <div key={l} className="card p-5">
             <p className="text-xs text-ash">{l}</p>
             <p className={`mt-2 font-mono text-3xl ${c}`}><CountUp value={n} /></p>
           </div>
         ))}
       </div>
+
+      <AdminPayments live={live?.payments} />
+
+      <AdminRewards live={live?.rewards} sellers={sellers} />
 
       <section className="card" aria-labelledby="vendeurs">
         <h2 id="vendeurs" className="text-xl font-medium text-white">Vendeurs</h2>

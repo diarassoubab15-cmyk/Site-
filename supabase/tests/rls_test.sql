@@ -37,6 +37,13 @@ insert into products (id, shop_id, slug, name, category, price, stock, wholesale
 select count(*) as produits_vendeur from products;
 
 select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-00000000000c',false);
+\echo '--- T5c commande dans une boutique autorisée mais NON payée (doit échouer)'
+insert into orders (buyer_id, shop_id, product_id, qty, total, method, shipping_name, shipping_phone, shipping_city)
+ values ('00000000-0000-0000-0000-00000000000c','11111111-1111-1111-1111-111111111111','22222222-2222-2222-2222-222222222222',1,1,'cash_on_delivery','C','+221','Dakar');
+-- l'abonnement est payé (confirmé par l'admin)
+reset role;
+insert into subscriptions (shop_id, plan, active, current_period_end) values ('11111111-1111-1111-1111-111111111111','pro',true, now() + interval '1 month');
+set role authenticated;
 \echo '--- T6 acheteur commande avec un total truqué à 1 FCFA'
 insert into orders (id, buyer_id, shop_id, product_id, qty, total, method, shipping_name, shipping_phone, shipping_city)
  values ('33333333-3333-3333-3333-333333333333','00000000-0000-0000-0000-00000000000c','11111111-1111-1111-1111-111111111111','22222222-2222-2222-2222-222222222222',3,1,'cash_on_delivery','C','+221','Dakar');

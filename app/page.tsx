@@ -200,7 +200,7 @@ export default async function Home() {
       <section className="container-x">
         <div className="rounded-[24px] border border-line px-6 py-16 text-center sm:px-16" style={{ background: "linear-gradient(rgb(27,27,27), rgb(3,3,3))" }}>
           <h2 className="font-display text-4xl leading-none text-white sm:text-[77px]">Votre boutique, ce soir.</h2>
-          <p className="mx-auto mt-6 max-w-lg text-ash">À partir de 4 900 FCFA par mois, sans commission. Payable en Orange Money, Wave ou carte.</p>
+          <p className="mx-auto mt-6 max-w-lg text-ash">À partir de 4 900 FCFA par mois, sans commission. Payable en Orange Money.</p>
           <div className="mt-10 flex flex-wrap justify-center gap-3">
             <Link href="/vendre" className="btn-solid">Demander mon ouverture</Link>
             <Link href="/tarifs" className="btn">Voir les tarifs</Link>

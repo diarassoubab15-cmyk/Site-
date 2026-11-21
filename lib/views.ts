@@ -2,7 +2,7 @@
  * Correspondance entre les statuts de la base (anglais) et ceux affichés (français),
  * partagée par le serveur et les composants.
  */
-import type { DemoOrder, DemoSeller, SellerStatus, Ticket } from "./demo-store";
+import type { DemoOrder, DemoSeller, DemoSubPayment, SellerStatus, SubPaymentStatus, Ticket } from "./demo-store";
 
 export const orderStatusFr: Record<string, DemoOrder["status"]> = {
   pending_payment: "en attente de paiement",
@@ -27,6 +27,14 @@ export const ticketKindFr: Record<string, Ticket["kind"]> = { contact: "contact"
 export const ticketKindDb = { contact: "contact", signalement: "report", remboursement: "refund" } as const;
 export const ticketStatusFr: Record<string, Ticket["status"]> = { open: "ouvert", in_progress: "en cours", resolved: "résolu" };
 
+export const subPaymentStatusFr: Record<string, SubPaymentStatus> = {
+  contact_pending: "contact",
+  awaiting_payment: "paiement",
+  declared: "déclaré",
+  confirmed: "confirmé",
+  rejected: "refusé",
+};
+
 export type ActionResult<T = undefined> = { ok: true; data?: T } | { ok: false; error: string; login?: boolean };
 
 /** Données réelles passées par le serveur aux composants (mode Supabase). */
@@ -42,6 +50,16 @@ export type LiveSeller = {
   payouts: { id: string; type: string; label: string; masked: string }[];
   orders: (DemoOrder & { buyer: string; city: string; phone: string })[];
   prefs: import("./demo-store").NotificationPrefs;
+  subscription: { plan: string; annual: boolean; active: boolean; until: string | null } | null;
+  /** Dernière demande de paiement (en cours, ou la plus récente). */
+  payment: DemoSubPayment | null;
+  /** Coordonnées Orange Money : envoyées par le serveur UNIQUEMENT après le contact avec l'admin. */
+  payInfo: { number: string; name: string } | null;
+  owner: { name: string; phone: string };
+  /** Fin de couverture : abonnement payé prolongé par les mois offerts. */
+  coveredUntil: string | null;
+  rewards: import("./rewards").RewardView[];
+  stats: { delivered: number; revenue: number; openOrders: number; rating: number | null; reviews: number; rank: number | null; competitors: number } | null;
 };
 
-export type LiveAdmin = { sellers: DemoSeller[]; tickets: (Ticket & { shopId?: string })[] };
+export type LiveAdmin = { sellers: DemoSeller[]; tickets: (Ticket & { shopId?: string })[]; payments: DemoSubPayment[]; rewards: import("./rewards").RewardView[] };

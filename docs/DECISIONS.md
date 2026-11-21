@@ -27,6 +27,20 @@
 - Sécurité vérifiée dans la base elle-même (triggers + RLS), pas seulement dans le site : 14 scénarios d'attaque dans `supabase/tests`.
 - Comme l'argent va au vendeur, NEXORA ne peut pas rembourser elle-même : elle impose le délai et sanctionne. C'est expliqué au client, qui peut choisir le paiement à la livraison.
 
+## Paiement des abonnements (novembre 2026)
+- Par Orange Money, vers le compte de l'admin. Décision du propriétaire : **le vendeur doit obligatoirement contacter l'admin (WhatsApp ou appel) avant tout paiement** ; sans ce contact, ça ne marche pas.
+- Appliqué par la base (table subscription_payments, étapes verrouillées) et non par le seul affichage.
+- Le numéro Orange Money de l'admin est une variable serveur, envoyée au vendeur uniquement après le contact.
+- Une boutique n'est visible que si elle est autorisée ET que l'abonnement est payé et non expiré.
+- Agrégateurs étudiés : CinetPay (retraits vers Orange Mali pas encore ouverts), PayDunya (2e choix), Orange Money Business en direct (1er choix, réponse d'Orange Mali attendue).
+
+## Récompenses (novembre 2026)
+- Meilleur vendeur du mois, du semestre et de l'année : classement par ventes LIVRÉES (pas les commandes annulées ou en litige) ; note et litiges affichés à titre d'aide.
+- L'admin seul désigne le gagnant et offre des mois gratuits (mois précis ou à la suite de l'abonnement) ; il peut aussi offrir des mois hors classement et retirer une récompense. Fonctions SQL réservées à is_admin(), aucune écriture directe possible.
+- Mois offerts = couverture d'abonnement (shop_covered_until) ; boutique en ligne si autorisée ET couverte.
+- Mini tableau de bord par boutique dans /vendeur, propre au vendeur ; l'admin ne le pilote pas (il garde seulement l'arbitrage des litiges et l'autorisation/suspension).
+- La demande mentionnait aussi « meilleur de la semaine » : non retenu (mois, semestre, année), à confirmer avec le propriétaire.
+
 ## Animations et 3D (skill animations-3d-nexora)
 - Couleurs : on garde noir + violet (choix du propriétaire), pas la charte bleu/orange du skill.
 - Écran d'ouverture 1,3 s, une fois par session, piloté par un script intégré (lib/motion-script.ts) et non par React,

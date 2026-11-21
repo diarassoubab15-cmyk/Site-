@@ -7,9 +7,10 @@ export const site = {
   locale: "fr_FR",
   support: {
     email: "support@nexora.example",
-    // Numéro d'exemple : à remplacer par le vrai numéro WhatsApp du SAV
-    whatsapp: "+2250700000000",
-    phoneDisplay: "+225 07 00 00 00 00",
+    // Numéro WhatsApp et téléphone de l'administrateur (variables NEXT_PUBLIC_ADMIN_* ; valeurs d'exemple sinon)
+    whatsapp: process.env.NEXT_PUBLIC_ADMIN_WHATSAPP ?? "+22370000000",
+    phone: process.env.NEXT_PUBLIC_ADMIN_PHONE ?? process.env.NEXT_PUBLIC_ADMIN_WHATSAPP ?? "+22370000000",
+    phoneDisplay: process.env.NEXT_PUBLIC_ADMIN_PHONE_DISPLAY ?? "+223 70 00 00 00",
     hours: "7 j/7, de 8 h à 20 h (GMT)",
     firstResponse: "moins de 2 heures",
   },

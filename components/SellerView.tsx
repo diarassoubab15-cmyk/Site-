@@ -3,6 +3,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { NotificationPrefs } from "./NotificationPrefs";
+import { SubscriptionPanel } from "./SubscriptionPanel";
+import { SellerStats } from "./SellerStats";
 import { plans } from "@/lib/plans";
 import { formatPrice } from "@/lib/format";
 import { paymentMethods, type PaymentMethodId } from "@/lib/payments";
@@ -107,10 +109,12 @@ export function SellerView({ live }: { live?: LiveSeller | null }) {
           <h2 className="mt-2 text-2xl font-medium text-white">{shop.shopName}</h2>
           <p className="mt-3 flex items-center gap-2 text-sm text-bone"><span className={`h-2 w-2 rounded-full ${dot}`} />{label}</p>
           {!supabaseEnabled && shop.status === "en attente" && <p className="mt-4 text-xs text-iron">Démo : ouvrez <Link href="/admin" className="link">/admin</Link> pour autoriser cette boutique.</p>}
-          {plan && !closed && (
-            <p className="mt-6 text-sm text-ash">Forfait <span className="text-white">{plan.name}</span> · <span className="font-mono">{formatPrice(plan.monthly)}</span>/mois · {shop.status === "autorisé" ? "actif" : "démarre après autorisation"}</p>
-          )}
+          {plan && !closed && <p className="mt-6 text-sm text-ash">Forfait choisi : <span className="text-white">{plan.name}</span></p>}
         </section>
+
+        {!closed && <SellerStats shop={shop} live={live} />}
+
+        {!closed && <SubscriptionPanel shop={shop} live={live} />}
 
         {supabaseEnabled && shop.status === "autorisé" && (
           <section className="card" aria-labelledby="cmdv">
