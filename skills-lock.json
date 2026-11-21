@@ -1,0 +1,21 @@
+{
+  "version": 2,
+  "skills": {
+    "find-skills": {
+      "source": "vercel-labs/skills",
+      "commit": "57217cf86ba38148a57af9e90d14a4c049558330",
+      "sourceType": "github",
+      "skillPath": "skills/find-skills/SKILL.md",
+      "computedHash": "7bc223e2aafbdbf6e50ea243ba6ef67fe432bb069ab439fea0390795dac0bf7f",
+      "installMode": "copy"
+    },
+    "website-builder": {
+      "source": "flowkit-labs/skills",
+      "commit": "90c852bee7aaf90a914b0ac066264a12690ed8ac",
+      "sourceType": "github",
+      "skillPath": "website-builder/SKILL.md",
+      "computedHash": "118c133fa188ed027c3f50b3b5deca9ed1006be9ed64ed7f7c129ba353a705a4",
+      "installMode": "copy"
+    }
+  }
+}
