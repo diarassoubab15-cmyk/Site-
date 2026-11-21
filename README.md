@@ -36,9 +36,11 @@ Copier `.env.example` en `.env.local` et remplir les valeurs.
 | Où | Quoi | Poids |
 |---|---|---|
 | Toutes les pages | écran d'ouverture (1 fois par session), cartes en cascade au défilement, onde et enfoncement des boutons, transition entre pages, notifications | ≈ 2 Ko (script intégré) + CSS |
-| Accueil, ordinateur capable | cube 3D Three.js qui suit le pointeur | 137 Ko compressés, chargés en différé |
-| Téléphone, appareil modeste, économie de données | cube en CSS pur, aucune 3D téléchargée | 0 Ko |
+| Accueil, ordinateur avec carte graphique | logo NEXORA en verre 3D (Three.js : réfraction, dispersion, irisation), qui suit le pointeur | 142 Ko compressés, chargés en différé |
+| Téléphone, appareil modeste, ordinateur sans carte graphique, économie de données | logo « verre » en SVG, aucune 3D téléchargée | 0 Ko |
 | Mouvement réduit (réglage système) | ni ouverture, ni 3D, tout s'affiche directement | — |
+
+Si le verre 3D descend sous ~18 images/s une fois affiché, il s'arrête seul et le logo SVG reprend sa place. `/?verre=force` l'affiche sur n'importe quelle machine (contrôle visuel).
 
 ## Deux modes de fonctionnement
 

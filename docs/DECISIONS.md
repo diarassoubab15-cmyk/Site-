@@ -47,7 +47,10 @@
   pour finir à l'heure même sur téléphone lent. Jamais sur /admin, /vendeur, /compte, /connexion, ni en mouvement réduit.
 - Apparition des cartes au défilement en CSS + IntersectionObserver ([data-reveal]) : sans JavaScript, rien n'est caché.
 - 3D (Three.js, sans React Three Fiber) uniquement sur la bannière d'accueil, chargée en différé, seulement sur
-  ordinateur capable (≥ 1024 px, ≥ 4 Go, ≥ 4 cœurs, pas d'économie de données). Sinon : cube CSS.
+  ordinateur capable (≥ 1024 px, ≥ 4 Go, ≥ 4 cœurs, pas d'économie de données, vraie carte graphique). Sinon : logo SVG.
+- Novembre 2026 : le cube est remplacé par le logo NEXORA en verre, d'après le skill « Premium 3D Glass » fourni par le
+  propriétaire (verre, studio, extrusion biseautée). Seuls ces réglages sont repris, pas le site vitrine du skill ni sa
+  copie de Three.js r160 ; dispersion native de Three.js r187. Surveillance des images/s avec retour au SVG si lent.
 - Pas de GSAP ni de Framer Motion : aucun besoin qui le justifie, 0 Ko ajouté.
 
 ## Historique
