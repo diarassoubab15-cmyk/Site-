@@ -17,8 +17,8 @@ const MEDAL = ["#e3b341", "#c9cdd3", "#c47f45"];   // or, argent, bronze
 
 function Medal({ rank }: { rank: number }) {
   return (
-    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border font-mono text-xs" style={{ borderColor: MEDAL[rank], color: MEDAL[rank] }} aria-label={`${rank + 1}e`}>
-      {rank + 1}
+    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border font-mono text-xs" style={{ borderColor: MEDAL[rank], color: MEDAL[rank] }}>
+      <span aria-hidden="true">{rank + 1}</span><span className="sr-only">{rank === 0 ? "1er" : `${rank + 1}e`}</span>
     </span>
   );
 }

@@ -12,7 +12,7 @@
   --color-bone: #f0f0f0;
   --color-ash: #a1a4a5;
   --color-smoke: #abafb4;
-  --color-iron: #6e727a;
+  --color-iron: #7c8088; /* 5,3:1 sur noir (AA) ; avant #6e727a = 4,35:1 */
   --color-charcoal: #464a4d;
   --color-lift: #0b0e14;
   --color-iris: #9281f7;

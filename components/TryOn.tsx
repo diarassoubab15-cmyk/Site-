@@ -1,5 +1,6 @@
 "use client";
 import Link from "next/link";
+import { useDialog } from "@/lib/use-dialog";
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { addToCart } from "@/lib/cart";
@@ -23,6 +24,7 @@ const toDataUrl = (blob: Blob) =>
  */
 export function TryOn({ shopSlug, shopName, color, items, initial }: { shopSlug: string; shopName: string; color: string; items: TryOnItem[]; initial: string }) {
   const [open, setOpen] = useState(false);
+  const dlg = useDialog<HTMLDivElement>(open);
   const [picked, setPicked] = useState<string[]>([initial]);
   const [consent, setConsent] = useState(false);
   const [status, setStatus] = useState<Status | null>(null);
@@ -79,7 +81,7 @@ export function TryOn({ shopSlug, shopName, color, items, initial }: { shopSlug:
         <span aria-hidden="true">✦</span> Essayer sur ma photo
       </button>
       {open && createPortal(
-        <div role="dialog" aria-modal="true" aria-label="Essayage virtuel" className="fixed inset-0 z-[95] flex flex-col bg-black" style={{ ["--c" as string]: color }}>
+        <div ref={dlg} role="dialog" aria-modal="true" aria-label="Essayage virtuel" className="fixed inset-0 z-[95] flex flex-col bg-black" style={{ ["--c" as string]: color }}>
           <div className="flex items-center justify-between gap-3 border-b border-line p-3 text-sm">
             <span className="truncate text-white">Essayage virtuel · <span style={{ color }}>{shopName}</span></span>
             <button type="button" className="btn shrink-0 px-3 py-1.5" disabled={phase === "working"} onClick={() => setOpen(false)}>Fermer</button>
@@ -138,6 +140,7 @@ export function TryOn({ shopSlug, shopName, color, items, initial }: { shopSlug:
                   </div>
                   {phase === "result" && (
                     <>
+                      <p className="sr-only" role="status">Rendu de l&apos;essayage prêt.</p>
                       <p className="text-center text-xs text-iron">Rendu généré par IA, pour vous faire une idée : les couleurs et la coupe réelles peuvent varier légèrement.</p>
                       <div className="flex flex-wrap justify-center gap-2">
                         <button type="button" className="btn" onPointerDown={() => setShowBefore(true)} onPointerUp={() => setShowBefore(false)} onPointerLeave={() => setShowBefore(false)} onKeyDown={(e) => e.key === " " && setShowBefore(true)} onKeyUp={() => setShowBefore(false)}>

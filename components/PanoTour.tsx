@@ -1,11 +1,13 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
+import { useDialog } from "@/lib/use-dialog";
 import { createPortal } from "react-dom";
 import type { PanoHandle } from "@/lib/pano-scene";
 
 /** Visite 360° pièce par pièce, en plein écran. La visionneuse n'est téléchargée qu'à l'ouverture. */
 export function PanoTour({ panos, title }: { panos: { url: string; label: string }[]; title: string }) {
   const [open, setOpen] = useState(false);
+  const dlg = useDialog<HTMLDivElement>(open);
   const [room, setRoom] = useState(0);
   const [state, setState] = useState<"loading" | "ready" | "flat" | "error">("loading");
   const [hint, setHint] = useState(true);
@@ -51,7 +53,7 @@ export function PanoTour({ panos, title }: { panos: { url: string; label: string
       </button>
       {/* Rendu à la racine du document : aucune colonne collante ni animation ne peut l'enfermer. */}
       {open && createPortal(
-        <div role="dialog" aria-modal="true" aria-label={`Visite 360° : ${title}`} className="fixed inset-0 z-[95] flex flex-col bg-black">
+        <div ref={dlg} role="dialog" aria-modal="true" aria-label={`Visite 360° : ${title}`} className="fixed inset-0 z-[95] flex flex-col bg-black">
           <div className="flex items-center justify-between gap-3 p-3 text-sm">
             <span className="truncate text-white">{title} · <span className="text-iris-glow">{panos[room].label}</span></span>
             <button type="button" className="btn shrink-0 px-3 py-1.5" onClick={() => setOpen(false)}>Fermer</button>

@@ -22,7 +22,7 @@ Copier `.env.example` en `.env.local` et remplir les valeurs.
 | `/marketplace`, `/marketplace/[catégorie]` | Catalogue, recherche (URL partageable `?q=`) |
 | `/produits/[slug]` | Fiche produit, commande, avis vérifiés |
 | `/boutiques/[slug]` | Page vendeur, signalement |
-| `/tarifs` | 3 forfaits payants (Essentiel, Pro, Business), mensuel / annuel |
+| `/tarifs` | 3 forfaits : Base 15 000, Pro 25 000, Ultra 50 000 FCFA/mois (annuel : 2 mois offerts) ; ce qui n'est pas encore construit est marqué « bientôt » |
 | `/vendre` | Demande d'ouverture en 4 étapes (brouillon auto) |
 | `/connexion` | Code par e-mail ou SMS, Google. Sans mot de passe |
 | `/compte` | Commandes, « J'ai reçu » / « Pas reçu », SAV, notifications, export / suppression |
@@ -32,16 +32,18 @@ Copier `.env.example` en `.env.local` et remplir les valeurs.
 | `/support` | WhatsApp, e-mail, formulaire vers l'admin, protection acheteur |
 | `/securite`, `/confidentialite`, `/conditions` | Informations (textes légaux à faire relire) |
 
-## Animations
+## Accueil et pages principales (motion design)
 
-| Où | Quoi | Poids |
-|---|---|---|
-| Toutes les pages | écran d'ouverture (1 fois par session), cartes en cascade au défilement, onde et enfoncement des boutons, transition entre pages, notifications | ≈ 2 Ko (script intégré) + CSS |
-| Accueil, ordinateur avec carte graphique | logo NEXORA en verre 3D (Three.js : réfraction, dispersion, irisation), qui suit le pointeur | 142 Ko compressés, chargés en différé |
-| Téléphone, appareil modeste, ordinateur sans carte graphique, économie de données | logo « verre » en SVG, aucune 3D téléchargée | 0 Ko |
-| Mouvement réduit (réglage système) | ni ouverture, ni 3D, tout s'affiche directement | — |
+| Où | Quoi |
+|---|---|
+| `/` | Logo NEXORA en motion design : il se dessine, son cadre tourne, quatre points (les couleurs des pages) gravitent. Il tourne au doigt (glisser : élan conservé, puis retour droit avec un ressort ; toucher ou Entrée : un tour). En glissant vers le bas : les pages, chacune encadrée et animée dans sa couleur. |
+| `/award` (or sur noir) | Le logo tourne sur lui-même en passant à l'or, une onde dorée s'ouvre sur le palmarès (boutiques du mois, du semestre, de l'année) et les 3 meilleures boutiques et produits de chaque catégorie (avis vérifiés, moyenne lissée). |
+| `/categories` (violet) | 8 types de boutiques, chacun sa couleur et son animation : Vêtements, Technologie, Immobilier, Automobile, Meubles & déco, Beauté, Épicerie, Vente en gros. `/categories/[type]` : boutiques de A à Z avec index par lettre. |
+| `/vendre` « Créer ma boutique » (vert) | 5 étapes avec aperçu en direct : nom, type, quelques prix ; pays, ville, quartier, boutique physique (lien Google Maps ou « Ma position actuelle ») ; WhatsApp et numéro d'appel ; encaissement ; forfait. |
+| `/reglages` (bleu, connexion obligatoire) | Moyen de paiement préféré (présélectionné à chaque achat), panier (commande de tout le panier en une fois), historique d'achats. |
+| « Ma boutique » / « Admin » | Tuiles en plus : la boutique pour un vendeur, l'administration pour le fondateur seulement. |
 
-Si le verre 3D descend sous ~18 images/s une fois affiché, il s'arrête seul et le logo SVG reprend sa place. `/?verre=force` l'affiche sur n'importe quelle machine (contrôle visuel).
+Animations : transform et opacité seulement, durées courtes, courbes ease-out ; toutes coupées en « mouvement réduit » ; sans JavaScript, tout reste visible. Plus de 3D décorative : Three.js ne sert qu'à la visite 360° (chargé à l'ouverture de la visite). Environ 114 Ko de JavaScript sur l'accueil mobile.
 
 ## Vidéos (HyperFrames)
 
@@ -50,7 +52,7 @@ Les vidéos animées sont fabriquées avec [HyperFrames](https://github.com/heyg
 **Accueil et catégories** : `npm run videos:site` (ou `npm run videos:site -- accueil mode`) régénère `public/videos/*.mp4` et leurs couvertures. Les textes sont dans `videos/site-videos.ts`. Environ 250 Ko par vidéo de 12 s, 20 s de fabrication.
 
 **Vidéo de chaque boutique** :
-1. Dans `/vendeur`, le vendeur décrit son activité. Quota mensuel : Essentiel 1, Pro 3, Business 10.
+1. Dans `/vendeur`, le vendeur décrit son activité. Quota mensuel : Base 1, Pro 3, Ultra 10.
 2. Le programme de fabrication `npm run videos:worker` (en continu, ou `-- --once`) prend la demande, rédige le scénario (avec Claude si `ANTHROPIC_API_KEY` est renseignée, sinon sans IA), rend la vidéo avec le modèle `videos/template/` et la dépose dans le stockage Supabase `shop-videos`.
 3. L'admin la voit dans `/admin` → **Vidéos de boutique**, la publie ou la refuse. Rien n'est publié sans lui.
 4. La vidéo publiée s'affiche sur la page de la boutique.
@@ -67,6 +69,14 @@ Sécurité : les textes du vendeur sont insérés comme texte brut (jamais comme
 - **Rotation 360° des objets** (toutes les catégories sauf l'immobilier) : le vendeur pose l'objet sur un fond uni et prend 24 à 36 photos en tournant autour. Il les envoie d'un coup ; elles sont rangées dans l'ordre de prise de vue (nom des fichiers, IMG_2 avant IMG_10). À partir de 8 photos, la fiche affiche « Rotation 360° » : l'acheteur fait tourner l'objet au doigt, au curseur ou aux flèches du clavier. Aucune 3D : on affiche la bonne photo, ce qui fonctionne sur tous les téléphones. Les photos ne sont téléchargées qu'à l'ouverture (24 photos ≈ 1 Mo). Bouton « Tout supprimer » pour refaire la série.
 - **Modifications demandées par écrit** : sur la page d'un produit, le vendeur écrit ce qu'il veut changer (« baisse le prix à 15 000, ajoute que c'est fait main »). NEXORA prépare la modification (avec Claude si `ANTHROPIC_API_KEY` est renseignée ; sans clé, seul un nouveau prix est repris) et le vendeur voit l'avant → après. L'admin la retrouve dans `/admin` → **Modifications de fiche demandées**, corrige si besoin, puis applique ou refuse avec un message. Rien ne change sur la fiche sans lui. Champs concernés : nom, accroche, description, prix, prix barré, caractéristiques. Limites : 5 demandes en attente et 30 par mois par boutique. Le serveur a besoin de `SUPABASE_SERVICE_ROLE_KEY` pour enregistrer la proposition (sinon l'admin modifie à la main).
 - Prévu ensuite : modèle 3D généré par IA marqué « aperçu IA » et validé par l'admin.
+
+## Essayage virtuel des vêtements
+
+Sur un vêtement qui a une photo : « Essayer sur ma photo ». Le client choisit un ensemble (1 à 3 pièces de la boutique, encadrées dans sa couleur), accepte que sa photo serve à cet essai, touche « Tester », choisit une photo dans sa galerie : le rendu est généré automatiquement (avant/après, ensemble ajouté au panier en un geste).
+
+- Essais par client et par boutique : **Base 5, Pro 15, Ultra illimité** ; un essai raté est rendu (migration 0012).
+- La photo est compressée sur le téléphone, transmise au service d'IA pour cet essai, **jamais conservée** par NEXORA.
+- Service d'IA à brancher : `TRYON_PROVIDER=http`, `TRYON_ENDPOINT`, `TRYON_API_KEY` (format décrit dans `lib/tryon.ts`). Sans réglage, l'essayage est annoncé « bientôt » et aucun essai n'est décompté. `TRYON_PROVIDER=mock` : tests uniquement (superposition, sans IA).
 
 ## Deux modes de fonctionnement
 
@@ -110,7 +120,7 @@ Copier les clés affichées dans `.env.local` (`NEXT_PUBLIC_SUPABASE_URL`, `NEXT
    ```
    La base n'accepte qu'un seul admin.
 
-### Paiement des abonnements (Orange Money, contact obligatoire)
+### Paiement des abonnements (Mobile Money, contact obligatoire)
 
 1. L'admin autorise la boutique. Elle reste **invisible** tant que l'abonnement n'est pas payé.
 2. Le vendeur choisit son forfait dans `/vendeur` : le site lui demande de **contacter l'admin** (WhatsApp prérempli avec la référence, ou appel). Aucune coordonnée de paiement n'est affichée.
@@ -119,6 +129,8 @@ Copier les clés affichées dans `.env.local` (`NEXT_PUBLIC_SUPABASE_URL`, `NEXT
 5. L'admin vérifie le SMS sur son téléphone et clique « Paiement reçu » : boutique visible pour 1 mois (ou 1 an). À l'échéance, elle est masquée jusqu'au paiement suivant.
 
 Sans l'étape 3, la base refuse toute déclaration de paiement. Montants calculés par la base, un numéro de transaction ne sert qu'une fois, une seule demande en cours par boutique.
+
+Opérateurs : Orange Money toujours proposé ; Wave, MTN MoMo et Moov Money dès que leur numéro est renseigné côté serveur (`ADMIN_WAVE_NUMBER`, `ADMIN_MTN_MOMO_NUMBER`, `ADMIN_MOOV_MONEY_NUMBER`, et `…_NAME`). L'opérateur est figé au moment de la demande.
 
 ### Récompenses et mois offerts (admin seul)
 
@@ -141,6 +153,9 @@ Sans l'étape 3, la base refuse toute déclaration de paiement. Montants calcul�
 - seul l'admin peut offrir ou retirer des mois et consulter le classement complet ; un vendeur ne voit que ses propres chiffres ;
 - fermeture de boutique : suppression des comptes de paiement et arrêt de l'abonnement ;
 - suppression de compte : l'historique des commandes est conservé mais anonymisé ;
+- coordonnées des responsables (nom, e-mail, téléphone) illisibles par l'API publique, réservées à l'admin (migration 0009 ; avant, elles étaient lisibles par tous) ;
+- fiche publique : liens Google Maps uniquement, numéros et prix vérifiés par la base ;
+- essayage : quotas par forfait appliqués par la base, aucune écriture directe possible ;
 - photos et panoramas : dépôt uniquement dans le dossier de sa boutique autorisée, quotas par produit, jamais de modèle 3D ni de marque « IA » posés par un vendeur (58 scénarios d'attaque dans `supabase/tests/media_test.sql`) ;
 - modifications par écrit : le vendeur demande et annule, jamais il n'écrit la proposition ni ne l'applique ; seul l'admin applique, champ par champ (14 scénarios dans `supabase/tests/edits_test.sql`).
 

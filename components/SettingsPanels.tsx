@@ -100,7 +100,7 @@ export function CartPanel({ preferred, known }: { preferred: PaymentMethodId | n
               <button type="button" className="btn px-2.5 py-1" aria-label={`Ajouter un ${it.name}`} onClick={() => setCartQty(it.slug, it.qty + 1)}>+</button>
             </span>
             <span className="ml-auto w-28 text-right font-mono text-sm text-white">{formatPrice(it.price * it.qty)}</span>
-            <button type="button" className="text-xs text-alarm hover:underline" onClick={() => removeFromCart(it.slug)}>Retirer</button>
+            <button type="button" className="text-xs text-alarm hover:underline" aria-label={`Retirer ${it.name} du panier`} onClick={() => removeFromCart(it.slug)}>Retirer</button>
           </li>
         ))}
       </ul>

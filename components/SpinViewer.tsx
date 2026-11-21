@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
+import { useDialog } from "@/lib/use-dialog";
 import { createPortal } from "react-dom";
 
 /**
@@ -9,6 +10,7 @@ import { createPortal } from "react-dom";
  */
 export function SpinViewer({ frames, title }: { frames: string[]; title: string }) {
   const [open, setOpen] = useState(false);
+  const dlg = useDialog<HTMLDivElement>(open);
   const [i, setI] = useState(0);
   const [loaded, setLoaded] = useState(0);
   const [hint, setHint] = useState(true);
@@ -88,7 +90,7 @@ export function SpinViewer({ frames, title }: { frames: string[]; title: string 
         <span aria-hidden="true">⟳</span> Rotation 360° · {n} vues
       </button>
       {open && createPortal(
-        <div role="dialog" aria-modal="true" aria-label={`Rotation 360° : ${title}`} className="fixed inset-0 z-[95] flex flex-col bg-black">
+        <div ref={dlg} role="dialog" aria-modal="true" aria-label={`Rotation 360° : ${title}`} className="fixed inset-0 z-[95] flex flex-col bg-black">
           <div className="flex items-center justify-between gap-3 p-3 text-sm">
             <span className="truncate text-white">{title} · <span className="text-iris-glow">rotation 360°</span></span>
             <button type="button" className="btn shrink-0 px-3 py-1.5" onClick={() => setOpen(false)}>Fermer</button>

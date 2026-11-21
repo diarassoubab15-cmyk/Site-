@@ -106,8 +106,8 @@ export function SpinLogo({ size = 240 }: { size?: number }) {
       ref={stage}
       className="spin-stage relative select-none"
       style={{ width: size, height: size }}
-      role="img"
-      aria-label="Logo NEXORA : touchez-le ou faites-le tourner du doigt"
+      role="button"
+      aria-label="Logo NEXORA : touchez-le pour le faire tourner"
       tabIndex={0}
       data-spin-logo
     >

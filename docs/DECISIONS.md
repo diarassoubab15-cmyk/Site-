@@ -79,6 +79,27 @@
   copie de Three.js r160 ; dispersion native de Three.js r187. Surveillance des images/s avec retour au SVG si lent.
 - Pas de GSAP ni de Framer Motion : aucun besoin qui le justifie, 0 Ko ajouté.
 
+## Refonte motion design (21 novembre 2026)
+- Le propriétaire trouve la 3D décorative dépassée : logo verre 3D et écran d'ouverture retirés, remplacés par un logo
+  en motion design (SVG + CSS, geste au doigt en JS avec ressort). Three.js reste pour la visite 360°.
+- Skills utilisés : web-animation-design, emil-design-engineering, make-interfaces-feel-better, audit-as-a11y-eng (audit-suite),
+  frontend-design (Anthropic), vercel-react-view-transitions et web-design-guidelines (Vercel), installés dans le projet.
+- Accueil = logo + tuiles Award (or), Catégories (violet), Créer ma boutique (vert), Réglages (bleu) ; « Ma boutique »
+  et « Admin » selon le compte. La couleur d'une tuile est celle de sa page.
+- Award : transition logo → or (0,9 s, directe en mouvement réduit) ; classement par moyenne lissée des avis vérifiés.
+- Catégories : slugs inchangés (mode, electronique, maison…) pour ne casser aucune adresse ; libellés renommés
+  (Vêtements, Technologie, Meubles & déco) ; Automobile ajoutée (avec sa vidéo HyperFrames).
+- Créer ma boutique : inspiré des meilleures pratiques e-commerce (étapes courtes, aperçu en direct), sans copie.
+  Google Maps sans clé : lien collé ou position du téléphone, carte chargée seulement à la demande (vie privée, données).
+- Faille corrigée (migration 0009) : nom, e-mail et téléphone des responsables étaient lisibles via l'API publique.
+- Forfaits : Base 15 000, Pro 25 000, Ultra 50 000 FCFA (identifiants internes inchangés). Fonctions non construites
+  marquées « bientôt ». Abonnement payable par 4 opérateurs Mobile Money, contact de l'admin toujours obligatoire.
+- Réglages : panier sur l'appareil (localStorage), une commande par article ; paiement préféré sur le profil.
+- Essayage : 5 essais par client (Base), 15 (Pro), illimité (Ultra) ; photo jamais conservée ; fournisseur d'IA
+  branché par adaptateur HTTP, à choisir par le propriétaire (clé payante).
+- Audit d'accessibilité (reviews/audit-as-a11y-eng.md) : focus des fenêtres plein écran, rôle du logo, contraste du gris
+  secondaire (#7c8088, 5,3:1) corrigés.
+
 ## Historique
 - Novembre 2026 : branchement Supabase testé de bout en bout sur un Supabase local (20 vérifications navigateur + 14 attaques SQL).
 - Un premier essai (branche `claude/nexora-marketplace-design-bx4zii`, 3 commits) n'a jamais pu être récupéré : le projet a été refait de zéro sur `claude/nexora-marketplace-design-74sqrs`.
