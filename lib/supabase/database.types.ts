@@ -115,16 +115,42 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
-                },"products": {
+                },"product_media": {
                   Row: {
-                    "category": string,"compare_at": number | null,"created_at": string,"description": string | null,"glyph": string,"id": string,"images": (string)[],"name": string,"price": number,"published": boolean,"shop_id": string,"short": string | null,"slug": string,"specs": NonNullable<Json>,"stock": number,"tone": string,"wholesale_min": number | null,"wholesale_price": number | null
+                    "ai_generated": boolean,"created_at": string,"height": number | null,"id": string,"kind": Database["public"]['Enums']["media_kind"],"label": string | null,"path": string,"position": number,"product_id": string,"shop_id": string,"status": Database["public"]['Enums']["media_status"],"width": number | null
                   }
                   ComputedFields: never
                   Insert: {
-                    "category": string,"compare_at"?: number | null,"created_at"?: string,"description"?: string | null,"glyph"?: string,"id"?: string,"images"?: (string)[],"name": string,"price": number,"published"?: boolean,"shop_id": string,"short"?: string | null,"slug": string,"specs"?: NonNullable<Json>,"stock"?: number,"tone"?: string,"wholesale_min"?: number | null,"wholesale_price"?: number | null
+                    "ai_generated"?: boolean,"created_at"?: string,"height"?: number | null,"id"?: string,"kind": Database["public"]['Enums']["media_kind"],"label"?: string | null,"path": string,"position"?: number,"product_id": string,"shop_id": string,"status"?: Database["public"]['Enums']["media_status"],"width"?: number | null
                   }
                   Update: {
-                    "category"?: string,"compare_at"?: number | null,"created_at"?: string,"description"?: string | null,"glyph"?: string,"id"?: string,"images"?: (string)[],"name"?: string,"price"?: number,"published"?: boolean,"shop_id"?: string,"short"?: string | null,"slug"?: string,"specs"?: NonNullable<Json>,"stock"?: number,"tone"?: string,"wholesale_min"?: number | null,"wholesale_price"?: number | null
+                    "ai_generated"?: boolean,"created_at"?: string,"height"?: number | null,"id"?: string,"kind"?: Database["public"]['Enums']["media_kind"],"label"?: string | null,"path"?: string,"position"?: number,"product_id"?: string,"shop_id"?: string,"status"?: Database["public"]['Enums']["media_status"],"width"?: number | null
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "product_media_product_id_fkey"
+      columns: ["product_id"]
+isOneToOne: false
+      referencedRelation: "products"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "product_media_shop_id_fkey"
+      columns: ["shop_id"]
+isOneToOne: false
+      referencedRelation: "shops"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"products": {
+                  Row: {
+                    "category": string,"compare_at": number | null,"created_at": string,"description": string | null,"glyph": string,"id": string,"images": (string)[],"name": string,"price": number,"price_unit": string | null,"published": boolean,"shop_id": string,"short": string | null,"slug": string,"specs": NonNullable<Json>,"stock": number,"tone": string,"updated_at": string,"wholesale_min": number | null,"wholesale_price": number | null
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "category": string,"compare_at"?: number | null,"created_at"?: string,"description"?: string | null,"glyph"?: string,"id"?: string,"images"?: (string)[],"name": string,"price": number,"price_unit"?: string | null,"published"?: boolean,"shop_id": string,"short"?: string | null,"slug": string,"specs"?: NonNullable<Json>,"stock"?: number,"tone"?: string,"updated_at"?: string,"wholesale_min"?: number | null,"wholesale_price"?: number | null
+                  }
+                  Update: {
+                    "category"?: string,"compare_at"?: number | null,"created_at"?: string,"description"?: string | null,"glyph"?: string,"id"?: string,"images"?: (string)[],"name"?: string,"price"?: number,"price_unit"?: string | null,"published"?: boolean,"shop_id"?: string,"short"?: string | null,"slug"?: string,"specs"?: NonNullable<Json>,"stock"?: number,"tone"?: string,"updated_at"?: string,"wholesale_min"?: number | null,"wholesale_price"?: number | null
                   }
                   Relationships: [
                     {
@@ -389,6 +415,9 @@ isOneToOne: false
 "is_end_user":
 { Args: Record<PropertyKey, never>; Returns: boolean
                            },
+"is_site_user":
+{ Args: Record<PropertyKey, never>; Returns: boolean
+                           },
 "plan_monthly_price":
 { Args: { "p": Database["public"]['Enums']["plan_id"] }; Returns: number
                            },
@@ -408,7 +437,7 @@ isOneToOne: false
                            }
           }
           Enums: {
-            "order_status": "pending_payment"|"confirmed"|"shipped"|"delivered"|"not_received"|"refunded"|"cancelled","payment_method": "orange_money"|"wave"|"mtn_momo"|"moov_money"|"card"|"cash_on_delivery","payout_type": "orange_money"|"wave"|"mtn_momo"|"moov_money"|"card"|"bank","plan_id": "essentiel"|"pro"|"business","reward_kind": "month"|"semester"|"year"|"gift","shop_status": "pending"|"approved"|"suspended"|"rejected"|"closed","subscription_payment_status": "contact_pending"|"awaiting_payment"|"declared"|"confirmed"|"rejected","ticket_kind": "contact"|"report"|"refund","ticket_status": "open"|"in_progress"|"resolved","user_role": "client"|"seller"|"admin","video_status": "queued"|"rendering"|"review"|"approved"|"rejected"|"failed"|"cancelled"
+            "media_kind": "photo"|"pano"|"spin"|"model3d","media_status": "approved"|"review"|"rejected","order_status": "pending_payment"|"confirmed"|"shipped"|"delivered"|"not_received"|"refunded"|"cancelled","payment_method": "orange_money"|"wave"|"mtn_momo"|"moov_money"|"card"|"cash_on_delivery","payout_type": "orange_money"|"wave"|"mtn_momo"|"moov_money"|"card"|"bank","plan_id": "essentiel"|"pro"|"business","reward_kind": "month"|"semester"|"year"|"gift","shop_status": "pending"|"approved"|"suspended"|"rejected"|"closed","subscription_payment_status": "contact_pending"|"awaiting_payment"|"declared"|"confirmed"|"rejected","ticket_kind": "contact"|"report"|"refund","ticket_status": "open"|"in_progress"|"resolved","user_role": "client"|"seller"|"admin","video_status": "queued"|"rendering"|"review"|"approved"|"rejected"|"failed"|"cancelled"
           }
           CompositeTypes: {
             [_ in never]: never
@@ -528,7 +557,7 @@ export const Constants = {
           }
         },"public": {
           Enums: {
-            "order_status": ["pending_payment", "confirmed", "shipped", "delivered", "not_received", "refunded", "cancelled"],"payment_method": ["orange_money", "wave", "mtn_momo", "moov_money", "card", "cash_on_delivery"],"payout_type": ["orange_money", "wave", "mtn_momo", "moov_money", "card", "bank"],"plan_id": ["essentiel", "pro", "business"],"reward_kind": ["month", "semester", "year", "gift"],"shop_status": ["pending", "approved", "suspended", "rejected", "closed"],"subscription_payment_status": ["contact_pending", "awaiting_payment", "declared", "confirmed", "rejected"],"ticket_kind": ["contact", "report", "refund"],"ticket_status": ["open", "in_progress", "resolved"],"user_role": ["client", "seller", "admin"],"video_status": ["queued", "rendering", "review", "approved", "rejected", "failed", "cancelled"]
+            "media_kind": ["photo", "pano", "spin", "model3d"],"media_status": ["approved", "review", "rejected"],"order_status": ["pending_payment", "confirmed", "shipped", "delivered", "not_received", "refunded", "cancelled"],"payment_method": ["orange_money", "wave", "mtn_momo", "moov_money", "card", "cash_on_delivery"],"payout_type": ["orange_money", "wave", "mtn_momo", "moov_money", "card", "bank"],"plan_id": ["essentiel", "pro", "business"],"reward_kind": ["month", "semester", "year", "gift"],"shop_status": ["pending", "approved", "suspended", "rejected", "closed"],"subscription_payment_status": ["contact_pending", "awaiting_payment", "declared", "confirmed", "rejected"],"ticket_kind": ["contact", "report", "refund"],"ticket_status": ["open", "in_progress", "resolved"],"user_role": ["client", "seller", "admin"],"video_status": ["queued", "rendering", "review", "approved", "rejected", "failed", "cancelled"]
           }
         }
 } as const

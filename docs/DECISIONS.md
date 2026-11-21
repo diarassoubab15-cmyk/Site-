@@ -48,7 +48,16 @@
 - Le propriétaire valide chaque vidéo avant publication ; quotas mensuels par forfait (1 / 3 / 10).
 - Pas d'hébergement pour l'instant : phase de test privée de quelques mois avec des boutiques de son entourage, site non publié.
   Le programme de fabrication tourne sur n'importe quelle machine ; un petit serveur plus tard.
-- La catégorie « immobilier » a son modèle vidéo mais n'existe pas encore dans le catalogue : à créer avec les descriptions.
+- La catégorie « immobilier » existe désormais dans le catalogue, avec sa vidéo.
+
+## Produits, photos et visite 360° (novembre 2026)
+- Feuille de route choisie : 1) produits + photos, 2) visite 360° immobilier, 3) rotation 360° d'objets à partir de vraies photos,
+  4) modifications par texte du vendeur (validées par l'admin), 5) modèle 3D généré par IA, marqué « aperçu IA » et validé par l'admin.
+  Étapes 1 et 2 livrées (migration 0006).
+- Visite 360° : vraies photos panoramiques par pièce (pas de reconstruction IA), affichées dans une sphère Three.js chargée à la demande.
+- Compression des images sur l'appareil du vendeur avant l'envoi (WebP) : connexions lentes et forfaits mobiles.
+- Envoi direct du navigateur vers le stockage, protégé par les règles de stockage (dossier = identifiant de la boutique autorisée).
+- Sur mobile, la fiche produit montre la photo, puis le prix et le bouton, puis la description.
 
 ## Animations et 3D (skill animations-3d-nexora)
 - Couleurs : on garde noir + violet (choix du propriétaire), pas la charte bleu/orange du skill.

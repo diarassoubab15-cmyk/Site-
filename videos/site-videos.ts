@@ -88,6 +88,17 @@ export const SITE_VIDEOS: Record<string, VideoScript> = {
     closing: "Goûtez le meilleur du terroir",
     mood: "chaleureux",
   }),
+  immobilier: brand("Immobilier", "or", {
+    headline: "Immobilier",
+    tagline: "Maisons, appartements et terrains, à louer ou à vendre.",
+    scenes: [
+      { title: "Visite 360°", text: "Visitez chaque pièce depuis votre téléphone.", icon: "maison" },
+      { title: "Agences vérifiées", text: "Chaque vendeur est contrôlé avant de publier.", icon: "cle" },
+      { title: "Terrains et villas", text: "De Bamako à Abidjan, au juste prix.", icon: "terrain" },
+    ],
+    closing: "Trouvez votre prochain chez-vous",
+    mood: "élégant",
+  }),
   gros: brand("Vente en gros", "violet", {
     headline: "Vente en gros",
     tagline: "Des prix dégressifs pour revendeurs et commerçants.",

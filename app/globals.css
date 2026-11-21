@@ -119,7 +119,7 @@ body {
 }
 
 .fade-up {
-  animation: fadeUp 600ms var(--ease-out) both;
+  animation: fadeUp 600ms var(--ease-out) backwards;
   animation-delay: calc(var(--d, 0) * 90ms);
 }
 @keyframes fadeUp {
@@ -178,7 +178,7 @@ body {
   animation-play-state: paused;
 }
 .nav-drop {
-  animation: navDrop 450ms var(--ease-out) both;
+  animation: navDrop 450ms var(--ease-out) backwards;
 }
 @keyframes navDrop {
   from { opacity: 0; transform: translateY(-100%); }
@@ -241,7 +241,7 @@ body {
 .check-draw circle { stroke-dasharray: 76; stroke-dashoffset: 76; animation: draw 450ms var(--ease-out) forwards; }
 .check-draw path { stroke-dasharray: 24; stroke-dashoffset: 24; animation: draw 300ms var(--ease-out) 300ms forwards; }
 @keyframes draw { to { stroke-dashoffset: 0; } }
-.pop { animation: pop 350ms var(--ease-out) both; }
+.pop { animation: pop 350ms var(--ease-out) backwards; }
 @keyframes pop { from { opacity: 0; transform: scale(0.96); } to { opacity: 1; transform: none; } }
 
 /* ---- Notifications (toasts) ---- */
@@ -256,8 +256,11 @@ body {
 
 /* ---- Transition entre pages ---- */
 .page-enter {
-  animation: pageEnter 280ms var(--ease-out) both;
+  animation: pageEnter 280ms var(--ease-out) backwards;
 }
+/* Important : remplissage « backwards » partout. Une animation de transform qui reste « remplie » après sa fin
+   crée un repère pour les éléments en position fixe : une fenêtre plein écran (visite 360°, zoom photo)
+   resterait prisonnière de la page au lieu de couvrir l'écran. */
 @keyframes pageEnter { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
 
 /* ---- Squelettes de chargement ---- */

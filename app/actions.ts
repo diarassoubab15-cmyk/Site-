@@ -440,3 +440,112 @@ export const adminUnpublishVideo = action(z.object({ id: z.string().uuid(), note
   revalidatePath("/", "layout");
   return { ok: true };
 });
+
+// ------------------------------------------------------------------ produits du vendeur
+const CATEGORIES = ["mode", "beaute", "electronique", "maison", "alimentation", "gros", "immobilier"] as const;
+const productSchema = z.object({
+  id: z.string().uuid().optional(),
+  name: z.string().trim().min(2, "Nom trop court").max(120),
+  category: z.enum(CATEGORIES),
+  price: z.number().int().min(1, "Prix invalide").max(1_000_000_000),
+  priceUnit: z.enum(["mois", "nuit", "jour"]).nullable(),
+  compareAt: z.number().int().positive().nullable(),
+  stock: z.number().int().min(0).max(1_000_000),
+  short: z.string().trim().max(200),
+  description: z.string().trim().max(5000),
+  specs: z.array(z.tuple([z.string().trim().min(1).max(40), z.string().trim().min(1).max(120)])).max(20),
+  wholesaleMin: z.number().int().min(2).nullable(),
+  wholesalePrice: z.number().int().positive().nullable(),
+  published: z.boolean(),
+});
+
+async function myApprovedShop(sb: Awaited<ReturnType<typeof requireUser>>["sb"], userId: string) {
+  const { data } = await sb.from("shops").select("id, slug, status").eq("owner_id", userId).neq("status", "closed").maybeSingle();
+  return data;
+}
+
+export const saveProduct = action<z.infer<typeof productSchema>, { id: string; slug: string }>(productSchema, async (p, { user, sb }) => {
+  const shop = await myApprovedShop(sb, user.id);
+  if (!shop || shop.status !== "approved") return fail("Votre boutique doit être autorisée pour publier des produits.");
+  if (p.compareAt !== null && p.compareAt <= p.price) return fail("L'ancien prix doit être supérieur au prix actuel.");
+  if ((p.wholesaleMin === null) !== (p.wholesalePrice === null)) return fail("Prix de gros : indiquez la quantité minimale ET le prix.");
+  const row = {
+    name: p.name, category: p.category, price: p.price, price_unit: p.priceUnit, compare_at: p.compareAt, stock: p.stock,
+    short: p.short || null, description: p.description || null, specs: p.specs, wholesale_min: p.wholesaleMin, wholesale_price: p.wholesalePrice, published: p.published,
+  };
+  if (p.id) {
+    const { data, error } = await sb.from("products").update(row).eq("id", p.id).eq("shop_id", shop.id).select("id, slug").single();
+    if (error) return dbError(error);
+    revalidatePath(`/produits/${data.slug}`);
+    revalidatePath("/vendeur/produits");
+    return { ok: true, data };
+  }
+  const slug = `${slugify(p.name).slice(0, 70) || "produit"}-${Math.random().toString(36).slice(2, 6)}`;
+  const { data, error } = await sb.from("products").insert({ ...row, shop_id: shop.id, slug }).select("id, slug").single();
+  if (error) return dbError(error);
+  revalidatePath("/vendeur/produits");
+  revalidatePath("/marketplace", "layout");
+  return { ok: true, data };
+});
+
+export const deleteProduct = action(z.object({ id: z.string().uuid() }), async ({ id }, { sb }) => {
+  const { data: files } = await sb.from("product_media").select("path").eq("product_id", id);
+  const { data: prod, error } = await sb.from("products").delete().eq("id", id).select("slug").single();
+  if (error) return dbError(error);
+  if (files?.length) await sb.storage.from("product-media").remove(files.map((f) => f.path));
+  revalidatePath("/vendeur/produits");
+  revalidatePath(`/produits/${prod.slug}`);
+  return { ok: true };
+});
+
+/** Rafraîchit la fiche publique d'un produit après un changement de ses médias. */
+async function revalidateProduct(sb: Awaited<ReturnType<typeof requireUser>>["sb"], productId: string) {
+  const { data } = await sb.from("products").select("slug").eq("id", productId).maybeSingle();
+  if (data) revalidatePath(`/produits/${data.slug}`);
+  revalidatePath("/vendeur/produits");
+  revalidatePath("/marketplace", "layout");
+}
+
+/** Enregistre un fichier déjà envoyé dans le stockage (dossier de la boutique, vérifié par la base). */
+export const addProductMedia = action(
+  z.object({
+    productId: z.string().uuid(),
+    kind: z.enum(["photo", "pano", "spin"]),
+    path: z.string().regex(/^[0-9a-f-]{36}\/[0-9a-f-]{36}\/[0-9a-z-]{8,40}\.(webp|jpg|jpeg|png)$/, "Chemin de fichier invalide"),
+    width: z.number().int().positive().max(20000),
+    height: z.number().int().positive().max(20000),
+    label: z.string().trim().max(40).optional(),
+  }),
+  async (m, { sb }) => {
+    const { count } = await sb.from("product_media").select("id", { count: "exact", head: true }).eq("product_id", m.productId).eq("kind", m.kind);
+    const { error } = await sb.from("product_media").insert({ product_id: m.productId, shop_id: m.path.slice(0, 36), kind: m.kind, path: m.path, width: m.width, height: m.height, label: m.label || null, position: count ?? 0 });
+    if (error) {
+      await sb.storage.from("product-media").remove([m.path]);
+      return dbError(error);
+    }
+    await revalidateProduct(sb, m.productId);
+    return { ok: true };
+  },
+);
+
+export const deleteProductMedia = action(z.object({ id: z.string().uuid() }), async ({ id }, { sb }) => {
+  const { data, error } = await sb.from("product_media").delete().eq("id", id).select("path, product_id").single();
+  if (error) return dbError(error);
+  await sb.storage.from("product-media").remove([data.path]);
+  await revalidateProduct(sb, data.product_id);
+  return { ok: true };
+});
+
+export const updateProductMedia = action(
+  z.object({ items: z.array(z.object({ id: z.string().uuid(), position: z.number().int().min(0).max(99), label: z.string().trim().max(40).optional() })).max(40) }),
+  async ({ items }, { sb }) => {
+    let productId = "";
+    for (const it of items) {
+      const { data, error } = await sb.from("product_media").update({ position: it.position, ...(it.label !== undefined ? { label: it.label || null } : {}) }).eq("id", it.id).select("product_id").single();
+      if (error) return dbError(error);
+      productId = data.product_id;
+    }
+    if (productId) await revalidateProduct(sb, productId);
+    return { ok: true };
+  },
+);

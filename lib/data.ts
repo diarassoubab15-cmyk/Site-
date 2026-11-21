@@ -35,6 +35,12 @@ export type Product = {
   specs: [string, string][];
   glyph: string;
   tone: string; // teinte de la vignette
+  /** Unité du prix pour une location (« / mois »). */
+  priceUnit?: "mois" | "nuit" | "jour";
+  /** Vraies photos (adresses publiques), dans l'ordre. */
+  images?: string[];
+  /** Panoramas 360° par pièce (visite immobilière). */
+  panos?: { url: string; label: string }[];
 };
 
 export type Review = {
@@ -57,6 +63,7 @@ export const categories: Category[] = [
   { slug: "maison", name: "Maison & déco", description: "Vannerie, mobilier, linge et objets d'artisans.", icon: "⌂" },
   { slug: "alimentation", name: "Épicerie", description: "Café, cacao, épices et produits du terroir.", icon: "❋" },
   { slug: "gros", name: "Vente en gros", description: "Prix dégressifs pour revendeurs et commerçants.", icon: "▤" },
+  { slug: "immobilier", name: "Immobilier", description: "Maisons, appartements et terrains à louer ou à vendre, avec visite 360°.", icon: "⌂" },
 ];
 
 export const shops: Shop[] = [

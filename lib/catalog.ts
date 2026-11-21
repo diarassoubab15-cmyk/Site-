@@ -21,6 +21,7 @@ type ShopRow = { slug: string; name: string; city: string; country: string; desc
 type ProductRow = {
   id: string; slug: string; name: string; short: string | null; description: string | null; category: string; price: number;
   compare_at: number | null; stock: number; wholesale_min: number | null; wholesale_price: number | null; specs: unknown; glyph: string; tone: string;
+  price_unit: string | null; product_media?: { path: string; kind: string; position: number; label: string | null; status: string }[];
   shops: ShopRow;
 };
 
@@ -51,9 +52,17 @@ const toProduct = (p: ProductRow): Product => ({
   specs: Array.isArray(p.specs) ? (p.specs as [string, string][]) : [],
   glyph: p.glyph,
   tone: p.tone,
+  priceUnit: (p.price_unit as Product["priceUnit"]) ?? undefined,
+  images: media(p, "photo").map((m) => mediaUrl(m.path)),
+  panos: media(p, "pano").map((m) => ({ url: mediaUrl(m.path), label: m.label ?? "Pièce" })),
 });
 
-const PRODUCT_COLS = "id, slug, name, short, description, category, price, compare_at, stock, wholesale_min, wholesale_price, specs, glyph, tone, shops!inner(slug, name, city, country, description, created_at, accepts_cod, response_time, payments)";
+const media = (p: ProductRow, kind: string) =>
+  (p.product_media ?? []).filter((m) => m.kind === kind && m.status === "approved").sort((a, b) => a.position - b.position);
+/** Adresse publique d'un fichier du stockage « product-media ». */
+export const mediaUrl = (path: string) => `${(process.env.NEXT_PUBLIC_SUPABASE_URL ?? "").replace(/\/$/, "")}/storage/v1/object/public/product-media/${path}`;
+
+const PRODUCT_COLS = "id, slug, name, short, description, category, price, compare_at, stock, wholesale_min, wholesale_price, specs, glyph, tone, price_unit, product_media(path, kind, position, label, status), shops!inner(slug, name, city, country, description, created_at, accepts_cod, response_time, payments)";
 
 async function ratingsFor(ids: string[]) {
   if (!ids.length) return new Map<string, Rating>();

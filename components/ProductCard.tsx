@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { CardItem } from "@/lib/catalog";
-import { formatPrice } from "@/lib/format";
+import { formatPrice, formatPriceUnit } from "@/lib/format";
 import { ProductThumb } from "./ProductThumb";
 import { Stars } from "./Stars";
 
@@ -25,7 +25,7 @@ export function ProductCard({ item }: { item: CardItem }) {
           </p>
         )}
         <div className="mt-auto flex items-baseline gap-2 pt-2">
-          <span className="font-mono text-sm text-white">{formatPrice(product.price)}</span>
+          <span className="font-mono text-sm text-white">{formatPriceUnit(product.price, product.priceUnit)}</span>
           {product.compareAt && <s className="font-mono text-xs text-iron">{formatPrice(product.compareAt)}</s>}
         </div>
         <div className="flex flex-wrap gap-1.5">

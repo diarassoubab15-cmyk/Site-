@@ -115,6 +115,16 @@ export function SellerView({ live }: { live?: LiveSeller | null }) {
 
         {!closed && <SellerStats shop={shop} live={live} />}
 
+        {!closed && shop.status === "autorisé" && (
+          <Link href="/vendeur/produits" className="lift card flex items-center justify-between gap-4 hover:border-iron">
+            <span>
+              <span className="block text-xl font-medium text-white">Mes produits</span>
+              <span className="mt-1 block text-sm text-ash">Ajouter, modifier, envoyer des photos et des visites 360°.</span>
+            </span>
+            <span className="text-iron" aria-hidden="true">›</span>
+          </Link>
+        )}
+
         {!closed && <SubscriptionPanel shop={shop} live={live} />}
 
         {!closed && shop.status === "autorisé" && <SellerVideos live={live} online={(!!live?.coveredUntil && new Date(live.coveredUntil).getTime() > Date.now() + 60_000) || (!!live?.subscription?.active && !live.subscription.until)} />}

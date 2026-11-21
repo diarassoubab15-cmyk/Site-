@@ -27,6 +27,7 @@ Copier `.env.example` en `.env.local` et remplir les valeurs.
 | `/connexion` | Code par e-mail ou SMS, Google. Sans mot de passe |
 | `/compte` | Commandes, « J'ai reçu » / « Pas reçu », SAV, notifications, export / suppression |
 | `/vendeur` | Statut, comptes d'encaissement, fermeture de boutique |
+| `/vendeur/produits` | Produits du vendeur : ajout, modification, photos, visite 360° (immobilier) |
 | `/admin` | **Admin unique** : autoriser / refuser / suspendre les vendeurs, litiges |
 | `/support` | WhatsApp, e-mail, formulaire vers l'admin, protection acheteur |
 | `/securite`, `/confidentialite`, `/conditions` | Informations (textes légaux à faire relire) |
@@ -57,6 +58,13 @@ Les vidéos animées sont fabriquées avec [HyperFrames](https://github.com/heyg
 Le programme de fabrication tourne sur n'importe quelle machine (l'ordinateur de l'admin pendant la phase de test, un petit serveur ensuite) : il lit `NEXT_PUBLIC_SUPABASE_URL` et `SUPABASE_SERVICE_ROLE_KEY` dans `.env.local`.
 
 Sécurité : les textes du vendeur sont insérés comme texte brut (jamais comme HTML ou code), les balises et liens sont retirés, la description est traitée comme une donnée par l'IA, les couleurs et icônes viennent de listes fermées. Lecture sur le site : rien n'est téléchargé avant que la vidéo soit visible, pas de lecture automatique en mode économie de données ou mouvement réduit.
+
+## Produits, photos et visite 360°
+
+- Dans `/vendeur/produits`, le vendeur ajoute ses produits et envoie **jusqu'à 12 photos** par produit. Les photos sont compressées sur son téléphone avant l'envoi (WebP, 1 600 px, souvent moins de 100 Ko) : peu de données mobiles consommées.
+- **Immobilier** : prix au mois, à la nuit ou au jour, bouton « Demander une visite » (message transmis par NEXORA) et **visite 360°** : une photo panoramique par pièce (format 2:1, prise avec une caméra 360° ou une application « photo sphère »), nommée par le vendeur. L'acheteur tourne dans la pièce au doigt, zoome, passe d'une pièce à l'autre. La 3D n'est téléchargée qu'à l'ouverture de la visite.
+- Les fichiers vont dans le stockage Supabase `product-media`, dans le dossier de la boutique : un vendeur ne peut écrire que dans le dossier de **sa** boutique autorisée, images seulement. Les modèles 3D (étape « aperçu IA » à venir) ne peuvent être déposés que par NEXORA.
+- Prévu ensuite : rotation 360° d'objets à partir de vraies photos, modifications demandées par texte (validées par l'admin), modèle 3D généré par IA marqué « aperçu IA » et validé par l'admin.
 
 ## Deux modes de fonctionnement
 
@@ -130,7 +138,8 @@ Sans l'étape 3, la base refuse toute déclaration de paiement. Montants calcul�
 - une boutique n'est visible que si elle est autorisée **et** couverte (abonnement payé en cours ou mois offerts) ;
 - seul l'admin peut offrir ou retirer des mois et consulter le classement complet ; un vendeur ne voit que ses propres chiffres ;
 - fermeture de boutique : suppression des comptes de paiement et arrêt de l'abonnement ;
-- suppression de compte : l'historique des commandes est conservé mais anonymisé.
+- suppression de compte : l'historique des commandes est conservé mais anonymisé ;
+- photos et panoramas : dépôt uniquement dans le dossier de sa boutique autorisée, quotas par produit, jamais de modèle 3D ni de marque « IA » posés par un vendeur (58 scénarios d'attaque dans `supabase/tests/media_test.sql`).
 
 ## Reste à brancher
 
@@ -138,7 +147,6 @@ Sans l'étape 3, la base refuse toute déclaration de paiement. Montants calcul�
 2. **Paiement automatique des abonnements** (facultatif) : aujourd'hui le paiement se fait par Orange Money avec confirmation manuelle de l'admin (voir plus haut). Un agrégateur (PayDunya, Moneroo…) ou Orange Money Business pourra l'automatiser ensuite.
 3. **E-mails de notification** (commande, expédition, avis…) : envoi via un service transactionnel en respectant `notification_preferences` (déjà enregistrées).
 4. **Rappel des litiges** : tâche planifiée qui alerte l'admin quand `tickets.seller_deadline` (72 h) est dépassé.
-5. **Photos produits** (Supabase Storage) et formulaire d'ajout de produits pour les vendeurs.
 
 À faire avant la mise en ligne : vrai numéro WhatsApp et e-mails dans `lib/site.ts`, relecture juridique des pages légales.
 
