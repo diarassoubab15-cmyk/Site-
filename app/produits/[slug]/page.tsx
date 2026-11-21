@@ -9,10 +9,12 @@ import { ProductThumb } from "@/components/ProductThumb";
 import { ProductGallery } from "@/components/ProductGallery";
 import { PanoTour } from "@/components/PanoTour";
 import { SpinViewer } from "@/components/SpinViewer";
+import { TryOn, type TryOnItem } from "@/components/TryOn";
+import { getShopType } from "@/lib/shop-types";
 import { ReviewSection } from "@/components/ReviewSection";
 import { Stars } from "@/components/Stars";
 import { getCategory } from "@/lib/data";
-import { allSlugs, getProductPage } from "@/lib/catalog";
+import { allSlugs, getProductPage, listCards } from "@/lib/catalog";
 import { formatDate, formatPrice, formatPriceUnit } from "@/lib/format";
 import { absoluteUrl, site } from "@/lib/site";
 
@@ -42,6 +44,13 @@ export default async function ProductPage({ params }: Props) {
   if (!page) notFound();
   const { product, shop, rating, reviews: list, related } = page;
   const cat = getCategory(product.category) ?? { slug: product.category, name: product.category };
+  // Essayage virtuel : vêtements de la même boutique qui ont une vraie photo.
+  const tryItems: TryOnItem[] =
+    product.category === "mode" && product.images?.length
+      ? (await listCards({ category: "mode" }))
+          .filter((c) => c.shop.slug === shop.slug && c.product.images?.length)
+          .map((c) => ({ slug: c.product.slug, name: c.product.name, image: c.product.images![0], price: c.product.price, payments: shop.payments }))
+      : [];
 
   return (
     <section className="container-x py-16">
@@ -76,7 +85,12 @@ export default async function ProductPage({ params }: Props) {
               <Link href={`/support?boutique=${shop.slug}#contact`} className="btn-solid w-full" data-haptic>Demander une visite</Link>
             </div>
           ) : (
-            <BuyBox product={product} shop={shop} />
+            <>
+              {tryItems.length > 0 && (
+                <TryOn shopSlug={shop.slug} shopName={shop.name} color={getShopType("mode")!.color} items={tryItems} initial={product.slug} />
+              )}
+              <BuyBox product={product} shop={shop} />
+            </>
           )}
         </div>
         <div className="space-y-8 lg:col-start-1 lg:row-start-2">

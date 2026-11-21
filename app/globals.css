@@ -379,6 +379,23 @@ body {
 .reglages-page { background: radial-gradient(110% 50% at 50% -10%, rgba(59, 158, 255, 0.2) 0%, transparent 60%), #000; }
 .reglages-card { border: 1px solid rgba(59, 158, 255, 0.28); border-radius: 18px; padding: 1.5rem; background: linear-gradient(160deg, #04101d 0%, #000 65%); }
 
+
+/* ==================================================================== ESSAYAGE VIRTUEL (couleur vive de la boutique : --c) */
+.tryon-cta { display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; padding: 0.8rem 1rem; border-radius: 10px;
+  background: var(--c); color: #000; font-weight: 500; transition: transform 160ms ease-out, opacity 150ms ease; -webkit-tap-highlight-color: transparent; }
+.tryon-cta:active:not(:disabled) { transform: scale(0.97); }
+.tryon-cta:disabled { opacity: 0.4; cursor: not-allowed; }
+.tryon-cta:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+.tryon-item { position: relative; padding: 0.5rem; border-radius: 14px; border: 2px solid #292d30; transition: border-color 150ms ease, transform 160ms ease-out; }
+.tryon-item:active { transform: scale(0.97); }
+.tryon-item.is-on { border-color: var(--c); box-shadow: 0 0 0 3px color-mix(in srgb, var(--c) 25%, transparent); }
+.tryon-check { position: absolute; right: 0.9rem; top: 0.9rem; display: flex; height: 1.6rem; width: 1.6rem; align-items: center; justify-content: center;
+  border-radius: 9999px; background: var(--c); color: #000; font-size: 0.8rem; animation: pop 220ms var(--ease-out) backwards; }
+.tryon-scan { position: absolute; left: 0; right: 0; top: 0; height: 30%;
+  background: linear-gradient(180deg, transparent, color-mix(in srgb, var(--c) 45%, transparent), transparent); animation: scan 1.6s cubic-bezier(0.645, 0.045, 0.355, 1) infinite alternate; }
+@keyframes scan { from { transform: translateY(-30%); } to { transform: translateY(260%); } }
+@media (prefers-reduced-motion: reduce) { .tryon-scan, .tryon-check { animation: none; } .tryon-cta, .tryon-item { transition: none; } }
+
 /* Mouvement réduit : tout s'affiche immédiatement. */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {

@@ -35,6 +35,8 @@ const securityHeaders = [
 
 const nextConfig: NextConfig = {
   poweredByHeader: false,
+  // Essayage virtuel : la photo compressée (≈ 200 Ko) passe par une action serveur.
+  experimental: { serverActions: { bodySizeLimit: "3mb" } },
   reactStrictMode: true,
   async headers() {
     return [{ source: "/:path*", headers: securityHeaders }];

@@ -9,6 +9,7 @@ import { currentUser, supabaseServer, supabaseService } from "@/lib/supabase/ser
 import { slugify } from "@/lib/format";
 import { categories } from "@/lib/data";
 import { coordsFromMapsUrl, isMapsUrl } from "@/lib/maps";
+import { mediaUrl as productMediaUrl } from "@/lib/catalog";
 import { shopStatusDb, ticketKindDb, type ActionResult } from "@/lib/views";
 import type { SellerStatus } from "@/lib/demo-store";
 import { periodOf, rewardTitle, type RankingRow } from "@/lib/rewards";
@@ -689,4 +690,56 @@ export const setPreferredPayment = action(z.object({ method: PAYMENT.nullable() 
   if (error) return dbError(error);
   revalidatePath("/reglages");
   return { ok: true };
+});
+
+// ------------------------------------------------------------------ essayage virtuel des vêtements
+/** État de l'essayage pour le visiteur : connecté ? service prêt ? essais restants dans cette boutique (null = illimité). */
+export async function tryOnStatus(shopSlug: string): Promise<{ loggedIn: boolean; ready: boolean; remaining: number | null }> {
+  const { tryOnConfigured } = await import("@/lib/tryon");
+  const u = await currentUser();
+  if (!u) return { loggedIn: false, ready: tryOnConfigured(), remaining: null };
+  const { data: shop } = await u.sb.from("shops").select("id").eq("slug", String(shopSlug).slice(0, 80)).maybeSingle();
+  if (!shop) return { loggedIn: true, ready: false, remaining: 0 };
+  const { data } = await u.sb.rpc("tryon_remaining", { p_shop: shop.id });
+  return { loggedIn: true, ready: tryOnConfigured(), remaining: (data as number | null) ?? null };
+}
+
+const tryOnSchema = z.object({
+  shopSlug: z.string().min(1).max(80),
+  slugs: z.array(z.string().min(1).max(100)).min(1, "Choisissez au moins un vêtement").max(3, "3 vêtements au plus"),
+  // Photo compressée sur le téléphone ; jamais enregistrée par NEXORA.
+  photo: z.string().max(2_500_000, "Photo trop lourde").regex(/^data:image\/(jpeg|webp|png);base64,[A-Za-z0-9+/=]+$/, "Photo illisible"),
+});
+
+export const tryOn = action<z.infer<typeof tryOnSchema>, { image: string; remaining: number | null }>(tryOnSchema, async ({ shopSlug, slugs, photo }, { sb }) => {
+  const { generateTryOn, tryOnConfigured } = await import("@/lib/tryon");
+  if (!tryOnConfigured()) return fail("L'essayage par IA arrive très bientôt. Aucun essai n'a été décompté.");
+  const { data: shop } = await sb.from("shops").select("id").eq("slug", shopSlug).maybeSingle();
+  if (!shop) return fail("Boutique introuvable");
+  const { data: rows } = await sb
+    .from("products")
+    .select("id, name, short, product_media(path, kind, position)")
+    .eq("shop_id", shop.id)
+    .eq("category", "mode")
+    .eq("published", true)
+    .in("slug", slugs);
+  const garments = (rows ?? [])
+    .map((p) => {
+      const photoPath = (p.product_media ?? []).filter((m) => m.kind === "photo").sort((a, b) => a.position - b.position)[0]?.path;
+      return photoPath ? { id: p.id, imageUrl: productMediaUrl(photoPath), name: p.name, description: p.short ?? "" } : null;
+    })
+    .filter((g): g is NonNullable<typeof g> => !!g);
+  if (garments.length !== slugs.length) return fail("Chaque vêtement choisi doit avoir une photo dans cette boutique.");
+  const { data: claimId, error } = await sb.rpc("claim_tryon", { p_shop: shop.id, p_products: garments.map((g) => g.id) });
+  if (error) return dbError(error);
+  try {
+    const res = await generateTryOn(photo, garments);
+    await sb.rpc("finish_tryon", { p_id: claimId as string, p_ok: true });
+    const { data: left } = await sb.rpc("tryon_remaining", { p_shop: shop.id });
+    return { ok: true, data: { image: res.image, remaining: (left as number | null) ?? null } };
+  } catch (e) {
+    await sb.rpc("finish_tryon", { p_id: claimId as string, p_ok: false });   // l'essai raté est rendu
+    console.error("essayage :", (e as Error).message);
+    return fail("L'essayage n'a pas abouti. Votre essai n'est pas décompté : réessayez avec une photo de face, en pied, bien éclairée.");
+  }
 });

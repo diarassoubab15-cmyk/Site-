@@ -377,6 +377,32 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"tryons": {
+                  Row: {
+                    "created_at": string,"id": string,"product_ids": (string)[],"shop_id": string,"status": string,"user_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "created_at"?: string,"id"?: string,"product_ids": (string)[],"shop_id": string,"status"?: string,"user_id": string
+                  }
+                  Update: {
+                    "created_at"?: string,"id"?: string,"product_ids"?: (string)[],"shop_id"?: string,"status"?: string,"user_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "tryons_shop_id_fkey"
+      columns: ["shop_id"]
+isOneToOne: false
+      referencedRelation: "shops"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "tryons_user_id_fkey"
+      columns: ["user_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    }
+                  ]
                 }
           }
           Views: {
@@ -449,8 +475,14 @@ isOneToOne: false
         isOneToOne: false
         isSetofReturn: true
       } },
+"claim_tryon":
+{ Args: { "p_products": (string)[],"p_shop": string }; Returns: string
+                           },
 "close_my_shop":
 { Args: { "p_cancel_subscription": boolean,"p_remove_payouts": boolean,"p_shop": string,"p_unpublish": boolean }; Returns: undefined
+                           },
+"finish_tryon":
+{ Args: { "p_id": string,"p_ok": boolean }; Returns: undefined
                            },
 "is_admin":
 { Args: Record<PropertyKey, never>; Returns: boolean
@@ -477,6 +509,12 @@ isOneToOne: false
                            },
 "shop_is_live":
 { Args: { "p_shop": string }; Returns: boolean
+                           },
+"tryon_quota":
+{ Args: { "p_shop": string }; Returns: number
+                           },
+"tryon_remaining":
+{ Args: { "p_shop": string }; Returns: number
                            },
 "valid_sample_prices":
 { Args: { "p": Json }; Returns: boolean
