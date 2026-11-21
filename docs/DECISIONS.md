@@ -103,6 +103,9 @@
 - « Boutique animée » (Pro) et « Vitrine Ultra » faites en motion design (SVG + CSS) : couleurs, animations et polices
   dans des listes fermées plutôt qu'un thème « créé sur mesure » (texte du forfait ajusté en conséquence) : rendu
   toujours lisible, léger et sûr. Le nom de la boutique reste un vrai titre h1 pour Google et les lecteurs d'écran.
+- « À la une » (Ultra) : rotation hebdomadaire automatique et équitable (empreinte boutique + semaine ISO) plutôt qu'un
+  choix manuel ; toujours signalée « Mise en avant · Ultra » et séparée du palmarès Award, qui reste fondé sur les seuls
+  avis vérifiés (ne pas faire passer une mise en avant payante pour une récompense).
 - Audit d'accessibilité (reviews/audit-as-a11y-eng.md) : focus des fenêtres plein écran, rôle du logo, contraste du gris
   secondaire (#7c8088, 5,3:1) corrigés.
 

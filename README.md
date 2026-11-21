@@ -77,6 +77,10 @@ Dans « Ma boutique » → **Apparence de la boutique** (aperçu en direct) :
 - **Ultra (Vitrine Ultra)** : en plus, en-tête presque plein écran, **animation signature** au choix (Vague, Constellation, Ruban, Pulsation) et **police** du nom (Élégante, Moderne, Technique).
 - Sans choix de couleur, celle du type de boutique est utilisée. Les réglages peuvent être préparés à tout forfait et s'affichent dès que le forfait les inclut (migration 0014, listes fermées vérifiées par la base). Tout est fixe en « mouvement réduit ».
 
+## « À la une » (Ultra)
+
+Les boutiques Ultra en ligne sont mises en avant en haut de leur page de catégorie (jusqu'à 3) et dans la page Award (une par catégorie, section « À la une cette semaine », séparée du palmarès). L'ordre est tiré chaque lundi d'une empreinte boutique + semaine (fonction `featured_shops`, migration 0015) : rotation équitable, identique pour tous, sans choix manuel. Chaque carte est marquée « Mise en avant · Ultra ». Une boutique suspendue ou qui quitte Ultra disparaît aussitôt.
+
 ## Présentation animée des produits (Ultra)
 
 Pour les boutiques au forfait Ultra, chaque produit qui a une photo reçoit sur sa fiche une **présentation animée en motion design** (4 scènes façon « stories » : photo et nom, caractéristiques, prix, mosaïque et « Commander »), construite à partir des vraies photos et des informations du vendeur. Aucune IA, aucune 3D, rien à valider ni à payer par produit. Lecture seulement quand elle est visible ; toucher à gauche/droite, flèches du clavier, pause ; fixe en « mouvement réduit ». Le forfait public d'une boutique est lu par la fonction `shop_tier` (migration 0013), qui ne révèle rien d'autre de l'abonnement.

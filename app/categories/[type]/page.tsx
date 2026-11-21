@@ -5,7 +5,8 @@ import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { ShopTypeIcon } from "@/components/ShopTypeIcon";
 import { Stars } from "@/components/Stars";
 import { VideoPlayer } from "@/components/VideoPlayer";
-import { listShopsByType, type TypeShop } from "@/lib/catalog";
+import { getFeaturedShops, listShopsByType, type TypeShop } from "@/lib/catalog";
+import { FeaturedShops } from "@/components/FeaturedShops";
 import { SHOP_TYPES, getShopType } from "@/lib/shop-types";
 import { siteVideo } from "@/lib/site-videos";
 
@@ -27,7 +28,7 @@ const initial = (name: string) => {
 export default async function TypePage({ params }: { params: Promise<{ type: string }> }) {
   const t = getShopType((await params).type);
   if (!t) notFound();
-  const shops = await listShopsByType(t.slug);
+  const [shops, featured] = await Promise.all([listShopsByType(t.slug), getFeaturedShops(t.slug, 3)]);
   const groups = new Map<string, TypeShop[]>();
   for (const s of shops) groups.set(initial(s.name), [...(groups.get(initial(s.name)) ?? []), s]);
   const video = siteVideo(t.slug);
@@ -48,6 +49,12 @@ export default async function TypePage({ params }: { params: Promise<{ type: str
           <Link href="/vendre" className="btn">Ouvrir une boutique {t.name.toLowerCase()}</Link>
         </div>
       </section>
+
+      {featured.length > 0 && (
+        <div className="container-x pb-12">
+          <FeaturedShops shops={featured} title="À la une" />
+        </div>
+      )}
 
       <section className="container-x pb-24" aria-labelledby="boutiques-az">
         <div className="grid gap-12 lg:grid-cols-[1.4fr_1fr]">

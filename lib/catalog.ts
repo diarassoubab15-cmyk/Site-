@@ -276,3 +276,16 @@ export async function getShopTier(slug: string): Promise<"essentiel" | "pro" | "
   const { data } = await supabasePublic().rpc("shop_tier", { p_slug: slug });
   return (data as "essentiel" | "pro" | "business" | null) ?? null;
 }
+
+// ------------------------------------------------------------------ « À la une » (boutiques Ultra, rotation hebdomadaire)
+export type FeaturedShop = { slug: string; name: string; city: string; country: string; category: string; brandColor: string | null };
+
+/** Boutiques Ultra mises en avant cette semaine (dans une catégorie, ou une par catégorie si aucune n'est donnée). */
+export async function getFeaturedShops(category?: string, limit = 3): Promise<FeaturedShop[]> {
+  if (!supabaseEnabled) return [];
+  const { data } = await supabasePublic().rpc("featured_shops", { p_category: category ?? undefined, p_limit: category ? limit : 12 });
+  const rows = (data ?? []).map((r) => ({ slug: r.slug, name: r.name, city: r.city, country: r.country, category: r.category, brandColor: r.brand_color }));
+  if (category) return rows;
+  const seen = new Set<string>();
+  return rows.filter((r) => !seen.has(r.category) && seen.add(r.category)).slice(0, limit);
+}

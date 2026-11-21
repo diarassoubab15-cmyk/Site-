@@ -491,6 +491,21 @@ body {
   .sig-ring:first-child { opacity: 0.35; }
 }
 
+
+/* ==================================================================== À LA UNE (boutiques Ultra) */
+.featured-card { position: relative; isolation: isolate; overflow: hidden; display: flex; flex-direction: column; gap: 1rem; padding: 1.1rem 1.2rem;
+  border-radius: 18px; border: 1px solid color-mix(in srgb, var(--b) 50%, transparent);
+  background: linear-gradient(150deg, color-mix(in srgb, var(--b) 14%, #000) 0%, #000 70%); transition: border-color 200ms ease, transform 160ms ease-out; }
+.featured-card:active { transform: scale(0.98); }
+.featured-card:focus-visible { outline: 2px solid var(--b); outline-offset: 3px; }
+@media (hover: hover) and (pointer: fine) { .featured-card:hover { border-color: var(--b); } }
+.featured-badge { align-self: flex-start; border-radius: 9999px; padding: 0.2rem 0.6rem; font-size: 0.7rem; color: #000; background: var(--b); }
+.featured-shine { position: absolute; inset: 0; z-index: -1; background: linear-gradient(105deg, transparent 35%, color-mix(in srgb, var(--b) 22%, transparent) 50%, transparent 65%);
+  transform: translateX(-100%); }
+[data-in] .featured-shine { animation: featShine 4.5s cubic-bezier(0.645, 0.045, 0.355, 1) 600ms infinite; }
+@keyframes featShine { 0% { transform: translateX(-100%); } 40%, 100% { transform: translateX(100%); } }
+@media (prefers-reduced-motion: reduce) { [data-in] .featured-shine { animation: none; } .featured-card { transition: none; } }
+
 /* Mouvement réduit : tout s'affiche immédiatement. */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {

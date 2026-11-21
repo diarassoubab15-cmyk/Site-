@@ -62,7 +62,7 @@ export const plans: Plan[] = [
     features: [
       { text: "Tout le forfait Pro" },
       { text: "Vitrine Ultra : en-tête plein écran, animation signature (4 styles) et police au choix" },
-      { text: "À la une de votre catégorie et dans la page Award, chaque semaine", soon: true },
+      { text: "À la une de votre catégorie et de la page Award, en rotation chaque semaine" },
       { text: "Présentation animée en motion design de chaque produit, créée à partir de vos photos" },
       { text: "10 vidéos animées par mois" },
       { text: "Essais virtuels illimités pour vos clients" },

@@ -2,7 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { ProductThumb } from "@/components/ProductThumb";
 import { Stars } from "@/components/Stars";
-import { getAwardPage, type AwardWinner } from "@/lib/catalog";
+import { getAwardPage, getFeaturedShops, type AwardWinner } from "@/lib/catalog";
+import { FeaturedShops } from "@/components/FeaturedShops";
 import { formatPrice, formatPriceUnit } from "@/lib/format";
 
 export const metadata: Metadata = {
@@ -24,7 +25,7 @@ function Medal({ rank }: { rank: number }) {
 }
 
 export default async function Award() {
-  const { winners, categories } = await getAwardPage();
+  const [{ winners, categories }, featured] = await Promise.all([getAwardPage(), getFeaturedShops(undefined, 6)]);
   return (
     <div className="award-page">
       <section className="container-x flex flex-col items-center pb-16 pt-16 text-center sm:pt-24" aria-labelledby="award-titre">
@@ -59,6 +60,12 @@ export default async function Award() {
           </ul>
         )}
       </section>
+
+      {featured.length > 0 && (
+        <div className="container-x pb-20">
+          <FeaturedShops shops={featured} title="À la une cette semaine" gold />
+        </div>
+      )}
 
       <section className="container-x pb-24" aria-labelledby="meilleurs">
         <h2 id="meilleurs" className="award-h2">Les mieux notés, catégorie par catégorie</h2>

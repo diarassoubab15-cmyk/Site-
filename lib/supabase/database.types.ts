@@ -481,6 +481,11 @@ isOneToOne: false
 "close_my_shop":
 { Args: { "p_cancel_subscription": boolean,"p_remove_payouts": boolean,"p_shop": string,"p_unpublish": boolean }; Returns: undefined
                            },
+"featured_shops":
+{ Args: { "p_category"?: string,"p_limit"?: number,"p_week"?: string }; Returns: {
+              "brand_color": string,"category": string,"city": string,"country": string,"name": string,"slug": string
+            }[]
+                           },
 "finish_tryon":
 { Args: { "p_id": string,"p_ok": boolean }; Returns: undefined
                            },
