@@ -195,14 +195,14 @@ isOneToOne: false
                   ]
                 },"profiles": {
                   Row: {
-                    "city": string | null,"country": string | null,"created_at": string,"email": string | null,"full_name": string | null,"id": string,"phone": string | null,"role": Database["public"]['Enums']["user_role"]
+                    "city": string | null,"country": string | null,"created_at": string,"email": string | null,"full_name": string | null,"id": string,"phone": string | null,"preferred_payment": Database["public"]['Enums']["payment_method"] | null,"role": Database["public"]['Enums']["user_role"]
                   }
                   ComputedFields: never
                   Insert: {
-                    "city"?: string | null,"country"?: string | null,"created_at"?: string,"email"?: string | null,"full_name"?: string | null,"id": string,"phone"?: string | null,"role"?: Database["public"]['Enums']["user_role"]
+                    "city"?: string | null,"country"?: string | null,"created_at"?: string,"email"?: string | null,"full_name"?: string | null,"id": string,"phone"?: string | null,"preferred_payment"?: Database["public"]['Enums']["payment_method"] | null,"role"?: Database["public"]['Enums']["user_role"]
                   }
                   Update: {
-                    "city"?: string | null,"country"?: string | null,"created_at"?: string,"email"?: string | null,"full_name"?: string | null,"id"?: string,"phone"?: string | null,"role"?: Database["public"]['Enums']["user_role"]
+                    "city"?: string | null,"country"?: string | null,"created_at"?: string,"email"?: string | null,"full_name"?: string | null,"id"?: string,"phone"?: string | null,"preferred_payment"?: Database["public"]['Enums']["payment_method"] | null,"role"?: Database["public"]['Enums']["user_role"]
                   }
                   Relationships: [
                     

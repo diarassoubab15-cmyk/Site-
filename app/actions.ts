@@ -285,7 +285,7 @@ export const adminResolveTicket = action(z.object({ ticketId: z.string().uuid(),
  * Ce que la fiche produit doit savoir de l'utilisateur, sans embarquer le client Supabase
  * dans le navigateur (≈ 75 Ko de moins sur la page la plus visitée).
  */
-export async function getBuyerContext(slug: string): Promise<{ loggedIn: boolean; known: { name: string; city: string } | null; reviewableOrderId: string | null }> {
+export async function getBuyerContext(slug: string): Promise<{ loggedIn: boolean; known: { name: string; city: string } | null; reviewableOrderId: string | null; preferredPayment?: string | null }> {
   const u = await currentUser();
   if (!u) return { loggedIn: false, known: null, reviewableOrderId: null };
   const p = u.profile;
@@ -297,7 +297,7 @@ export async function getBuyerContext(slug: string): Promise<{ loggedIn: boolean
     const taken = new Set((done ?? []).map((d) => d.order_id));
     reviewableOrderId = orders.find((o) => !taken.has(o.id))?.id ?? null;
   }
-  return { loggedIn: true, known, reviewableOrderId };
+  return { loggedIn: true, known, reviewableOrderId, preferredPayment: p?.preferred_payment ?? null };
 }
 
 // ------------------------------------------------------------------ abonnements (Orange Money, contact admin obligatoire)
@@ -682,3 +682,11 @@ export const updateShopProfile = action(
     return { ok: true };
   },
 );
+
+// ------------------------------------------------------------------ réglages de l'acheteur
+export const setPreferredPayment = action(z.object({ method: PAYMENT.nullable() }), async ({ method }, { user, sb }) => {
+  const { error } = await sb.from("profiles").update({ preferred_payment: method }).eq("id", user.id);
+  if (error) return dbError(error);
+  revalidatePath("/reglages");
+  return { ok: true };
+});

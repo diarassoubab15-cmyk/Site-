@@ -1,7 +1,9 @@
 "use client";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
+import { addToCart } from "@/lib/cart";
+import { toast } from "@/lib/toast";
 import type { Product, Shop } from "@/lib/data";
 import { formatPrice } from "@/lib/format";
 import { paymentMethods, type PaymentMethodId } from "@/lib/payments";
@@ -23,6 +25,11 @@ export function BuyBox({ product, shop }: { product: Product; shop: Shop }) {
   const [form, setForm] = useState({ name: "", phone: "", city: "" });
   const [done, setDone] = useState<string | null>(null);
   const [error, setError] = useState("");
+  // Moyen de paiement préféré (Réglages) : présélectionné s'il est accepté par cette boutique.
+  const preferred = live.preferredPayment as PaymentMethodId | null | undefined;
+  useEffect(() => {
+    if (preferred && shop.payments.includes(preferred)) setMethod(preferred);
+  }, [preferred, shop.payments]);
 
   const wholesale = product.wholesale && qty >= product.wholesale.minQty;
   const unit = wholesale ? product.wholesale!.price : product.price;
@@ -134,6 +141,19 @@ export function BuyBox({ product, shop }: { product: Product; shop: Shop }) {
                 ? "Commander, payer à la livraison"
                 : `Payer avec ${paymentMethods[method].label}`}
       </button>
+      {!out && (
+        <button
+          type="button"
+          className="btn w-full"
+          data-haptic
+          onClick={() => {
+            addToCart({ slug: product.slug, name: product.name, price: product.price, shopName: shop.name, payments: shop.payments, image: product.images?.[0] }, qty);
+            toast(`Ajouté au panier (${qty})`);
+          }}
+        >
+          Ajouter au panier
+        </button>
+      )}
       <p className="text-xs leading-relaxed text-iron">
         Paiement versé directement à {shop.name}. Protection acheteur : produit non reçu = remboursement ou sanction du vendeur.
       </p>

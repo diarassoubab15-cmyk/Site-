@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Logo } from "./Logo";
+import { CartBadge } from "./SettingsPanels";
 
 const nav = [
   { href: "/award", label: "Award" },
@@ -23,6 +24,7 @@ export function Header() {
           ))}
         </nav>
         <div className="hidden items-center gap-3 md:flex">
+          <CartBadge />
           <Link href="/connexion" className="text-sm text-bone hover:text-white">
             Connexion
           </Link>
@@ -31,6 +33,7 @@ export function Header() {
           </Link>
         </div>
         {/* Menu mobile sans JavaScript */}
+        <div className="ml-auto flex items-center gap-1 md:hidden"><CartBadge /></div>
         <details className="group relative md:hidden">
           <summary className="btn list-none px-3 py-2 [&::-webkit-details-marker]:hidden" aria-label="Ouvrir le menu">
             <span className="group-open:hidden">Menu</span>

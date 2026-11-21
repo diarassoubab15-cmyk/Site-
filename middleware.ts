@@ -10,7 +10,7 @@ import { SUPABASE_ANON_KEY, SUPABASE_URL, supabaseEnabled } from "@/lib/supabase
  * Sans Supabase (mode démo), /admin est protégé par ADMIN_USER / ADMIN_PASSWORD
  * et fermé en production si ces variables manquent.
  */
-const PRIVATE = ["/compte", "/vendeur", "/admin"];
+const PRIVATE = ["/compte", "/vendeur", "/admin", "/reglages"];
 
 function safeEqual(a: string, b: string) {
   if (a.length !== b.length) return false;
