@@ -41,6 +41,8 @@ export type Product = {
   images?: string[];
   /** Panoramas 360° par pièce (visite immobilière). */
   panos?: { url: string; label: string }[];
+  /** Rotation 360° : photos prises en tournant autour de l'objet, dans l'ordre. */
+  spin?: string[];
 };
 
 export type Review = {

@@ -8,6 +8,7 @@ import { ProductCard } from "@/components/ProductCard";
 import { ProductThumb } from "@/components/ProductThumb";
 import { ProductGallery } from "@/components/ProductGallery";
 import { PanoTour } from "@/components/PanoTour";
+import { SpinViewer } from "@/components/SpinViewer";
 import { ReviewSection } from "@/components/ReviewSection";
 import { Stars } from "@/components/Stars";
 import { getCategory } from "@/lib/data";
@@ -67,6 +68,7 @@ export default async function ProductPage({ params }: Props) {
             <span className="text-iron" aria-hidden="true">›</span>
           </Link>
           {product.panos?.length ? <PanoTour panos={product.panos} title={product.name} /> : null}
+          {(product.spin?.length ?? 0) >= 8 ? <SpinViewer frames={product.spin!} title={product.name} /> : null}
           {product.category === "immobilier" ? (
             <div className="card space-y-4">
               <p className="font-mono text-2xl text-white">{formatPriceUnit(product.price, product.priceUnit)}</p>

@@ -25,7 +25,11 @@ export default async function ModifierProduit({ params }: { params: Promise<{ id
         {product.published && <Link href={`/produits/${product.slug}`} prefetch={false} className="btn">Voir la fiche publique</Link>}
       </div>
       <MediaManager shopId={data.shop.id} productId={product.id} kind="photo" items={product.media} />
-      {product.category === "immobilier" && <MediaManager shopId={data.shop.id} productId={product.id} kind="pano" items={product.media} />}
+      {product.category === "immobilier" ? (
+        <MediaManager shopId={data.shop.id} productId={product.id} kind="pano" items={product.media} />
+      ) : (
+        <MediaManager shopId={data.shop.id} productId={product.id} kind="spin" items={product.media} />
+      )}
       <ProductEditor product={product} />
     </section>
   );

@@ -14,7 +14,10 @@ const SETTINGS: Record<Kind, { max: number; side: number; quality: number; title
     max: 12, side: 4096, quality: 0.85, title: "Visite 360°",
     help: "Une photo 360° par pièce (format 2:1), prise avec une caméra 360° ou une application « photo sphère ». Donnez un nom à chaque pièce.",
   },
-  spin: { max: 36, side: 1200, quality: 0.8, title: "Rotation 360°", help: "24 à 36 photos prises en tournant autour du produit, dans l'ordre." },
+  spin: {
+    max: 36, side: 1200, quality: 0.8, title: "Rotation 360°",
+    help: "Posez le produit au centre, sur un fond uni, et prenez 24 à 36 photos en tournant autour, à la même hauteur et la même distance. Envoyez-les toutes d'un coup : elles sont rangées dans l'ordre de prise de vue (nom des fichiers). La rotation s'affiche sur la fiche à partir de 8 photos.",
+  },
 };
 
 const rand = () => crypto.randomUUID().replace(/-/g, "").slice(0, 16);
@@ -31,7 +34,9 @@ export function MediaManager({ shopId, productId, kind, items }: { shopId: strin
 
   async function upload(files: FileList | null) {
     if (!files?.length) return;
-    const chosen = [...files].slice(0, cfg.max - room);
+    // Rotation : l'ordre compte, on suit l'ordre de prise de vue (les appareils numérotent les fichiers).
+    const sorted = kind === "spin" ? [...files].sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true })) : [...files];
+    const chosen = sorted.slice(0, cfg.max - room);
     if (files.length > chosen.length) toast(`Limite de ${cfg.max} fichiers : ${chosen.length} envoyé(s).`, "info");
     const sb = supabaseBrowser();
     let done = 0;
@@ -77,11 +82,31 @@ export function MediaManager({ shopId, productId, kind, items }: { shopId: strin
     <section className="card space-y-4" aria-labelledby={`media-${kind}`}>
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <h2 id={`media-${kind}`} className="text-lg font-medium text-white">{cfg.title}</h2>
-        <span className="font-mono text-xs text-iron">{room}/{cfg.max}</span>
+        <span className="flex items-baseline gap-3">
+          {kind === "spin" && list.length > 0 && (
+            <button
+              type="button"
+              className="text-xs text-alarm hover:underline"
+              disabled={pending || !!busy}
+              onClick={() => {
+                if (!confirm(`Supprimer les ${list.length} photos de rotation ?`)) return;
+                start(async () => {
+                  let failed = 0;
+                  for (const m of list) if (!(await deleteProductMedia({ id: m.id })).ok) failed++;
+                  toast(failed ? `${failed} photo(s) non supprimée(s)` : "Rotation supprimée", failed ? "error" : "ok");
+                  router.refresh();
+                });
+              }}
+            >
+              Tout supprimer
+            </button>
+          )}
+          <span className="font-mono text-xs text-iron">{room}/{cfg.max}</span>
+        </span>
       </div>
       <p className="text-sm text-ash">{cfg.help}</p>
       {list.length > 0 && (
-        <ul className={`grid gap-3 ${kind === "pano" ? "sm:grid-cols-2" : "grid-cols-3 sm:grid-cols-4"}`}>
+        <ul className={`grid gap-3 ${kind === "pano" ? "sm:grid-cols-2" : kind === "spin" ? "grid-cols-4 sm:grid-cols-6" : "grid-cols-3 sm:grid-cols-4"}`}>
           {list.map((m, i) => (
             <li key={m.id} className="space-y-2 rounded-[6px] border border-line p-2">
               {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -125,7 +150,7 @@ export function MediaManager({ shopId, productId, kind, items }: { shopId: strin
         <div className="flex flex-wrap items-center gap-3">
           <label className={`btn cursor-pointer ${busy ? "pointer-events-none opacity-50" : ""}`}>
             <input ref={input} type="file" accept="image/jpeg,image/png,image/webp" multiple className="sr-only" onChange={(e) => upload(e.target.files)} disabled={!!busy} />
-            + Ajouter {kind === "pano" ? "des panoramas" : "des photos"}
+            + Ajouter {kind === "pano" ? "des panoramas" : kind === "spin" ? "les photos de rotation" : "des photos"}
           </label>
           {busy && <span className="font-mono text-xs text-iris" role="status">{busy}</span>}
         </div>

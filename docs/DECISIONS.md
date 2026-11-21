@@ -58,6 +58,9 @@
 - Compression des images sur l'appareil du vendeur avant l'envoi (WebP) : connexions lentes et forfaits mobiles.
 - Envoi direct du navigateur vers le stockage, protégé par les règles de stockage (dossier = identifiant de la boutique autorisée).
 - Sur mobile, la fiche produit montre la photo, puis le prix et le bouton, puis la description.
+- Étape 3 livrée : rotation 360° par série de vraies photos (pas de 3D ni d'IA), affichée à partir de 8 vues,
+  ordre de prise de vue respecté à l'envoi. Migration 0007 : le vendeur peut lire les fichiers de sa boutique
+  dans le stockage, sans quoi la suppression ne supprimait rien (les fichiers restaient en ligne).
 
 ## Animations et 3D (skill animations-3d-nexora)
 - Couleurs : on garde noir + violet (choix du propriétaire), pas la charte bleu/orange du skill.

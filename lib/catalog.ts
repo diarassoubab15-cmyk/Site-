@@ -55,6 +55,7 @@ const toProduct = (p: ProductRow): Product => ({
   priceUnit: (p.price_unit as Product["priceUnit"]) ?? undefined,
   images: media(p, "photo").map((m) => mediaUrl(m.path)),
   panos: media(p, "pano").map((m) => ({ url: mediaUrl(m.path), label: m.label ?? "Pièce" })),
+  spin: media(p, "spin").map((m) => mediaUrl(m.path)),
 });
 
 const media = (p: ProductRow, kind: string) =>

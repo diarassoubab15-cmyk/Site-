@@ -8,7 +8,7 @@ export function ProductThumb({ product, large = false }: { product: Product; lar
       <div className={`relative aspect-square overflow-hidden border border-line bg-lift ${large ? "rounded-[16px]" : "rounded-[12px]"}`}>
         {/* eslint-disable-next-line @next/next/no-img-element -- images déjà compressées à l'envoi (WebP) */}
         <img src={photo} alt={product.name} loading={large ? "eager" : "lazy"} decoding="async" className="h-full w-full object-cover" />
-        {product.panos?.length ? <span className="badge absolute left-3 top-3 border-white/20 bg-black/60 text-white backdrop-blur-[25px]">360°</span> : null}
+        {product.panos?.length || (product.spin?.length ?? 0) >= 8 ? <span className="badge absolute left-3 top-3 border-white/20 bg-black/60 text-white backdrop-blur-[25px]">360°</span> : null}
       </div>
     );
   }
