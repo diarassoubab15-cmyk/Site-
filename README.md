@@ -121,7 +121,7 @@ Copier les clés affichées dans `.env.local` (`NEXT_PUBLIC_SUPABASE_URL`, `NEXT
 ## Mettre en ligne avec Supabase
 
 1. **Créer le projet** sur supabase.com (région la plus proche de vos clients).
-2. **Créer les tables** : exécuter dans l'éditeur SQL, dans l'ordre, `supabase/migrations/0001_init.sql`, `0002_app.sql`, `0003_subscription_payments.sql`, `0004_rewards.sql` puis `0005_shop_videos.sql`. Ne **pas** exécuter `seed.sql` (données de démonstration).
+2. **Créer les tables** : le projet Supabase est relié au dépôt GitHub ; les fichiers de `supabase/migrations/` (nommés `<horodatage>_<nom>.sql`, dans l'ordre) sont appliqués automatiquement à la fusion sur `main`. À la main : les exécuter dans l'ordre dans l'éditeur SQL. Ne **pas** exécuter `seed.sql` (données de démonstration).
 3. **Variables** sur l'hébergeur : `NEXT_PUBLIC_SITE_URL`, `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY` (secrète, jamais côté navigateur), et pour les abonnements : `NEXT_PUBLIC_ADMIN_WHATSAPP`, `NEXT_PUBLIC_ADMIN_PHONE`, `NEXT_PUBLIC_ADMIN_PHONE_DISPLAY`, `ADMIN_ORANGE_MONEY_NUMBER`, `ADMIN_ORANGE_MONEY_NAME`.
 4. **Authentification** (Authentication) :
    - *URL Configuration* : Site URL = votre domaine ; Redirect URLs = `https://votre-domaine/auth/callback`.
