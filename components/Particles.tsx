@@ -20,7 +20,7 @@ export function Particles() {
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    const accent = (document.querySelector<HTMLElement>("[data-accent]")?.dataset.accent ?? getComputedStyle(document.documentElement).getPropertyValue("--color-iris").trim()) || "#9281f7";
+    const accent = (document.querySelector<HTMLElement>("[data-accent]")?.dataset.accent ?? getComputedStyle(document.documentElement).getPropertyValue("--color-iris").trim()) || "#5433eb";
     const dpr = Math.min(window.devicePixelRatio || 1, 1.5);
     let w = 0, h = 0;
     type P = { x: number; y: number; vx: number; vy: number; r: number; a: number };

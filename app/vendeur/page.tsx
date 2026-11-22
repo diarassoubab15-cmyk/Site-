@@ -27,7 +27,7 @@ export default async function Vendeur() {
           <ShopThemeForm
             shopName={profile.name} typeName={getShopType(profile.category)?.name} place={[profile.district, profile.city, profile.country].filter(Boolean).join(", ")}
             tier={profile.tier} initial={{ brandColor: profile.brandColor, signature: profile.signature, displayFont: profile.displayFont }}
-            fallbackColor={getShopType(profile.category)?.color ?? "#9281f7"}
+            fallbackColor={getShopType(profile.category)?.color ?? "#5433eb"}
           />
         </div>
       )}

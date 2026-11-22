@@ -100,7 +100,7 @@ export function BuyBox({ product, shop }: { product: Product; shop: Shop }) {
         <div className="grid gap-2">
           {shop.payments.map((m) => (
             <label key={m} className={`flex cursor-pointer items-center gap-3 rounded-[6px] border px-3 py-2.5 text-sm transition-colors ${method === m ? "border-white text-white" : "border-line text-bone hover:border-iron"}`}>
-              <input type="radio" name="method" value={m} checked={method === m} onChange={() => setMethod(m)} className="accent-[#9281f7]" />
+              <input type="radio" name="method" value={m} checked={method === m} onChange={() => setMethod(m)} className="accent-[#5433eb]" />
               <span className="h-2 w-2 rounded-full" style={{ background: paymentMethods[m].color }} aria-hidden="true" />
               {paymentMethods[m].label}
               {m === "cash_on_delivery" && <span className="ml-auto text-xs text-pulse">payer à la réception</span>}

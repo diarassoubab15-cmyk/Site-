@@ -30,8 +30,8 @@ export function PaymentPreference({ initial }: { initial: PaymentMethodId | null
     <fieldset className="grid grid-cols-2 gap-2 sm:grid-cols-3" disabled={pending}>
       <legend className="sr-only">Moyen de paiement préféré</legend>
       {CHOICES.map((m) => (
-        <label key={m} className={`flex cursor-pointer items-center gap-3 rounded-[10px] border px-3 py-3 text-sm transition-colors ${value === m ? "border-[#3b9eff] text-white" : "border-line text-bone hover:border-iron"}`}>
-          <input type="radio" name="pref-pay" checked={value === m} onChange={() => choose(m)} className="accent-[#3b9eff]" />
+        <label key={m} className={`flex cursor-pointer items-center gap-3 rounded-[10px] border px-3 py-3 text-sm transition-colors ${value === m ? "border-[#1f6fd1] text-white" : "border-line text-bone hover:border-iron"}`}>
+          <input type="radio" name="pref-pay" checked={value === m} onChange={() => choose(m)} className="accent-[#1f6fd1]" />
           {paymentMethods[m].label}
         </label>
       ))}
@@ -129,7 +129,7 @@ export function CartBadge() {
   return (
     <Link href="/reglages#panier" className="relative flex h-9 w-9 items-center justify-center rounded-[8px] text-bone hover:text-white" aria-label={`Panier : ${n} article${n > 1 ? "s" : ""}`}>
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M3 4h2l2.4 11.2a1 1 0 0 0 1 .8h8.8a1 1 0 0 0 1-.8L20 8H6.2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /><circle cx="9.5" cy="19.5" r="1.3" fill="currentColor" /><circle cx="17" cy="19.5" r="1.3" fill="currentColor" /></svg>
-      {n > 0 && <span className="pop absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#3b9eff] px-1 font-mono text-[10px] text-black">{n}</span>}
+      {n > 0 && <span className="pop absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#1f6fd1] px-1 font-mono text-[10px] text-black">{n}</span>}
     </Link>
   );
 }

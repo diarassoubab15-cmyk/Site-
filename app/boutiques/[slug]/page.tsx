@@ -41,7 +41,7 @@ export default async function ShopPage({ params }: Props) {
   const tier = await getShopTier(shop.slug);
   const animated = tier === "pro" || tier === "business";
   const creations = tier === "business" ? await getShopCreations(shop.slug) : [];
-  const brand = shop.brandColor ?? type?.color ?? "#9281f7";
+  const brand = shop.brandColor ?? type?.color ?? "#5433eb";
   return (
     <section className="container-x py-16">
       <Breadcrumbs items={[{ name: "Accueil", href: "/" }, type ? { name: type.name, href: `/categories/${type.slug}` } : { name: "Boutiques", href: "/categories" }, { name: shop.name, href: `/boutiques/${shop.slug}` }]} />

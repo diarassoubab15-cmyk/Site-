@@ -31,7 +31,7 @@ export default async function Reglages() {
     <div className="reglages-page">
       <section className="container-x max-w-4xl space-y-6 pb-24 pt-16">
         <header>
-          <h1 className="h-display fade-up" style={{ color: "#70b8ff" }}>Réglages</h1>
+          <h1 className="h-display fade-up" style={{ color: "#1f6fd1" }}>Réglages</h1>
           <p className="fade-up mt-4 text-ash" style={{ ["--d" as string]: 1 }}>
             Connecté : <span className="font-mono text-bone">{u.user.email || u.user.phone}</span>
           </p>

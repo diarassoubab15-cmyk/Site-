@@ -10,7 +10,7 @@ import { useEffect, useRef } from "react";
  * Le défilement vertical de la page reste libre (touch-action: pan-y).
  * Mouvement réduit : logo fixe, dessiné d'emblée.
  */
-const DOTS = ["#e3b341", "#9281f7", "#3ad389", "#3b9eff"];
+const DOTS = ["#e3b341", "#5433eb", "#12995a", "#1f6fd1"];
 
 export function SpinLogo({ size = 240 }: { size?: number }) {
   const stage = useRef<HTMLDivElement>(null);

@@ -60,9 +60,9 @@ function GrantForm({ kind, defaultMonths, onSubmit, pending, withTitle }: { kind
         {months > 0 && (
           <fieldset className="space-y-2 text-sm text-bone">
             <legend className="label">À partir de</legend>
-            <label className="flex items-center gap-2"><input type="radio" checked={when === "suite"} onChange={() => setWhen("suite")} className="accent-[#9281f7]" />la fin de son abonnement en cours</label>
+            <label className="flex items-center gap-2"><input type="radio" checked={when === "suite"} onChange={() => setWhen("suite")} className="accent-[#5433eb]" />la fin de son abonnement en cours</label>
             <label className="flex items-center gap-2">
-              <input type="radio" checked={when === "mois"} onChange={() => setWhen("mois")} className="accent-[#9281f7]" />un mois précis :
+              <input type="radio" checked={when === "mois"} onChange={() => setWhen("mois")} className="accent-[#5433eb]" />un mois précis :
               <input type="month" min={thisMonth} className="input w-44 py-1.5" value={start} onChange={(e) => { setStart(e.target.value); setWhen("mois"); }} aria-label="Mois offert" />
             </label>
           </fieldset>

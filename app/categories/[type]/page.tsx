@@ -36,8 +36,7 @@ export default async function TypePage({ params }: { params: Promise<{ type: str
 
   return (
     <div className="type-page" data-accent={t.color} style={{ ["--c" as string]: t.color, ["--cl" as string]: t.light }}>
-      <section className="container-x relative isolate pb-12 pt-12" aria-labelledby="type-titre">
-        <ProductMarquee products={cards.map((c) => c.product)} type={t.slug} />
+      <section className="container-x pb-8 pt-8" aria-labelledby="type-titre">
         <Breadcrumbs items={[{ name: "Accueil", href: "/" }, { name: "Catégories", href: "/categories" }, { name: t.name, href: `/categories/${t.slug}` }]} />
         <div className="type-hero mt-6 flex flex-wrap items-center gap-6">
           <span className="hub-icon h-24 w-24" style={{ color: t.light }}><ShopTypeIcon slug={t.slug} size={64} /></span>
@@ -50,6 +49,10 @@ export default async function TypePage({ params }: { params: Promise<{ type: str
           <Link href={`/marketplace/${t.slug}`} className="btn">Voir tous les produits</Link>
           <Link href="/vendre" className="btn">Ouvrir une boutique {t.name.toLowerCase()}</Link>
         </div>
+      </section>
+
+      <section aria-label={`Produits ${t.name.toLowerCase()} à découvrir`} className="pb-12">
+        <ProductMarquee products={cards.map((c) => c.product)} type={t.slug} rows={1} />
       </section>
 
       {featured.length > 0 && (
