@@ -27,7 +27,7 @@ function Medal({ rank }: { rank: number }) {
 export default async function Award() {
   const [{ winners, categories }, featured] = await Promise.all([getAwardPage(), getFeaturedShops(undefined, 6)]);
   return (
-    <div className="award-page">
+    <div className="award-page" data-accent="#e3b341">
       <section className="container-x flex flex-col items-center pb-16 pt-16 text-center sm:pt-24" aria-labelledby="award-titre">
         <svg viewBox="0 0 24 24" width="96" height="96" fill="none" className="award-settle" aria-hidden="true">
           <path d="M7.25 4.25 12 1.5 21.5 7v10L12 22.5 2.5 17V7l4.75-2.75" stroke="#f6d77a" strokeWidth="1.15" strokeLinejoin="round" />

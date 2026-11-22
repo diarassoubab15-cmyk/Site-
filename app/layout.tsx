@@ -5,6 +5,7 @@ import { Footer } from "@/components/Footer";
 import { SupportButton } from "@/components/SupportButton";
 import { JsonLd } from "@/components/JsonLd";
 import { Toaster } from "@/components/Toaster";
+import { Particles } from "@/components/Particles";
 import { motionScript } from "@/lib/motion-script";
 import { site, absoluteUrl } from "@/lib/site";
 
@@ -29,6 +30,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <script dangerouslySetInnerHTML={{ __html: motionScript }} />
       </head>
       <body className="min-h-screen">
+        <Particles />
         <Toaster />
         <a href="#contenu" className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 btn bg-black">
           Aller au contenu

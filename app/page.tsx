@@ -2,15 +2,21 @@ import { SpinLogo } from "@/components/SpinLogo";
 import { HubTiles } from "@/components/HubTiles";
 import { PaymentMethods } from "@/components/PaymentMethods";
 import { onlineMethods } from "@/lib/payments";
+import { ProductMarquee } from "@/components/ProductMarquee";
+import { listCards } from "@/lib/catalog";
+
+export const revalidate = 120;
 
 /**
  * Accueil : le logo NEXORA en plein écran (motion design, réagit au toucher),
  * puis, en glissant vers le bas, les pages principales encadrées chacune dans sa couleur.
  */
-export default function Home() {
+export default async function Home() {
+  const products = (await listCards({ limit: 24 }).catch(() => [])).map((c) => c.product);
   return (
     <>
-      <section className="container-x flex min-h-[calc(100svh-4rem)] flex-col items-center justify-center py-12 text-center" aria-labelledby="accueil-titre">
+      <section className="container-x relative isolate flex min-h-[calc(100svh-4rem)] flex-col items-center justify-center py-12 text-center" aria-labelledby="accueil-titre">
+        <ProductMarquee products={products} rows={3} />
         <SpinLogo size={240} />
         <p className="fade-up mt-14 text-lg font-semibold tracking-[0.32em] text-white" style={{ ["--d" as string]: 6 }} aria-hidden="true">NEXORA</p>
         <h1 id="accueil-titre" className="fade-up mt-4 max-w-md font-display text-3xl leading-tight text-bone sm:text-4xl" style={{ ["--d" as string]: 7 }}>
