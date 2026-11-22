@@ -18,7 +18,7 @@ export function FeaturedShops({ shops, title, gold = false }: { shops: FeaturedS
       <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3" data-reveal suppressHydrationWarning>
         {shops.map((s) => {
           const t = getShopType(s.category);
-          const c = s.brandColor ?? t?.color ?? "#9281f7";
+          const c = s.brandColor ?? t?.color ?? "#5433eb";
           return (
             <li key={s.slug}>
               <Link href={`/boutiques/${s.slug}`} className="featured-card" style={{ ["--b" as string]: c }} data-featured={s.slug}>

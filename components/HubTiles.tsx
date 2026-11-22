@@ -139,7 +139,7 @@ export function HubTiles() {
 
   return (
     <>
-      <div className="grid gap-4 sm:grid-cols-2" data-reveal suppressHydrationWarning>
+      <div className="grid gap-5 sm:grid-cols-2 sm:gap-7" data-reveal suppressHydrationWarning>
         {HUB_PAGES.map((p) => <Tile key={p.id} p={p} onAward={p.id === "award" ? toAward : undefined} />)}
         {extra.map((p) => <Tile key={p.id} p={p} />)}
       </div>

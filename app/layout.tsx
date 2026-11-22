@@ -5,6 +5,7 @@ import { Footer } from "@/components/Footer";
 import { SupportButton } from "@/components/SupportButton";
 import { JsonLd } from "@/components/JsonLd";
 import { Toaster } from "@/components/Toaster";
+import { Particles } from "@/components/Particles";
 import { motionScript } from "@/lib/motion-script";
 import { site, absoluteUrl } from "@/lib/site";
 
@@ -20,7 +21,7 @@ export const metadata: Metadata = {
   formatDetection: { telephone: false },
 };
 
-export const viewport: Viewport = { themeColor: "#000000", width: "device-width", initialScale: 1 };
+export const viewport: Viewport = { themeColor: "#05060b", width: "device-width", initialScale: 1 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -29,8 +30,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <script dangerouslySetInnerHTML={{ __html: motionScript }} />
       </head>
       <body className="min-h-screen">
+        <Particles />
         <Toaster />
-        <a href="#contenu" className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 btn bg-black">
+        <a href="#contenu" className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-full focus:bg-black focus:px-4 focus:py-2 focus:text-sm focus:text-white focus:shadow-[var(--shadow-float)]">
           Aller au contenu
         </a>
         <Header />

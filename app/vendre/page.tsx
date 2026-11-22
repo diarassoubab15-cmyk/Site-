@@ -24,13 +24,13 @@ export default async function Vendre({ searchParams }: { searchParams: Promise<{
   const known = supabaseEnabled ? await loadKnownUser() : null;
   return (
     <>
-      <section className="container-x py-16 sm:py-24" style={{ ["--c" as string]: "#3ad389" }}>
-        <h1 className="h-display fade-up" style={{ color: "#8be8b8" }}>Créer ma boutique</h1>
+      <section className="container-x py-16 sm:py-24" style={{ ["--c" as string]: "#12995a" }}>
+        <h1 className="h-display fade-up" style={{ color: "#12995a" }}>Créer ma boutique</h1>
         <p className="fade-up mt-6 max-w-2xl text-lg text-ash" style={{ ["--d" as string]: 1 }}>Ouvrez votre boutique en quelques minutes et gardez 100 % de vos ventes.</p>
         <ol className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
           {how.map(([t, b], i) => (
             <li key={t} className="flex gap-4">
-              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[6px] border border-[#3ad389]/50 font-mono text-xs text-[#8be8b8]">{i + 1}</span>
+              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[6px] border border-[#12995a]/50 font-mono text-xs text-[#12995a]">{i + 1}</span>
               <span><span className="block font-medium text-white">{t}</span><span className="mt-1 block text-sm text-ash">{b}</span></span>
             </li>
           ))}

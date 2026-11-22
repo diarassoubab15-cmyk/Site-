@@ -6,43 +6,63 @@
 @import "@fontsource/instrument-serif/400-italic.css";
 @import "@fontsource/jetbrains-mono/400.css";
 
+/* Thème clair (inspiré de Shop) : toile gris très clair, surfaces blanches, encre presque noire, un seul violet.
+   Les noms historiques sont gardés pour ne rien casser : « white » = l'encre du texte, « black » = la surface blanche.
+   Les zones qui restent sombres (Award, Vitrine Ultra, vidéos) remettent les valeurs sombres avec .dark-zone. */
 @theme {
-  --color-void: #000000;
-  --color-line: #292d30;
-  --color-bone: #f0f0f0;
-  --color-ash: #a1a4a5;
-  --color-smoke: #abafb4;
-  --color-iron: #7c8088; /* 5,3:1 sur noir (AA) ; avant #6e727a = 4,35:1 */
-  --color-charcoal: #464a4d;
-  --color-lift: #0b0e14;
-  --color-iris: #9281f7;
-  --color-iris-glow: #baa7ff;
-  --color-signal: #3b9eff;
-  --color-sky: #70b8ff;
-  --color-pulse: #3ad389;
-  --color-alarm: #ff9592;
-  --color-amber: #ffca16;
+  --color-white: #0b0b0f;
+  --color-black: #ffffff;
+  --color-void: #ffffff;
+  --color-canvas: #f2f4f5;
+  --color-line: #e6e6ea;
+  --color-bone: #24232a;
+  --color-ash: #66646b; /* 5,6:1 sur blanc (AA) */
+  --color-smoke: #77757b;
+  --color-iron: #6e6c73; /* 5,1:1 sur blanc, 4,7:1 sur la toile (AA) */
+  --color-charcoal: #c9c9cf;
+  --color-lift: #f2f4f5;
+  --color-iris: #5433eb;
+  --color-iris-glow: #5433eb;
+  --color-signal: #1f6fd1;
+  --color-sky: #1f6fd1;
+  --color-pulse: #12995a;
+  --color-alarm: #d63b36;
+  --color-amber: #b7791f;
 
   --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   --font-display: "Instrument Serif", "Tiempos Headline", Georgia, serif;
   --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 
-  --radius-ui: 6px;
-  --radius-card: 16px;
-  --radius-panel: 24px;
+  --radius-ui: 9999px;
+  --radius-card: 28px;
+  --radius-panel: 28px;
+
+  --shadow-soft: 0 4px 6px -1px rgba(0, 0, 0, 0.08), 0 2px 4px -2px rgba(0, 0, 0, 0.08);
+  --shadow-pill: 0 2px 8px rgba(0, 0, 0, 0.06);
+  --shadow-float: 0 4px 24px rgba(0, 0, 0, 0.1);
+  --shadow-violet: 0 4px 24px rgba(69, 36, 219, 0.34);
 }
 
 :root {
-  color-scheme: dark;
+  color-scheme: light;
+}
+
+/* Zones sombres (Award noir et or, Vitrine Ultra, vidéos) : on remet les couleurs sombres pour tout ce qu'elles contiennent. */
+.dark-zone, .award-page, .shop-hero, .showcase, .hub-tile[data-hub="award"] {
+  --color-white: #ffffff; --color-black: #000000; --color-line: #343a40; --color-bone: #f0f0f0;
+  --color-ash: #babdc0; --color-smoke: #abafb4; --color-iron: #9a9ea6; --color-lift: #11141c;
+  --color-iris: #9281f7; --color-iris-glow: #baa7ff; --color-pulse: #3ad389; --color-alarm: #ff9592;
+  color: #f0f0f0; color-scheme: dark;
 }
 
 html {
-  background: #000;
+  background: #f2f4f5;
   scroll-behavior: smooth;
 }
 
 body {
-  background: #000;
+  background: #f2f4f5;
+  letter-spacing: -0.011em;
   color: var(--color-bone);
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
@@ -50,8 +70,8 @@ body {
 }
 
 ::selection {
-  background: rgba(146, 129, 247, 0.35);
-  color: #fff;
+  background: rgba(84, 51, 235, 0.18);
+  color: #0b0b0f;
 }
 
 :focus-visible {
@@ -64,16 +84,16 @@ body {
     @apply mx-auto w-full max-w-[1200px] px-4 sm:px-6;
   }
   .btn {
-    @apply inline-flex items-center justify-center gap-2 rounded-[6px] border border-line px-4 py-2.5 text-sm font-medium text-white transition-colors duration-150 ease-out hover:border-white disabled:cursor-not-allowed disabled:opacity-50;
+    @apply inline-flex items-center justify-center gap-2 rounded-full border border-line bg-black px-5 py-2.5 text-sm font-medium text-white shadow-[var(--shadow-pill)] transition-[border-color,transform,box-shadow] duration-150 ease-out hover:border-[#c9c9cf] active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-50;
   }
   .btn-solid {
-    @apply inline-flex items-center justify-center gap-2 rounded-[6px] border border-white bg-white px-4 py-2.5 text-sm font-medium text-black transition-colors duration-150 ease-out hover:bg-bone disabled:cursor-not-allowed disabled:opacity-50;
+    @apply inline-flex items-center justify-center gap-2 rounded-full border border-[#5433eb] bg-[#5433eb] px-5 py-2.5 text-sm font-medium text-[#fff] shadow-[var(--shadow-violet)] transition-[background-color,transform] duration-150 ease-out hover:bg-[#4527d6] active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-50;
   }
   .btn-danger {
     @apply inline-flex items-center justify-center gap-2 rounded-[6px] border border-alarm/40 px-4 py-2.5 text-sm font-medium text-alarm transition-colors duration-150 hover:border-alarm disabled:opacity-50;
   }
   .card {
-    @apply rounded-[16px] border border-line bg-black p-6 sm:p-8;
+    @apply rounded-[28px] bg-black p-6 shadow-[var(--shadow-soft)] sm:p-8;
   }
   .pill {
     @apply inline-flex items-center gap-2 rounded-full border border-line px-3 py-1.5 text-sm text-bone;
@@ -82,7 +102,7 @@ body {
     @apply inline-flex items-center gap-1.5 rounded-[6px] border border-line px-2 py-0.5 font-mono text-xs text-ash;
   }
   .input {
-    @apply w-full rounded-[6px] border border-line bg-black px-3 py-2.5 text-sm text-white placeholder:text-iron transition-colors focus:border-white focus:outline-none;
+    @apply w-full rounded-[18px] border border-line bg-black px-4 py-2.5 text-sm text-white placeholder:text-iron transition-colors focus:border-[#5433eb] focus:outline-none;
   }
   .label {
     @apply mb-1.5 block text-sm font-medium text-bone;
@@ -208,7 +228,7 @@ body {
 
 /* ---- Squelettes de chargement ---- */
 .skeleton {
-  background: linear-gradient(90deg, #0b0e14 0%, #15181d 50%, #0b0e14 100%);
+  background: linear-gradient(90deg, #eceef0 0%, #f7f8f9 50%, #eceef0 100%);
   background-size: 200% 100%;
   animation: shimmer 1.4s linear infinite;
 }
@@ -220,9 +240,9 @@ body {
    points en orbite, halo qui respire. Le geste de l'utilisateur est géré en JS (ressort), voir SpinLogo. */
 .spin-stage { touch-action: pan-y; cursor: grab; -webkit-tap-highlight-color: transparent; outline: none; }
 .spin-stage.is-grabbed { cursor: grabbing; }
-.spin-stage:focus-visible { box-shadow: 0 0 0 2px #000, 0 0 0 4px #9281f7; border-radius: 24px; }
+.spin-stage:focus-visible { box-shadow: 0 0 0 2px #fff, 0 0 0 4px #5433eb; border-radius: 24px; }
 .spin-halo {
-  background: radial-gradient(circle, rgba(146, 129, 247, 0.3) 0%, rgba(146, 129, 247, 0.07) 42%, transparent 68%);
+  background: radial-gradient(circle, rgba(196, 77, 255, 0.3) 0%, rgba(255, 138, 61, 0.08) 42%, transparent 68%);
   animation: haloBreath 5s ease-in-out infinite;
 }
 @keyframes haloBreath { 50% { transform: scale(1.06); opacity: 0.75; } }
@@ -249,7 +269,7 @@ body {
   position: relative; isolation: isolate; overflow: hidden; display: flex; flex-direction: column; gap: 2.5rem;
   min-height: 15rem; padding: 1.5rem; border-radius: 20px; color: var(--cl);
   border: 1px solid color-mix(in srgb, var(--c) 55%, transparent);
-  background: linear-gradient(160deg, color-mix(in srgb, var(--c) 9%, #000) 0%, #000 60%);
+  background: #fff; box-shadow: var(--shadow-soft); border-radius: 28px;
   transition: transform 160ms ease-out, border-color 200ms ease;
   -webkit-tap-highlight-color: transparent;
 }
@@ -264,8 +284,8 @@ body {
   background: radial-gradient(circle, color-mix(in srgb, var(--c) 28%, transparent) 0%, transparent 65%);
 }
 .hub-icon { display: inline-flex; width: 3.5rem; height: 3.5rem; align-items: center; justify-content: center; border-radius: 14px;
-  border: 1px solid color-mix(in srgb, var(--c) 35%, transparent); background: color-mix(in srgb, var(--c) 8%, #000); }
-.hub-title { display: block; font-family: var(--font-display); font-size: 2rem; line-height: 1; color: #fff; }
+  border: 1px solid color-mix(in srgb, var(--c) 30%, transparent); background: color-mix(in srgb, var(--c) 10%, #fff); }
+.hub-title { display: block; font-family: var(--font-display); font-size: 2rem; line-height: 1; color: var(--color-white); }
 .hub-arrow { position: absolute; right: 1.25rem; top: 1.5rem; transition: transform 160ms ease-out; }
 .hub-tile[data-hub="award"] { background: linear-gradient(160deg, #1d1505 0%, #000 62%); }
 .hub-tile[data-hub="award"] .hub-title { background: linear-gradient(100deg, #fff3c4, #e3b341 55%, #b8861b); -webkit-background-clip: text; background-clip: text; color: transparent; }
@@ -362,12 +382,12 @@ body {
 @keyframes boxDrop { 0% { transform: translateY(-14px); opacity: 0; } 30% { transform: translateY(4px); opacity: 1; } 40%, 85% { transform: translateY(4px); opacity: 1; } 100% { transform: translateY(4px); opacity: 0; } }
 
 /* Page d'un type : son ambiance (couleur en haut de page), index alphabétique */
-.type-page { background: radial-gradient(110% 55% at 50% -8%, color-mix(in srgb, var(--c) 24%, transparent) 0%, transparent 60%), #000; }
+.type-page { background: none; }
 .type-letter { font-family: var(--font-display); font-size: 2.5rem; line-height: 1; color: var(--c); }
 .type-row { border: 1px solid color-mix(in srgb, var(--c) 30%, transparent); border-radius: 14px; transition: border-color 200ms ease, transform 160ms ease-out; }
 .type-row:active { transform: scale(0.98); }
 @media (hover: hover) and (pointer: fine) { .type-row:hover { border-color: var(--c); } }
-.cat-head { background: radial-gradient(110% 60% at 50% -10%, rgba(146, 129, 247, 0.22) 0%, transparent 60%); }
+.cat-head { background: none; }
 
 @media (prefers-reduced-motion: reduce) {
   [data-in] .st *, .type-hero .st * { animation: none; }
@@ -376,8 +396,8 @@ body {
 
 
 /* ==================================================================== RÉGLAGES (bleu) */
-.reglages-page { background: radial-gradient(110% 50% at 50% -10%, rgba(59, 158, 255, 0.2) 0%, transparent 60%), #000; }
-.reglages-card { border: 1px solid rgba(59, 158, 255, 0.28); border-radius: 18px; padding: 1.5rem; background: linear-gradient(160deg, #04101d 0%, #000 65%); }
+.reglages-page { background: radial-gradient(110% 50% at 50% -10%, rgba(31, 111, 209, 0.12) 0%, transparent 60%); }
+.reglages-card { border-radius: 28px; padding: 1.5rem; background: #fff; box-shadow: var(--shadow-soft); }
 
 
 /* ==================================================================== ESSAYAGE VIRTUEL (couleur vive de la boutique : --c) */
@@ -385,7 +405,7 @@ body {
   background: var(--c); color: #000; font-weight: 500; transition: transform 160ms ease-out, opacity 150ms ease; -webkit-tap-highlight-color: transparent; }
 .tryon-cta:active:not(:disabled) { transform: scale(0.97); }
 .tryon-cta:disabled { opacity: 0.4; cursor: not-allowed; }
-.tryon-cta:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+.tryon-cta:focus-visible { outline: 2px solid #5433eb; outline-offset: 2px; }
 .tryon-item { position: relative; padding: 0.5rem; border-radius: 14px; border: 2px solid #292d30; transition: border-color 150ms ease, transform 160ms ease-out; }
 .tryon-item:active { transform: scale(0.97); }
 .tryon-item.is-on { border-color: var(--c); box-shadow: 0 0 0 3px color-mix(in srgb, var(--c) 25%, transparent); }
@@ -495,7 +515,7 @@ body {
 /* ==================================================================== À LA UNE (boutiques Ultra) */
 .featured-card { position: relative; isolation: isolate; overflow: hidden; display: flex; flex-direction: column; gap: 1rem; padding: 1.1rem 1.2rem;
   border-radius: 18px; border: 1px solid color-mix(in srgb, var(--b) 50%, transparent);
-  background: linear-gradient(150deg, color-mix(in srgb, var(--b) 14%, #000) 0%, #000 70%); transition: border-color 200ms ease, transform 160ms ease-out; }
+  background: #fff; box-shadow: var(--shadow-soft); transition: border-color 200ms ease, transform 160ms ease-out; }
 .featured-card:active { transform: scale(0.98); }
 .featured-card:focus-visible { outline: 2px solid var(--b); outline-offset: 3px; }
 @media (hover: hover) and (pointer: fine) { .featured-card:hover { border-color: var(--b); } }
@@ -516,3 +536,100 @@ body {
   }
 }
 
+
+/* ---- Logo de l'en-tête : un tour à chaque page ---- */
+.logo-spin { animation: logoSpin 700ms cubic-bezier(0.23, 1, 0.32, 1); }
+@keyframes logoSpin { from { transform: rotate(-360deg) scale(0.7); } 60% { transform: rotate(-20deg) scale(1.12); } to { transform: none; } }
+
+/* ---- Particules interactives (fond fixe, derrière le contenu) ---- */
+.particles { position: fixed; inset: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; }
+#contenu, body > footer { position: relative; z-index: 1; }
+#contenu { overflow-x: clip; }
+
+/* ---- Produits qui défilent : cartes blanches qui flottent (façon Shop) ---- */
+.float-band { display: flex; flex-direction: column; gap: 14px; overflow: hidden; padding: 14px 0 22px;
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 7%, #000 93%, transparent); mask-image: linear-gradient(90deg, transparent, #000 7%, #000 93%, transparent); }
+.marquee-row { overflow: visible; }
+.marquee-track { display: flex; width: max-content; will-change: transform; animation: marquee calc(var(--n) * 4.2s) linear infinite; }
+.marquee-set { display: flex; gap: 14px; padding-right: 14px; }
+.marquee-row[data-dir="right"] .marquee-track { animation-direction: reverse; }
+.float-band:hover .marquee-track, .float-band:focus-within .marquee-track { animation-play-state: paused; }
+.float-card { display: flex; width: 11rem; flex-shrink: 0; flex-direction: column; border-radius: 28px; background: #fff; padding: 8px 8px 12px;
+  box-shadow: var(--shadow-soft); transition: transform 200ms cubic-bezier(0.23, 1, 0.32, 1), box-shadow 200ms ease; -webkit-tap-highlight-color: transparent; }
+.float-card:nth-child(3n + 2) { transform: translateY(10px); }
+.float-card:nth-child(3n) { transform: translateY(-6px); }
+@media (hover: hover) and (pointer: fine) { a.float-card:hover { transform: translateY(-6px) scale(1.02); box-shadow: var(--shadow-float); } }
+a.float-card:active { transform: scale(0.97); }
+a.float-card:focus-visible { outline: 2px solid #5433eb; outline-offset: 3px; }
+.float-img { display: block; aspect-ratio: 1; overflow: hidden; border-radius: 20px; background: var(--color-lift); }
+.float-img img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.float-label { margin: 10px 6px 0; display: flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 500; letter-spacing: -0.014em; color: var(--color-white); min-width: 0; }
+.float-dot { width: 8px; height: 8px; flex-shrink: 0; border-radius: 9999px; }
+.float-sub { margin: 2px 6px 0 20px; font-size: 12px; color: var(--color-ash); }
+@media (min-width: 640px) { .float-card { width: 13rem; } }
+
+/* Petite bande de vignettes dans une carte de catégorie */
+.strip { overflow: hidden; -webkit-mask-image: linear-gradient(90deg, transparent, #000 10%, #000 90%, transparent); mask-image: linear-gradient(90deg, transparent, #000 10%, #000 90%, transparent); }
+.strip .marquee-set { gap: 6px; padding-right: 6px; }
+.strip-item { display: flex; width: 3.5rem; height: 3.5rem; flex-shrink: 0; align-items: center; justify-content: center; overflow: hidden; border-radius: 14px; background: var(--color-lift); }
+.strip-item img { width: 100%; height: 100%; object-fit: cover; }
+@keyframes marquee { to { transform: translateX(-50%); } }
+@media (prefers-reduced-motion: reduce) { .marquee-track { animation: none; } .logo-spin { animation: none; } }
+
+/* ---- Studio IA (Ultra) ---- */
+.studio-card { background: linear-gradient(160deg, #fff8e8 0%, #fff 55%); }
+.studio-pick { height: 4.5rem; width: 3.6rem; flex-shrink: 0; overflow: hidden; border-radius: 10px; border: 1px solid var(--color-line); transition: transform 160ms ease-out, border-color 160ms ease; }
+.studio-pick:active { transform: scale(0.96); }
+.studio-pick.is-on { border-color: #e3b341; box-shadow: 0 0 0 2px rgba(227, 179, 65, 0.35); }
+.studio-media { aspect-ratio: 4 / 5; overflow: hidden; border-radius: 12px; border: 1px solid var(--color-line); background: var(--color-lift); }
+.studio-item { animation: pop 260ms cubic-bezier(0.23, 1, 0.32, 1) backwards; }
+.shop-gallery-item { aspect-ratio: 4 / 5; overflow: hidden; border-radius: 14px; border: 1px solid var(--color-line); }
+
+/* ---- Lueurs d'ambiance (douces, sur la toile claire) ---- */
+.ambient { position: fixed; inset: 0; z-index: 0; pointer-events: none;
+  background:
+    radial-gradient(55% 40% at 12% 0%, rgba(84, 51, 235, 0.09) 0%, transparent 70%),
+    radial-gradient(45% 35% at 95% 25%, rgba(255, 138, 61, 0.07) 0%, transparent 70%),
+    radial-gradient(60% 45% at 50% 105%, rgba(31, 111, 209, 0.07) 0%, transparent 70%); }
+
+/* ---- Logo de page (comme Award) : arrive en tournant, refait un tour au toucher ---- */
+.page-mark { --pm: var(--color-iris); color: var(--color-white); padding: 14px; border-radius: 22px; -webkit-tap-highlight-color: transparent;
+  filter: drop-shadow(0 0 18px color-mix(in srgb, var(--pm) 55%, transparent)); }
+.page-mark-spin { display: inline-flex; animation: awardSettle 900ms cubic-bezier(0.23, 1, 0.32, 1) backwards, pageMarkTurn 900ms cubic-bezier(0.23, 1, 0.32, 1) backwards; }
+@keyframes pageMarkTurn { from { rotate: -360deg; } to { rotate: 0deg; } }
+@media (prefers-reduced-motion: reduce) { .page-mark-spin { animation: none; } }
+
+/* ---- Recherche en pilule, bouton violet (accueil) ---- */
+.search-pill { display: flex; align-items: center; gap: 8px; border-radius: 9999px; background: #fff; border: 1px solid rgba(5, 41, 77, 0.1);
+  padding: 5px 5px 5px 22px; box-shadow: var(--shadow-pill); transition: box-shadow 200ms ease, border-color 200ms ease; }
+.search-pill:focus-within { border-color: #5433eb; box-shadow: 0 0 0 4px rgba(84, 51, 235, 0.12); }
+.search-pill input { flex: 1; min-width: 0; background: transparent; font-size: 16px; letter-spacing: -0.031em; color: var(--color-white); outline: none; }
+.search-pill input::placeholder { color: #77757b; }
+.search-pill button { display: flex; height: 46px; width: 46px; flex-shrink: 0; align-items: center; justify-content: center; border-radius: 9999px;
+  background: #5433eb; color: #fff; box-shadow: var(--shadow-violet); transition: transform 150ms ease-out, background-color 150ms ease; }
+.search-pill button:hover { background: #4527d6; }
+.search-pill button:active { transform: scale(0.94); }
+
+/* ---- Pastilles de catégories ---- */
+.cat-pill { display: inline-flex; align-items: center; gap: 8px; border-radius: 9999px; background: #fff; border: 1px solid #ebebeb;
+  padding: 5px 14px 5px 5px; font-size: 14px; letter-spacing: -0.014em; color: var(--color-white); box-shadow: var(--shadow-pill);
+  transition: transform 150ms ease-out, border-color 150ms ease; -webkit-tap-highlight-color: transparent; }
+.cat-pill:hover { border-color: #c9c9cf; }
+.cat-pill:active { transform: scale(0.96); }
+.cat-pill-icon { display: flex; width: 28px; height: 28px; align-items: center; justify-content: center; border-radius: 9999px; }
+
+/* Cartes « À la une » sur la page Award (zone sombre) */
+.award-page .featured-card { background: linear-gradient(150deg, #1a1305 0%, #000 70%); box-shadow: none; border: 1px solid #4a3a12; }
+
+/* Pastilles : une ligne qui défile au doigt sur téléphone, plusieurs lignes centrées sur grand écran */
+.cat-pills { overflow-x: auto; scrollbar-width: none; padding: 4px 2px 10px; margin: 0 -16px; padding-inline: 16px; scroll-snap-type: x proximity; }
+.cat-pills::-webkit-scrollbar { display: none; }
+.cat-pills > * { flex-shrink: 0; scroll-snap-align: start; }
+@media (min-width: 640px) { .cat-pills { overflow: visible; margin: 0; padding-inline: 2px; } }
+.hub-tile[data-hub="award"] .hub-icon { background: color-mix(in srgb, var(--c) 12%, #000); }
+
+/* ---- Lien de la boutique ---- */
+.link-pill { display: flex; align-items: center; gap: 8px; border-radius: 9999px; background: var(--color-lift); border: 1px solid var(--color-line); padding: 5px 5px 5px 18px; min-width: 0; }
+.link-pill:focus-within { border-color: #5433eb; }
+.qr-box { display: block; width: 9rem; height: 9rem; border-radius: 20px; background: #fff; padding: 8px; box-shadow: var(--shadow-soft); }
+.qr-box svg { width: 100%; height: 100%; }

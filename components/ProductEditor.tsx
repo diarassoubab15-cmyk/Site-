@@ -110,7 +110,7 @@ export function ProductEditor({ product }: { product?: SellerProduct }) {
       )}
 
       <label className="flex items-center gap-3 text-sm text-bone">
-        <input type="checkbox" name="published" defaultChecked={product?.published ?? true} className="accent-[#9281f7]" />
+        <input type="checkbox" name="published" defaultChecked={product?.published ?? true} className="accent-[#5433eb]" />
         Visible sur la marketplace
       </label>
 

@@ -5,8 +5,9 @@ import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { ShopTypeIcon } from "@/components/ShopTypeIcon";
 import { Stars } from "@/components/Stars";
 import { VideoPlayer } from "@/components/VideoPlayer";
-import { getFeaturedShops, listShopsByType, type TypeShop } from "@/lib/catalog";
+import { getFeaturedShops, listCards, listShopsByType, type TypeShop } from "@/lib/catalog";
 import { FeaturedShops } from "@/components/FeaturedShops";
+import { ProductMarquee } from "@/components/ProductMarquee";
 import { SHOP_TYPES, getShopType } from "@/lib/shop-types";
 import { siteVideo } from "@/lib/site-videos";
 
@@ -28,14 +29,14 @@ const initial = (name: string) => {
 export default async function TypePage({ params }: { params: Promise<{ type: string }> }) {
   const t = getShopType((await params).type);
   if (!t) notFound();
-  const [shops, featured] = await Promise.all([listShopsByType(t.slug), getFeaturedShops(t.slug, 3)]);
+  const [shops, featured, cards] = await Promise.all([listShopsByType(t.slug), getFeaturedShops(t.slug, 3), listCards({ category: t.slug, limit: 24 }).catch(() => [])]);
   const groups = new Map<string, TypeShop[]>();
   for (const s of shops) groups.set(initial(s.name), [...(groups.get(initial(s.name)) ?? []), s]);
   const video = siteVideo(t.slug);
 
   return (
-    <div className="type-page" style={{ ["--c" as string]: t.color, ["--cl" as string]: t.light }}>
-      <section className="container-x pb-12 pt-12" aria-labelledby="type-titre">
+    <div className="type-page" data-accent={t.color} style={{ ["--c" as string]: t.color, ["--cl" as string]: t.light }}>
+      <section className="container-x pb-8 pt-8" aria-labelledby="type-titre">
         <Breadcrumbs items={[{ name: "Accueil", href: "/" }, { name: "Catégories", href: "/categories" }, { name: t.name, href: `/categories/${t.slug}` }]} />
         <div className="type-hero mt-6 flex flex-wrap items-center gap-6">
           <span className="hub-icon h-24 w-24" style={{ color: t.light }}><ShopTypeIcon slug={t.slug} size={64} /></span>
@@ -48,6 +49,10 @@ export default async function TypePage({ params }: { params: Promise<{ type: str
           <Link href={`/marketplace/${t.slug}`} className="btn">Voir tous les produits</Link>
           <Link href="/vendre" className="btn">Ouvrir une boutique {t.name.toLowerCase()}</Link>
         </div>
+      </section>
+
+      <section aria-label={`Produits ${t.name.toLowerCase()} à découvrir`} className="pb-12">
+        <ProductMarquee products={cards.map((c) => c.product)} type={t.slug} rows={1} />
       </section>
 
       {featured.length > 0 && (

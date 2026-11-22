@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ShopTypeIcon } from "@/components/ShopTypeIcon";
-import { shopTypeCounts } from "@/lib/catalog";
+import { listCards, shopTypeCounts } from "@/lib/catalog";
+import { ProductMarquee } from "@/components/ProductMarquee";
+import type { Product } from "@/lib/data";
 import { SHOP_TYPES } from "@/lib/shop-types";
 
 export const metadata: Metadata = {
@@ -12,9 +14,11 @@ export const metadata: Metadata = {
 export const revalidate = 120;
 
 export default async function Categories() {
-  const counts = await shopTypeCounts();
+  const [counts, cards] = await Promise.all([shopTypeCounts(), listCards({ limit: 200 }).catch(() => [])]);
+  const byType = new Map<string, Product[]>();
+  for (const c of cards) { const l = byType.get(c.product.category) ?? []; if (l.length < 10) byType.set(c.product.category, [...l, c.product]); }
   return (
-    <div className="cat-head">
+    <div className="cat-head" data-accent="#5433eb">
       <section className="container-x pb-10 pt-16 sm:pt-24" aria-labelledby="cat-titre">
         <h1 id="cat-titre" className="h-display fade-up">Catégories</h1>
         <p className="fade-up mt-6 max-w-xl text-lg text-ash" style={{ ["--d" as string]: 1 }}>
@@ -39,6 +43,7 @@ export default async function Categories() {
                   <span className="mt-auto block">
                     <span className="hub-title text-[1.75rem]">{t.name}</span>
                     <span className="mt-2 block text-sm leading-relaxed text-ash">{t.tagline}</span>
+                    <span className="mt-4 block"><ProductMarquee products={byType.get(t.slug) ?? []} type={t.slug} rows={1} variant="strip" /></span>
                     <span className="mt-3 block font-mono text-xs" style={{ color: t.light }}>{n ? `${n} boutique${n > 1 ? "s" : ""}` : "Bientôt vos premières boutiques"}</span>
                   </span>
                 </Link>

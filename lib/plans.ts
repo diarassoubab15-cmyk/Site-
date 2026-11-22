@@ -23,7 +23,7 @@ export const plans: Plan[] = [
     pitch: "Tout pour ouvrir sa boutique et vendre, essayage virtuel compris.",
     monthly: 15000,
     products: "Jusqu'à 100 produits",
-    color: "#3ad389",
+    color: "#12995a",
     features: [
       { text: "Boutique en ligne avec adresse, carte, boutons WhatsApp et Appeler" },
       { text: "12 photos par produit, visite 360° (immobilier), rotation 360° des objets" },
@@ -41,7 +41,7 @@ export const plans: Plan[] = [
     monthly: 25000,
     products: "Jusqu'à 1 000 produits",
     highlighted: true,
-    color: "#9281f7",
+    color: "#5433eb",
     features: [
       { text: "Tout le forfait Base" },
       { text: "Boutique animée en motion design, aux couleurs de votre marque" },
@@ -58,11 +58,12 @@ export const plans: Plan[] = [
     pitch: "L'expérience premium : une boutique unique, vue en premier.",
     monthly: 50000,
     products: "Produits illimités",
-    color: "#e3b341",
+    color: "#b7791f",
     features: [
       { text: "Tout le forfait Pro" },
       { text: "Vitrine Ultra : en-tête plein écran, animation signature (4 styles) et police au choix" },
       { text: "À la une de votre catégorie et de la page Award, en rotation chaque semaine" },
+      { text: "Studio IA : décrivez une image ou une vidéo, l'IA la crée pour votre boutique (30 images et 4 vidéos par mois, rendu photo réaliste)" },
       { text: "Présentation animée en motion design de chaque produit, créée à partir de vos photos" },
       { text: "10 vidéos animées par mois" },
       { text: "Essais virtuels illimités pour vos clients" },

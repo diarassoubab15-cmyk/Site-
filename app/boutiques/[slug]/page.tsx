@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, permanentRedirect } from "next/navigation";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { JsonLd } from "@/components/JsonLd";
 import { PaymentMethods } from "@/components/PaymentMethods";
@@ -10,7 +10,7 @@ import { VideoPlayer } from "@/components/VideoPlayer";
 import { ShopMap } from "@/components/ShopMap";
 import { getShopType } from "@/lib/shop-types";
 import { mapsEmbedUrl, telLink, waLink } from "@/lib/maps";
-import { allSlugs, getShopPage, getShopTier } from "@/lib/catalog";
+import { allSlugs, getShopCreations, getShopPage, getShopTier, resolveShopSlug } from "@/lib/catalog";
 import { ShopHero } from "@/components/ShopHero";
 import type { Signature } from "@/lib/shop-theme";
 import { formatDate, formatPrice } from "@/lib/format";
@@ -32,15 +32,22 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 export default async function ShopPage({ params }: Props) {
-  const page = await getShopPage((await params).slug);
-  if (!page) notFound();
+  const slug = (await params).slug;
+  const page = await getShopPage(slug);
+  if (!page) {
+    // Ancienne adresse d'une boutique qui a changé de lien : on envoie vers la nouvelle.
+    const current = await resolveShopSlug(slug);
+    if (current && current !== slug) permanentRedirect(`/boutiques/${current}`);
+    notFound();
+  }
   const { shop, cards: items, rating, awards, video } = page;
   const type = shop.category ? getShopType(shop.category) : undefined;
   const place = [shop.district, shop.city, shop.country].filter(Boolean).join(", ");
   // Boutique animée (Pro) et Vitrine Ultra : couleur de la marque, à défaut celle de son type de boutique.
   const tier = await getShopTier(shop.slug);
   const animated = tier === "pro" || tier === "business";
-  const brand = shop.brandColor ?? type?.color ?? "#9281f7";
+  const creations = tier === "business" ? await getShopCreations(shop.slug) : [];
+  const brand = shop.brandColor ?? type?.color ?? "#5433eb";
   return (
     <section className="container-x py-16">
       <Breadcrumbs items={[{ name: "Accueil", href: "/" }, type ? { name: type.name, href: `/categories/${type.slug}` } : { name: "Boutiques", href: "/categories" }, { name: shop.name, href: `/boutiques/${shop.slug}` }]} />
@@ -96,6 +103,21 @@ export default async function ShopPage({ params }: Props) {
       {video && (
         <section className="mt-10" aria-label="Vidéo de la boutique">
           <VideoPlayer src={video.src} poster={video.poster} label={`Présentation de ${shop.name}`} className="mx-auto max-w-4xl" />
+        </section>
+      )}
+      {creations.length > 0 && (
+        <section className="mt-12" aria-labelledby="galerie">
+          <h2 id="galerie" className="mb-5 text-2xl font-medium text-white">Galerie</h2>
+          <ul className="grid grid-cols-2 gap-3 md:grid-cols-4" data-reveal suppressHydrationWarning>
+            {creations.map((c) => (
+              <li key={c.id} className="shop-gallery-item">
+                {c.kind === "video"
+                  ? <video src={c.url} muted loop playsInline autoPlay preload="metadata" className="h-full w-full object-cover" aria-label={c.prompt} />
+                  // eslint-disable-next-line @next/next/no-img-element
+                  : <img src={c.url} alt={c.prompt} loading="lazy" decoding="async" className="h-full w-full object-cover" />}
+              </li>
+            ))}
+          </ul>
         </section>
       )}
       <h2 className="mb-8 mt-16 text-2xl font-medium text-white">Produits ({items.length})</h2>

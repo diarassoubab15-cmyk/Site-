@@ -145,7 +145,7 @@ export function SellerApplyForm({ initialPlan, known }: { initialPlan: string; k
   }
 
   const type = getShopType(val("category"));
-  const accent = type?.color ?? "#9281f7";
+  const accent = type?.color ?? "#5433eb";
 
   return (
     <div className="grid gap-6 xl:grid-cols-[1.25fr_1fr]">
@@ -195,7 +195,7 @@ export function SellerApplyForm({ initialPlan, known }: { initialPlan: string; k
             <div><label className="label" htmlFor="city">Ville</label><input id="city" required autoComplete="address-level2" className="input" value={val("city", p?.city)} onChange={(e) => set("city", e.target.value)} /></div>
             <div className="sm:col-span-2"><label className="label" htmlFor="district">Quartier <span className="text-iron">(facultatif)</span></label><input id="district" maxLength={80} className="input" placeholder="Ex. : ACI 2000, Hamdallaye" value={val("district")} onChange={(e) => set("district", e.target.value)} /></div>
             <label className="flex items-center gap-3 rounded-[6px] border border-line px-3 py-3 text-sm text-bone sm:col-span-2">
-              <input type="checkbox" checked={physical} onChange={(e) => set("physical", e.target.checked ? "1" : "0")} className="accent-[#9281f7]" />
+              <input type="checkbox" checked={physical} onChange={(e) => set("physical", e.target.checked ? "1" : "0")} className="accent-[#5433eb]" />
               Les clients peuvent venir à ma boutique (boutique physique)
             </label>
             {physical && (
@@ -231,13 +231,13 @@ export function SellerApplyForm({ initialPlan, known }: { initialPlan: string; k
             <div className="grid gap-2 sm:grid-cols-2">
               {payoutChoices.map((m) => (
                 <label key={m} className={`flex cursor-pointer items-center gap-3 rounded-[6px] border px-3 py-2.5 text-sm ${val("payoutMethod", "orange_money") === m ? "border-white text-white" : "border-line text-bone"}`}>
-                  <input type="radio" name="payoutMethod" checked={val("payoutMethod", "orange_money") === m} onChange={() => set("payoutMethod", m)} className="accent-[#9281f7]" />
+                  <input type="radio" name="payoutMethod" checked={val("payoutMethod", "orange_money") === m} onChange={() => set("payoutMethod", m)} className="accent-[#5433eb]" />
                   {payoutLabel(m)}
                 </label>
               ))}
             </div>
             <div><label className="label" htmlFor="payoutAccount">{val("payoutMethod", "orange_money") === "bank" ? "IBAN / RIB" : "Numéro marchand ou de téléphone"}</label><input id="payoutAccount" required className="input font-mono" value={val("payoutAccount")} onChange={(e) => set("payoutAccount", e.target.value)} /></div>
-            <label className="flex items-center gap-3 text-sm text-bone"><input type="checkbox" checked={val("cod", "1") === "1"} onChange={(e) => set("cod", e.target.checked ? "1" : "0")} className="accent-[#9281f7]" />J&apos;accepte le paiement à la livraison</label>
+            <label className="flex items-center gap-3 text-sm text-bone"><input type="checkbox" checked={val("cod", "1") === "1"} onChange={(e) => set("cod", e.target.checked ? "1" : "0")} className="accent-[#5433eb]" />J&apos;accepte le paiement à la livraison</label>
           </div>
         )}
 
@@ -245,7 +245,7 @@ export function SellerApplyForm({ initialPlan, known }: { initialPlan: string; k
           <div className="space-y-3">
             {plans.map((pl) => (
               <label key={pl.id} className={`flex cursor-pointer items-center justify-between gap-4 rounded-[6px] border px-4 py-3 ${val("plan") === pl.id ? "border-white" : "border-line"}`}>
-                <span className="flex items-center gap-3"><input type="radio" name="plan" checked={val("plan") === pl.id} onChange={() => set("plan", pl.id)} className="accent-[#9281f7]" /><span className="text-white">{pl.name}</span><span className="text-xs text-ash">{pl.products}</span></span>
+                <span className="flex items-center gap-3"><input type="radio" name="plan" checked={val("plan") === pl.id} onChange={() => set("plan", pl.id)} className="accent-[#5433eb]" /><span className="text-white">{pl.name}</span><span className="text-xs text-ash">{pl.products}</span></span>
                 <span className="font-mono text-sm text-bone">{pl.monthly.toLocaleString("fr-FR")} FCFA/mois</span>
               </label>
             ))}
@@ -264,7 +264,7 @@ export function SellerApplyForm({ initialPlan, known }: { initialPlan: string; k
       {/* Aperçu en direct : la fiche telle que les clients la verront */}
       <aside aria-label="Aperçu de votre boutique" className="xl:sticky xl:top-24 xl:self-start">
         <p className="mb-3 text-sm text-ash">Aperçu pour vos clients</p>
-        <div className="hub-tile min-h-0 gap-5" style={{ ["--c" as string]: accent, ["--cl" as string]: type?.light ?? "#baa7ff" }} data-shop-preview>
+        <div className="hub-tile min-h-0 gap-5" style={{ ["--c" as string]: accent, ["--cl" as string]: type?.light ?? "#5433eb" }} data-shop-preview>
           <span className="hub-glow" aria-hidden="true" />
           <div className="flex items-center gap-4">
             <span className="hub-icon h-14 w-14" data-in=""><ShopTypeIcon slug={val("category")} size={40} /></span>

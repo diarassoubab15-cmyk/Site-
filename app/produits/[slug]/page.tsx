@@ -47,7 +47,7 @@ export default async function ProductPage({ params }: Props) {
   const cat = getCategory(product.category) ?? { slug: product.category, name: product.category };
   // Présentation animée en motion design : boutiques Ultra, produits avec au moins une vraie photo.
   const tier = product.images?.length ? await getShopTier(shop.slug) : null;
-  const typeColor = getShopType(product.category)?.color ?? "#9281f7";
+  const typeColor = getShopType(product.category)?.color ?? "#5433eb";
   // Essayage virtuel : vêtements de la même boutique qui ont une vraie photo.
   const tryItems: TryOnItem[] =
     product.category === "mode" && product.images?.length

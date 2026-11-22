@@ -42,7 +42,7 @@ export function ShopProfileForm({ profile, slug }: { profile: ShopProfile; slug?
         <div><label className="label" htmlFor="pf-wa">WhatsApp</label><input id="pf-wa" required inputMode="tel" className="input" value={f.whatsapp} onChange={(e) => setF({ ...f, whatsapp: e.target.value })} /></div>
         <div><label className="label" htmlFor="pf-call">Appels</label><input id="pf-call" required inputMode="tel" className="input" value={f.callPhone} onChange={(e) => setF({ ...f, callPhone: e.target.value })} /></div>
         <label className="flex items-center gap-3 text-sm text-bone sm:col-span-2">
-          <input type="checkbox" checked={f.isPhysical} onChange={(e) => setF({ ...f, isPhysical: e.target.checked })} className="accent-[#9281f7]" />
+          <input type="checkbox" checked={f.isPhysical} onChange={(e) => setF({ ...f, isPhysical: e.target.checked })} className="accent-[#5433eb]" />
           Boutique physique (les clients peuvent venir)
         </label>
         {f.isPhysical && (
