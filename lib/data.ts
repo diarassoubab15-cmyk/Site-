@@ -1,6 +1,6 @@
 /**
  * Données de démonstration.
- * Elles seront remplacées par les tables Supabase (voir supabase/migrations/0001_init.sql).
+ * Elles seront remplacées par les tables Supabase (voir supabase/migrations/20261121183051_0001_init.sql).
  * Les pages lisent uniquement via les fonctions exportées ici : brancher Supabase
  * revient à réécrire ces fonctions, sans toucher aux pages.
  */
