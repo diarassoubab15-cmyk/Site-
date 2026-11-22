@@ -289,3 +289,18 @@ export async function getFeaturedShops(category?: string, limit = 3): Promise<Fe
   const seen = new Set<string>();
   return rows.filter((r) => !seen.has(r.category) && seen.add(r.category)).slice(0, limit);
 }
+
+// ------------------------------------------------------------------ Studio IA (forfait Ultra)
+/** Adresse publique d'un fichier du stockage « shop-ai ». */
+export const aiUrl = (path: string) => `${(process.env.NEXT_PUBLIC_SUPABASE_URL ?? "").replace(/\/$/, "")}/storage/v1/object/public/shop-ai/${path}`;
+export type ShopCreation = { id: string; kind: "image" | "video"; url: string; prompt: string };
+
+/** Créations IA publiées par une boutique en ligne (visibles seulement si elle est en Ultra). */
+export async function getShopCreations(slug: string): Promise<ShopCreation[]> {
+  if (!supabaseEnabled) return [];
+  const sb = supabasePublic();
+  const { data: s } = await sb.from("shops").select("id").eq("slug", slug).eq("status", "approved").maybeSingle();
+  if (!s) return [];
+  const { data } = await sb.from("ai_creations").select("id, kind, path, prompt").eq("shop_id", s.id).eq("published", true).eq("status", "done").order("created_at", { ascending: false }).limit(24);
+  return (data ?? []).filter((c) => c.path).map((c) => ({ id: c.id, kind: c.kind as ShopCreation["kind"], url: aiUrl(c.path!), prompt: c.prompt }));
+}

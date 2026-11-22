@@ -5,6 +5,8 @@ import { supabaseEnabled } from "@/lib/supabase/env";
 import { loadSeller, loadShopProfile } from "@/lib/server-data";
 import { ShopProfileForm } from "@/components/ShopProfileForm";
 import { ShopThemeForm } from "@/components/ShopThemeForm";
+import { AiStudio } from "@/components/AiStudio";
+import { aiStudioState } from "@/app/actions";
 import { getShopType } from "@/lib/shop-types";
 
 export const metadata: Metadata = { title: "Ma boutique", robots: { index: false, follow: false } };
@@ -13,6 +15,7 @@ export const dynamic = "force-dynamic";
 
 export default async function Vendeur() {
   const [live, profile] = supabaseEnabled ? await Promise.all([loadSeller(), loadShopProfile()]) : [null, null];
+  const studio = profile?.tier === "business" ? await aiStudioState() : null;
   return (
     <section className="container-x py-16">
       <h1 className="h-section mb-8 text-4xl sm:text-5xl">Ma boutique</h1>
@@ -28,6 +31,7 @@ export default async function Vendeur() {
           />
         </div>
       )}
+      {profile && <div className="mt-6"><AiStudio ultra={profile.tier === "business"} initial={studio} /></div>}
     </section>
   );
 }

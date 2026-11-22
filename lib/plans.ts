@@ -63,6 +63,7 @@ export const plans: Plan[] = [
       { text: "Tout le forfait Pro" },
       { text: "Vitrine Ultra : en-tête plein écran, animation signature (4 styles) et police au choix" },
       { text: "À la une de votre catégorie et de la page Award, en rotation chaque semaine" },
+      { text: "Studio IA : décrivez une image ou une vidéo, l'IA la crée pour votre boutique (30 images et 4 vidéos par mois, rendu photo réaliste)" },
       { text: "Présentation animée en motion design de chaque produit, créée à partir de vos photos" },
       { text: "10 vidéos animées par mois" },
       { text: "Essais virtuels illimités pour vos clients" },

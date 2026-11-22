@@ -23,7 +23,19 @@ export type Database = {
           }
         },"public": {
           Tables: {
-            "admin_audit": {
+            "ai_creations": {
+                  Row: {
+                    "created_at": string,"id": string,"kind": string,"path": string | null,"prompt": string,"published": boolean,"request_id": string | null,"shop_id": string,"source_id": string | null,"status": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "created_at"?: string,"id"?: string,"kind": string,"path"?: string | null,"prompt": string,"published"?: boolean,"request_id"?: string | null,"shop_id": string,"source_id"?: string | null,"status"?: string
+                  }
+                  Update: {
+                    "created_at"?: string,"id"?: string,"kind"?: string,"path"?: string | null,"prompt"?: string,"published"?: boolean,"request_id"?: string | null,"shop_id"?: string,"source_id"?: string | null,"status"?: string
+                  }
+                  Relationships: []
+                },"admin_audit": {
                   Row: {
                     "action": string,"actor_id": string | null,"created_at": string,"details": Json | null,"id": number,"target": string
                   }
@@ -475,6 +487,15 @@ isOneToOne: false
         isOneToOne: false
         isSetofReturn: true
       } },
+"ai_remaining":
+{ Args: { "p_kind": string }; Returns: number
+                           },
+"claim_ai_creation":
+{ Args: { "p_kind": string,"p_prompt": string,"p_source"?: string }; Returns: string
+                           },
+"set_ai_published":
+{ Args: { "p_id": string,"p_published": boolean }; Returns: undefined
+                           },
 "claim_tryon":
 { Args: { "p_products": (string)[],"p_shop": string }; Returns: string
                            },

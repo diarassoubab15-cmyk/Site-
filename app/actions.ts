@@ -9,7 +9,7 @@ import { currentUser, supabaseServer, supabaseService } from "@/lib/supabase/ser
 import { slugify } from "@/lib/format";
 import { categories } from "@/lib/data";
 import { coordsFromMapsUrl, isMapsUrl } from "@/lib/maps";
-import { mediaUrl as productMediaUrl } from "@/lib/catalog";
+import { aiUrl, mediaUrl as productMediaUrl } from "@/lib/catalog";
 import { shopStatusDb, ticketKindDb, type ActionResult } from "@/lib/views";
 import type { SellerStatus } from "@/lib/demo-store";
 import { periodOf, rewardTitle, type RankingRow } from "@/lib/rewards";
@@ -761,5 +761,97 @@ export const updateShopTheme = action(shopThemeSchema, async (f, { user, sb }) =
   if (error) return dbError(error);
   revalidatePath(`/boutiques/${data.slug}`);
   revalidatePath("/vendeur");
+  return { ok: true };
+});
+
+// ------------------------------------------------------------------ Studio IA (forfait Ultra)
+export type AiCreationView = { id: string; kind: "image" | "video"; prompt: string; status: "pending" | "done" | "failed"; url: string | null; published: boolean; createdAt: string };
+const AI_COLS = "id, kind, prompt, status, path, published, created_at, request_id, shop_id, source_id";
+type AiRow = { id: string; kind: string; prompt: string; status: string; path: string | null; published: boolean; created_at: string; request_id: string | null; shop_id: string; source_id: string | null };
+const aiView = (r: AiRow): AiCreationView => ({
+  id: r.id, kind: r.kind as AiCreationView["kind"], prompt: r.prompt, status: r.status as AiCreationView["status"],
+  url: r.path ? aiUrl(r.path) : null, published: r.published, createdAt: r.created_at,
+});
+
+/** État du studio pour le vendeur connecté : créations, quotas restants du mois, service prêt ou non. */
+export async function aiStudioState(): Promise<{ ready: boolean; remaining: { image: number; video: number }; creations: AiCreationView[] } | null> {
+  const { aiConfigured } = await import("@/lib/ai-studio");
+  const u = await currentUser();
+  if (!u) return null;
+  const [img, vid, list] = await Promise.all([
+    u.sb.rpc("ai_remaining", { p_kind: "image" }),
+    u.sb.rpc("ai_remaining", { p_kind: "video" }),
+    u.sb.from("ai_creations").select(AI_COLS).order("created_at", { ascending: false }).limit(40),
+  ]);
+  return { ready: aiConfigured(), remaining: { image: (img.data as number) ?? 0, video: (vid.data as number) ?? 0 }, creations: ((list.data ?? []) as AiRow[]).map(aiView) };
+}
+
+const aiCreateSchema = z.object({
+  kind: z.enum(["image", "video"]),
+  prompt: z.string().trim().min(3, "Décrivez ce que vous voulez (3 caractères au moins)").max(600, "600 caractères au plus"),
+  sourceId: z.string().uuid().nullable(),
+});
+
+export const createAiCreation = action<z.infer<typeof aiCreateSchema>, { id: string }>(aiCreateSchema, async ({ kind, prompt, sourceId }, { sb }) => {
+  const { aiConfigured, submitAi } = await import("@/lib/ai-studio");
+  if (!aiConfigured()) return fail("Le Studio IA arrive très bientôt. Rien n'a été décompté.");
+  if (kind === "video" && !sourceId) return fail("Choisissez l'image à animer (créez d'abord une image).");
+  const { data: id, error } = await sb.rpc("claim_ai_creation", { p_kind: kind, p_prompt: prompt, ...(sourceId ? { p_source: sourceId } : {}) });
+  if (error) return dbError(error);
+  const svc = supabaseService();
+  try {
+    let sourceUrl: string | undefined;
+    if (sourceId) {
+      const { data: src } = await sb.from("ai_creations").select("path").eq("id", sourceId).maybeSingle();
+      sourceUrl = src?.path ? aiUrl(src.path) : undefined;
+    }
+    const requestId = await submitAi(kind, prompt, sourceUrl);
+    await svc.from("ai_creations").update({ request_id: requestId }).eq("id", id as string);
+    return { ok: true, data: { id: id as string } };
+  } catch (e) {
+    await svc.from("ai_creations").update({ status: "failed" }).eq("id", id as string);   // rendue : ne compte pas
+    console.error("studio IA :", (e as Error).message);
+    return fail("La création n'a pas pu démarrer. Rien n'a été décompté : réessayez dans un instant.");
+  }
+});
+
+const aiIdSchema = z.object({ id: z.string().uuid() });
+
+/** Suivi d'une création : quand elle est prête, le fichier est rapatrié chez NEXORA (les liens du service expirent). */
+export const pollAiCreation = action<z.infer<typeof aiIdSchema>, AiCreationView>(aiIdSchema, async ({ id }, { sb }) => {
+  const { data: row } = await sb.from("ai_creations").select(AI_COLS).eq("id", id).maybeSingle();   // RLS : ses créations seulement
+  if (!row) return fail("Création introuvable");
+  const r = row as AiRow;
+  if (r.status !== "pending" || !r.request_id) return { ok: true, data: aiView(r) };
+  const { checkAi, downloadAi } = await import("@/lib/ai-studio");
+  const svc = supabaseService();
+  const failNow = async () => {
+    await svc.from("ai_creations").update({ status: "failed" }).eq("id", id).eq("status", "pending");
+    return { ok: true as const, data: aiView({ ...r, status: "failed" }) };
+  };
+  if (Date.now() - new Date(r.created_at).getTime() > 20 * 60_000) return failNow();
+  try {
+    const res = await checkAi(r.kind as "image" | "video", r.request_id);
+    if (res.status === "pending") return { ok: true, data: aiView(r) };
+    if (res.status === "failed") { console.error("studio IA :", res.reason); return failNow(); }
+    const file = res.data ? { data: res.data, contentType: res.contentType } : await downloadAi(res.url!);
+    const video = r.kind === "video";
+    const path = `${r.shop_id}/${id}.${video ? "mp4" : file.contentType === "image/png" ? "png" : file.contentType === "image/webp" ? "webp" : "jpg"}`;
+    const up = await svc.storage.from("shop-ai").upload(path, file.data, { contentType: video ? "video/mp4" : file.contentType, upsert: true });
+    if (up.error) throw up.error;
+    const { data: done } = await svc.from("ai_creations").update({ status: "done", path }).eq("id", id).eq("status", "pending").select(AI_COLS).single();
+    return { ok: true, data: aiView((done ?? { ...r, status: "done", path }) as AiRow) };
+  } catch (e) {
+    console.error("studio IA :", (e as Error).message);
+    return { ok: true, data: aiView(r) };   // on réessaiera au prochain passage
+  }
+});
+
+const aiPublishSchema = z.object({ id: z.string().uuid(), published: z.boolean() });
+export const publishAiCreation = action(aiPublishSchema, async ({ id, published }, { user, sb }) => {
+  const { error } = await sb.rpc("set_ai_published", { p_id: id, p_published: published });
+  if (error) return dbError(error);
+  const { data: shop } = await sb.from("shops").select("slug").eq("owner_id", user.id).neq("status", "closed").maybeSingle();
+  if (shop) revalidatePath(`/boutiques/${shop.slug}`);
   return { ok: true };
 });

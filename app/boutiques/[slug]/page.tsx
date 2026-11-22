@@ -10,7 +10,7 @@ import { VideoPlayer } from "@/components/VideoPlayer";
 import { ShopMap } from "@/components/ShopMap";
 import { getShopType } from "@/lib/shop-types";
 import { mapsEmbedUrl, telLink, waLink } from "@/lib/maps";
-import { allSlugs, getShopPage, getShopTier } from "@/lib/catalog";
+import { allSlugs, getShopCreations, getShopPage, getShopTier } from "@/lib/catalog";
 import { ShopHero } from "@/components/ShopHero";
 import type { Signature } from "@/lib/shop-theme";
 import { formatDate, formatPrice } from "@/lib/format";
@@ -40,6 +40,7 @@ export default async function ShopPage({ params }: Props) {
   // Boutique animée (Pro) et Vitrine Ultra : couleur de la marque, à défaut celle de son type de boutique.
   const tier = await getShopTier(shop.slug);
   const animated = tier === "pro" || tier === "business";
+  const creations = tier === "business" ? await getShopCreations(shop.slug) : [];
   const brand = shop.brandColor ?? type?.color ?? "#9281f7";
   return (
     <section className="container-x py-16">
@@ -96,6 +97,21 @@ export default async function ShopPage({ params }: Props) {
       {video && (
         <section className="mt-10" aria-label="Vidéo de la boutique">
           <VideoPlayer src={video.src} poster={video.poster} label={`Présentation de ${shop.name}`} className="mx-auto max-w-4xl" />
+        </section>
+      )}
+      {creations.length > 0 && (
+        <section className="mt-12" aria-labelledby="galerie">
+          <h2 id="galerie" className="mb-5 text-2xl font-medium text-white">Galerie</h2>
+          <ul className="grid grid-cols-2 gap-3 md:grid-cols-4" data-reveal suppressHydrationWarning>
+            {creations.map((c) => (
+              <li key={c.id} className="shop-gallery-item">
+                {c.kind === "video"
+                  ? <video src={c.url} muted loop playsInline autoPlay preload="metadata" className="h-full w-full object-cover" aria-label={c.prompt} />
+                  // eslint-disable-next-line @next/next/no-img-element
+                  : <img src={c.url} alt={c.prompt} loading="lazy" decoding="async" className="h-full w-full object-cover" />}
+              </li>
+            ))}
+          </ul>
         </section>
       )}
       <h2 className="mb-8 mt-16 text-2xl font-medium text-white">Produits ({items.length})</h2>
