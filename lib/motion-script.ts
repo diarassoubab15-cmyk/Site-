@@ -1,7 +1,8 @@
 /**
  * Script intégré dans <head> (≈ 1 Ko), exécuté avant l'affichage, indépendant de React :
  * - fait apparaître les cartes en cascade au défilement (IntersectionObserver) ;
- * - onde au toucher sur les boutons et vibration légère sur les actions importantes.
+ * - onde au toucher sur les boutons et vibration légère sur les actions importantes ;
+ * - le menu du téléphone se referme quand on choisit une page.
  * Sans JavaScript, rien n'est masqué.
  */
 export const motionScript = `(function(){
@@ -20,5 +21,6 @@ var r=b.getBoundingClientRect(),s=Math.max(r.width,r.height)*2,sp=document.creat
 sp.className='ripple';sp.style.width=sp.style.height=s+'px';sp.style.left=(e.clientX-r.left-s/2)+'px';sp.style.top=(e.clientY-r.top-s/2)+'px';
 b.appendChild(sp);setTimeout(function(){sp.remove();},600);
 },{passive:true});
+document.addEventListener('click',function(e){var l=e.target.closest&&e.target.closest('details[open] a');if(l){l.closest('details').removeAttribute('open');}},{passive:true});
 document.addEventListener('click',function(e){var t=e.target.closest&&e.target.closest('[data-haptic]');if(t&&navigator.vibrate){try{navigator.vibrate(10);}catch(x){}}},{passive:true});
 })();`;
