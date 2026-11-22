@@ -7,30 +7,33 @@ import { supabaseEnabled } from "@/lib/supabase/env";
 import { supabaseBrowser } from "@/lib/supabase/client";
 import { signOut } from "@/app/actions";
 
-type Mode = "email" | "phone";
+export type AuthMode = "connexion" | "inscription";
+type Step = "form" | "check-email" | "forgot" | "forgot-sent" | "link-sent";
 
-export function LoginForm({ user, next = "/compte" }: { user?: { email: string; phone: string } | null; next?: string }) {
+/**
+ * Se connecter / S'inscrire, par e-mail et mot de passe (fiable, sans attendre d'e-mail à chaque fois).
+ * Secours : « Recevoir un lien de connexion » et « Mot de passe oublié » (lien par e-mail vers /auth/callback).
+ */
+export function LoginForm({ user, next = "/compte", initialMode = "connexion" }: { user?: { email: string; phone: string } | null; next?: string; initialMode?: AuthMode }) {
   const demo = useDemo();
   const router = useRouter();
-  const [mode, setMode] = useState<Mode>("email");
-  const [id, setId] = useState("");
-  const [sent, setSent] = useState(false);
-  const [code, setCode] = useState("");
+  const [mode, setMode] = useState<AuthMode>(initialMode);
+  const [step, setStep] = useState<Step>("form");
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [showPw, setShowPw] = useState(false);
   const [error, setError] = useState("");
   const [pending, start] = useTransition();
 
   const connected = supabaseEnabled ? user : demo.profile && (demo.profile.email || demo.profile.phone) ? demo.profile : null;
-
   if (connected) {
     return (
       <div className="card space-y-4">
         <p className="text-white">Connecté en tant que <span className="font-mono text-iris">{connected.email || connected.phone}</span></p>
         <div className="flex flex-wrap gap-2">
           <Link href="/compte" className="btn-solid">Mon compte</Link>
-          <button
-            className="btn"
-            onClick={() => (supabaseEnabled ? start(async () => { await signOut(); router.refresh(); }) : update((s) => ({ ...s, profile: null })))}
-          >
+          <button className="btn" onClick={() => (supabaseEnabled ? start(async () => { await signOut(); router.refresh(); }) : update((s) => ({ ...s, profile: null })))}>
             Se déconnecter
           </button>
         </div>
@@ -38,92 +41,145 @@ export function LoginForm({ user, next = "/compte" }: { user?: { email: string; 
     );
   }
 
-  const target = mode === "email" ? id.trim().toLowerCase() : id.replace(/[^\d+]/g, "");
+  const mail = email.trim().toLowerCase();
+  const callback = (to: string) => `${window.location.origin}/auth/callback?next=${encodeURIComponent(to)}`;
+  const go = () => window.location.assign(next);   // navigation complète : la page suivante repart avec la session
+  const fail = (msg: string) => setError(msg);
 
-  function send(e: React.FormEvent) {
+  function submit(e: React.FormEvent) {
     e.preventDefault();
     setError("");
-    if (!supabaseEnabled) return setSent(true);
+    if (mode === "inscription" && name.trim().length < 2) return fail("Indiquez votre nom.");
+    if (password.length < 8) return fail("Le mot de passe doit contenir au moins 8 caractères.");
+    if (!supabaseEnabled) {
+      update((s) => ({ ...s, profile: { name: name || s.profile?.name || "", city: "", country: "", email: mail, phone: "" } }));
+      return;
+    }
     start(async () => {
       const sb = supabaseBrowser();
-      // Le lien de l'e-mail ramène sur /auth/callback, qui ouvre la session (le code à 6 chiffres marche aussi).
-      const emailRedirectTo = `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}`;
-      const { error } = await sb.auth.signInWithOtp(mode === "email" ? { email: target, options: { emailRedirectTo } } : { phone: target });
-      if (error) setError(error.status === 429 ? "Trop de demandes. Patientez une minute avant de redemander un code." : "Envoi impossible. Vérifiez l'adresse ou le numéro.");
-      else setSent(true);
+      if (mode === "connexion") {
+        const { error } = await sb.auth.signInWithPassword({ email: mail, password });
+        if (!error) return go();
+        if (/confirm/i.test(error.message)) return fail("Confirmez d'abord votre adresse : touchez le lien reçu par e-mail lors de l'inscription.");
+        if (error.status === 429) return fail("Trop d'essais. Patientez une minute.");
+        return fail("E-mail ou mot de passe incorrect. Vous vous êtes inscrit sans mot de passe ? Touchez « Mot de passe oublié » pour en créer un.");
+      }
+      const { data, error } = await sb.auth.signUp({ email: mail, password, options: { data: { full_name: name.trim() }, emailRedirectTo: callback(next) } });
+      if (error) {
+        if (/registered|exists/i.test(error.message)) return fail("Un compte existe déjà avec cet e-mail : connectez-vous.");
+        if (error.status === 429) return fail("Trop de demandes. Patientez une minute.");
+        return fail(/password/i.test(error.message) ? "Mot de passe trop simple : mélangez lettres et chiffres." : "Inscription impossible. Vérifiez l'adresse e-mail.");
+      }
+      // Compte déjà existant : Supabase ne le dit pas (sécurité), mais ne renvoie aucune identité.
+      if (data.user && data.user.identities?.length === 0) return fail("Un compte existe déjà avec cet e-mail : connectez-vous.");
+      if (data.session) {
+        await sb.from("profiles").update({ full_name: name.trim() }).eq("id", data.session.user.id);
+        return go();
+      }
+      setStep("check-email");   // confirmation de l'adresse demandée par Supabase
     });
   }
 
-  function verify(e: React.FormEvent) {
+  function magicLink() {
+    setError("");
+    if (!/^\S+@\S+\.\S+$/.test(mail)) return fail("Entrez d'abord votre adresse e-mail.");
+    start(async () => {
+      const { error } = await supabaseBrowser().auth.signInWithOtp({ email: mail, options: { emailRedirectTo: callback(next), shouldCreateUser: false } });
+      if (error) return fail(error.status === 429 ? "Trop de demandes. Patientez une minute." : "Aucun compte avec cet e-mail : inscrivez-vous.");
+      setStep("link-sent");
+    });
+  }
+
+  function forgot(e: React.FormEvent) {
     e.preventDefault();
-    if (!/^\d{6}$/.test(code)) return setError("Le code contient 6 chiffres.");
-    if (!supabaseEnabled) {
-      update((s) => ({ ...s, profile: { name: s.profile?.name ?? "", city: s.profile?.city ?? "", country: s.profile?.country ?? "", email: mode === "email" ? id : s.profile?.email ?? "", phone: mode === "phone" ? id : s.profile?.phone ?? "" } }));
-      return;
-    }
+    setError("");
+    if (!/^\S+@\S+\.\S+$/.test(mail)) return fail("Entrez votre adresse e-mail.");
     start(async () => {
-      const sb = supabaseBrowser();
-      const { error } = await sb.auth.verifyOtp(mode === "email" ? { email: target, token: code, type: "email" } : { phone: target, token: code, type: "sms" });
-      if (error) return setError("Code incorrect ou expiré.");
-      // Navigation complète (et non router.push + refresh, qui peuvent s'annuler l'un l'autre) :
-      // la page suivante repart avec la nouvelle session.
-      window.location.assign(next);
+      const { error } = await supabaseBrowser().auth.resetPasswordForEmail(mail, { redirectTo: callback("/compte/mot-de-passe") });
+      if (error) return fail(error.status === 429 ? "Trop de demandes. Patientez une minute." : "Envoi impossible. Vérifiez l'adresse.");
+      setStep("forgot-sent");
     });
   }
 
-  function google() {
-    if (!supabaseEnabled) {
-      update((s) => ({ ...s, profile: { name: "Compte Google", email: "demo@gmail.com", phone: "", city: "", country: "" } }));
-      return;
-    }
-    start(async () => {
-      await supabaseBrowser().auth.signInWithOAuth({ provider: "google", options: { redirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}` } });
-    });
+  const mailNote = (
+    <p className="text-xs text-iron">
+      L&apos;e-mail vient de « Supabase Auth » : regardez aussi dans Spams et Promotions. Ouvrez le lien <strong className="text-white">dans le même navigateur</strong> (appui long sur le lien → « Ouvrir dans Chrome »).
+    </p>
+  );
+
+  if (step === "check-email" || step === "link-sent" || step === "forgot-sent") {
+    const text = step === "check-email"
+      ? <>Dernière étape : nous avons envoyé un e-mail à <span className="font-mono text-iris">{mail}</span>. Touchez le lien qu&apos;il contient pour confirmer votre adresse ; votre compte sera alors ouvert.</>
+      : step === "link-sent"
+        ? <>Lien de connexion envoyé à <span className="font-mono text-iris">{mail}</span>. Touchez-le pour vous connecter.</>
+        : <>E-mail envoyé à <span className="font-mono text-iris">{mail}</span>. Touchez le lien pour choisir un nouveau mot de passe.</>;
+    return (
+      <div className="card space-y-4" role="status">
+        <p className="text-bone">{text}</p>
+        {mailNote}
+        <button type="button" className="btn" onClick={() => { setStep("form"); setError(""); }}>Retour</button>
+      </div>
+    );
+  }
+
+  if (step === "forgot") {
+    return (
+      <form onSubmit={forgot} className="card space-y-4">
+        <h2 className="text-lg font-medium text-white">Mot de passe oublié</h2>
+        <p className="text-sm text-ash">Recevez un lien pour choisir un nouveau mot de passe. Il sert aussi à créer un mot de passe si vous vous étiez inscrit sans.</p>
+        <div>
+          <label htmlFor="email" className="label">Adresse e-mail</label>
+          <input id="email" type="email" required autoComplete="email" className="input" value={email} onChange={(e) => setEmail(e.target.value)} />
+        </div>
+        {error && <p className="text-sm text-alarm" role="alert">{error}</p>}
+        <button className="btn-solid w-full" disabled={pending}>{pending ? "Envoi…" : "Recevoir le lien"}</button>
+        <button type="button" className="text-sm text-ash hover:text-white" onClick={() => { setStep("form"); setError(""); }}>Retour</button>
+      </form>
+    );
   }
 
   return (
     <div className="card space-y-6">
-      <div className="inline-flex rounded-[6px] border border-line p-1" role="tablist">
-        {(["email", "phone"] as Mode[]).map((m) => (
-          <button key={m} role="tab" aria-selected={mode === m} onClick={() => { setMode(m); setSent(false); setId(""); setError(""); }} className={`rounded-[4px] px-4 py-1.5 text-sm ${mode === m ? "bg-white text-black" : "text-ash hover:text-white"}`}>
-            {m === "email" ? "E-mail" : "Téléphone"}
+      <div className="auth-tabs" role="tablist" aria-label="Se connecter ou s'inscrire">
+        {(["connexion", "inscription"] as AuthMode[]).map((m) => (
+          <button key={m} type="button" role="tab" aria-selected={mode === m} onClick={() => { setMode(m); setError(""); }}>
+            {m === "connexion" ? "Se connecter" : "S'inscrire"}
           </button>
         ))}
       </div>
 
-      {!sent ? (
-        <form onSubmit={send} className="space-y-4">
+      <form onSubmit={submit} className="space-y-4">
+        {mode === "inscription" && (
           <div>
-            <label htmlFor="id" className="label">{mode === "email" ? "Adresse e-mail" : "Numéro de téléphone"}</label>
-            <input id="id" required autoFocus type={mode === "email" ? "email" : "tel"} inputMode={mode === "email" ? "email" : "tel"} autoComplete={mode === "email" ? "email" : "tel"} placeholder={mode === "email" ? "vous@exemple.com" : "+225 07 00 00 00 00"} className="input" value={id} onChange={(e) => setId(e.target.value)} aria-invalid={!!error} aria-describedby={error ? "id-err" : undefined} />
-            {error && <p id="id-err" className="mt-1.5 text-xs text-alarm">{error}</p>}
+            <label htmlFor="name" className="label">Nom et prénom</label>
+            <input id="name" required autoComplete="name" className="input" value={name} onChange={(e) => setName(e.target.value)} />
           </div>
-          <button className="btn-solid w-full" disabled={pending}>{pending ? "Envoi…" : "Recevoir un code"}</button>
-          <p className="text-xs text-iron">Pas de mot de passe à retenir. Pas encore de compte ? Il est créé automatiquement.</p>
-        </form>
-      ) : (
-        <form onSubmit={verify} className="space-y-4">
-          <p className="text-sm text-ash">
-            {mode === "email"
-              ? <>E-mail envoyé à <span className="font-mono text-iris">{id}</span>. Touchez le lien qu&apos;il contient <strong className="text-white">sur ce même téléphone ou ordinateur</strong>, ou entrez ci-dessous le code à 6 chiffres s&apos;il y en a un. Valable 1 heure.</>
-              : <>Code envoyé par SMS à <span className="font-mono text-iris">{id}</span>. Il expire dans 10 minutes.</>}
-          </p>
-          <div>
-            <label htmlFor="code" className="label">Code à 6 chiffres</label>
-            <input id="code" required autoFocus inputMode="numeric" autoComplete="one-time-code" maxLength={6} className="input font-mono tracking-[0.5em]" value={code} onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))} aria-invalid={!!error} aria-describedby={error ? "code-err" : undefined} />
-            {error && <p id="code-err" className="mt-1.5 text-xs text-alarm">{error}</p>}
+        )}
+        <div>
+          <label htmlFor="email" className="label">Adresse e-mail</label>
+          <input id="email" type="email" required autoComplete="email" inputMode="email" placeholder="vous@exemple.com" className="input" value={email} onChange={(e) => setEmail(e.target.value)} />
+        </div>
+        <div>
+          <div className="flex items-baseline justify-between">
+            <label htmlFor="password" className="label">Mot de passe</label>
+            <button type="button" className="text-xs text-iris" onClick={() => setShowPw((v) => !v)}>{showPw ? "Masquer" : "Afficher"}</button>
           </div>
-          <button className="btn-solid w-full" disabled={pending}>{pending ? "Vérification…" : "Se connecter"}</button>
-          <button type="button" className="text-sm text-ash hover:text-white" onClick={() => { setSent(false); setCode(""); setError(""); }}>Modifier {mode === "email" ? "l'e-mail" : "le numéro"}</button>
-        </form>
-      )}
+          <input id="password" type={showPw ? "text" : "password"} required minLength={8} autoComplete={mode === "connexion" ? "current-password" : "new-password"} className="input" value={password} onChange={(e) => setPassword(e.target.value)} />
+          {mode === "inscription" && <p className="mt-1.5 text-xs text-iron">8 caractères au moins.</p>}
+        </div>
+        {error && <p className="text-sm text-alarm" role="alert">{error}</p>}
+        <button className="btn-solid w-full" disabled={pending}>
+          {pending ? "Un instant…" : mode === "connexion" ? "Se connecter" : "Créer mon compte"}
+        </button>
+      </form>
 
-      {/* Google : seulement quand il est activé dans Supabase (NEXT_PUBLIC_GOOGLE_LOGIN=1), sinon le bouton mènerait à une erreur. */}
-      {(!supabaseEnabled || process.env.NEXT_PUBLIC_GOOGLE_LOGIN === "1") && (
-        <>
-          <div className="flex items-center gap-4 text-xs text-iron"><span className="h-px flex-1 bg-line" />ou<span className="h-px flex-1 bg-line" /></div>
-          <button className="btn w-full" type="button" onClick={google} disabled={pending}>Continuer avec Google</button>
-        </>
+      {mode === "connexion" ? (
+        <div className="flex flex-wrap justify-between gap-3 text-sm">
+          <button type="button" className="text-iris underline underline-offset-4" onClick={() => { setStep("forgot"); setError(""); }}>Mot de passe oublié ?</button>
+          {supabaseEnabled && <button type="button" className="text-ash underline underline-offset-4 hover:text-white" onClick={magicLink} disabled={pending}>Recevoir un lien de connexion</button>}
+        </div>
+      ) : (
+        <p className="text-xs text-iron">En créant un compte, vous acceptez les <Link href="/conditions" className="link">conditions</Link> et la <Link href="/confidentialite" className="link">politique de confidentialité</Link>.</p>
       )}
     </div>
   );

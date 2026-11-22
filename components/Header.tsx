@@ -26,9 +26,12 @@ export function Header() {
         <div className="hidden items-center gap-3 md:flex">
           <CartBadge />
           <Link href="/connexion" className="text-sm text-bone hover:text-white">
-            Connexion
+            Se connecter
           </Link>
-          <Link href="/vendre" className="btn">
+          <Link href="/connexion?mode=inscription" className="btn-solid px-4 py-2">
+            S&apos;inscrire
+          </Link>
+          <Link href="/vendre" className="btn hidden px-4 py-2 lg:inline-flex">
             Créer ma boutique
           </Link>
         </div>
@@ -39,9 +42,9 @@ export function Header() {
             <span className="group-open:hidden">Menu</span>
             <span className="hidden group-open:inline">Fermer</span>
           </summary>
-          <div className="absolute right-0 top-12 w-64 rounded-[16px] border border-line bg-black p-2">
-            {[...nav, { href: "/connexion", label: "Connexion" }].map((n) => (
-              <Link key={n.href} href={n.href} className="block rounded-[6px] px-3 py-2.5 text-sm text-bone hover:bg-lift hover:text-white">
+          <div className="absolute right-0 top-12 w-64 rounded-[22px] bg-black p-2 shadow-[var(--shadow-float)]">
+            {[...nav, { href: "/connexion", label: "Se connecter" }, { href: "/connexion?mode=inscription", label: "S'inscrire" }].map((n) => (
+              <Link key={n.href} href={n.href} className="block rounded-full px-4 py-2.5 text-sm text-bone hover:bg-lift hover:text-white">
                 {n.label}
               </Link>
             ))}
