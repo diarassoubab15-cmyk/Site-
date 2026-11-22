@@ -35,6 +35,16 @@ function basicAuth(req: NextRequest) {
 
 export async function middleware(req: NextRequest) {
   const path = req.nextUrl.pathname;
+
+  // Lien de connexion qui revient sur une autre page que /auth/callback (adresse du site par défaut dans Supabase) :
+  // on le fait passer par /auth/callback pour ouvrir la session.
+  const q = req.nextUrl.searchParams;
+  if (supabaseEnabled && path !== "/auth/callback" && (q.get("code") || q.get("token_hash"))) {
+    const url = req.nextUrl.clone();
+    url.pathname = "/auth/callback";
+    if (!q.get("next")) url.searchParams.set("next", path === "/" ? "/compte" : path);
+    return NextResponse.redirect(url);
+  }
   const isPrivate = PRIVATE.some((p) => path === p || path.startsWith(`${p}/`));
 
   if (!supabaseEnabled) {

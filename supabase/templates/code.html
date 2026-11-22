@@ -1,12 +1,13 @@
 <!doctype html>
 <html lang="fr">
-  <body style="margin:0;background:#000;color:#f0f0f0;font-family:Inter,Arial,sans-serif">
+  <body style="margin:0;background:#f2f4f5;color:#24232a;font-family:Inter,Arial,sans-serif">
     <div style="max-width:480px;margin:0 auto;padding:40px 24px">
-      <p style="letter-spacing:.18em;font-weight:600;color:#fff">NEXORA</p>
-      <h1 style="font-weight:500;color:#fff">Votre code de connexion</h1>
-      <p style="color:#a1a4a5">Saisissez ce code sur NEXORA. Il expire dans 10 minutes.</p>
-      <p style="font-family:monospace;font-size:32px;letter-spacing:.4em;color:#baa7ff;border:1px solid #292d30;border-radius:6px;padding:16px;text-align:center">{{ .Token }}</p>
-      <p style="color:#6e727a;font-size:12px">Vous n'avez rien demandé ? Ignorez cet e-mail : personne ne peut se connecter sans ce code.</p>
+      <p style="letter-spacing:.18em;font-weight:600;color:#0b0b0f">NEXORA</p>
+      <h1 style="font-weight:500;color:#0b0b0f">Connexion à NEXORA</h1>
+      <p><a href="{{ .SiteURL }}/auth/callback?token_hash={{ .TokenHash }}&type=email&next=/compte" style="display:inline-block;background:#5433eb;color:#fff;text-decoration:none;border-radius:9999px;padding:12px 22px">Me connecter</a></p>
+      <p style="color:#66646b">Ou saisissez ce code sur NEXORA :</p>
+      <p style="font-family:monospace;font-size:32px;letter-spacing:.4em;color:#5433eb;background:#fff;border-radius:16px;padding:16px;text-align:center">{{ .Token }}</p>
+      <p style="color:#6e6c73;font-size:12px">Vous n'avez rien demandé ? Ignorez cet e-mail : personne ne peut se connecter sans ce lien ou ce code.</p>
     </div>
   </body>
 </html>

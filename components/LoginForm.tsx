@@ -46,7 +46,9 @@ export function LoginForm({ user, next = "/compte" }: { user?: { email: string; 
     if (!supabaseEnabled) return setSent(true);
     start(async () => {
       const sb = supabaseBrowser();
-      const { error } = await sb.auth.signInWithOtp(mode === "email" ? { email: target } : { phone: target });
+      // Le lien de l'e-mail ramène sur /auth/callback, qui ouvre la session (le code à 6 chiffres marche aussi).
+      const emailRedirectTo = `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}`;
+      const { error } = await sb.auth.signInWithOtp(mode === "email" ? { email: target, options: { emailRedirectTo } } : { phone: target });
       if (error) setError(error.status === 429 ? "Trop de demandes. Patientez une minute avant de redemander un code." : "Envoi impossible. Vérifiez l'adresse ou le numéro.");
       else setSent(true);
     });
@@ -101,7 +103,11 @@ export function LoginForm({ user, next = "/compte" }: { user?: { email: string; 
         </form>
       ) : (
         <form onSubmit={verify} className="space-y-4">
-          <p className="text-sm text-ash">Code envoyé {mode === "email" ? "par e-mail" : "par SMS"} à <span className="font-mono text-iris">{id}</span>. Il expire dans 10 minutes.</p>
+          <p className="text-sm text-ash">
+            {mode === "email"
+              ? <>E-mail envoyé à <span className="font-mono text-iris">{id}</span>. Touchez le lien qu&apos;il contient <strong className="text-white">sur ce même téléphone ou ordinateur</strong>, ou entrez ci-dessous le code à 6 chiffres s&apos;il y en a un. Valable 1 heure.</>
+              : <>Code envoyé par SMS à <span className="font-mono text-iris">{id}</span>. Il expire dans 10 minutes.</>}
+          </p>
           <div>
             <label htmlFor="code" className="label">Code à 6 chiffres</label>
             <input id="code" required autoFocus inputMode="numeric" autoComplete="one-time-code" maxLength={6} className="input font-mono tracking-[0.5em]" value={code} onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))} aria-invalid={!!error} aria-describedby={error ? "code-err" : undefined} />
@@ -112,8 +118,13 @@ export function LoginForm({ user, next = "/compte" }: { user?: { email: string; 
         </form>
       )}
 
-      <div className="flex items-center gap-4 text-xs text-iron"><span className="h-px flex-1 bg-line" />ou<span className="h-px flex-1 bg-line" /></div>
-      <button className="btn w-full" type="button" onClick={google} disabled={pending}>Continuer avec Google</button>
+      {/* Google : seulement quand il est activé dans Supabase (NEXT_PUBLIC_GOOGLE_LOGIN=1), sinon le bouton mènerait à une erreur. */}
+      {(!supabaseEnabled || process.env.NEXT_PUBLIC_GOOGLE_LOGIN === "1") && (
+        <>
+          <div className="flex items-center gap-4 text-xs text-iron"><span className="h-px flex-1 bg-line" />ou<span className="h-px flex-1 bg-line" /></div>
+          <button className="btn w-full" type="button" onClick={google} disabled={pending}>Continuer avec Google</button>
+        </>
+      )}
     </div>
   );
 }
