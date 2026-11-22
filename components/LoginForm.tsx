@@ -5,7 +5,7 @@ import { useState, useTransition } from "react";
 import { update, useDemo } from "@/lib/demo-store";
 import { supabaseEnabled } from "@/lib/supabase/env";
 import { supabaseBrowser } from "@/lib/supabase/client";
-import { signOut } from "@/app/actions";
+import { passwordLogin, signOut } from "@/app/actions";
 
 export type AuthMode = "connexion" | "inscription";
 type Step = "form" | "check-email" | "forgot" | "forgot-sent" | "link-sent";
@@ -58,11 +58,10 @@ export function LoginForm({ user, next = "/compte", initialMode = "connexion" }:
     start(async () => {
       const sb = supabaseBrowser();
       if (mode === "connexion") {
-        const { error } = await sb.auth.signInWithPassword({ email: mail, password });
-        if (!error) return go();
-        if (/confirm/i.test(error.message)) return fail("Confirmez d'abord votre adresse : touchez le lien reçu par e-mail lors de l'inscription.");
-        if (error.status === 429) return fail("Trop d'essais. Patientez une minute.");
-        return fail("E-mail ou mot de passe incorrect. Vous vous êtes inscrit sans mot de passe ? Touchez « Mot de passe oublié » pour en créer un.");
+        const r = await passwordLogin({ email: mail, password });
+        if (r.ok) return go();
+        setPassword("");
+        return fail(r.error);
       }
       const { data, error } = await sb.auth.signUp({ email: mail, password, options: { data: { full_name: name.trim() }, emailRedirectTo: callback(next) } });
       if (error) {
@@ -165,7 +164,9 @@ export function LoginForm({ user, next = "/compte", initialMode = "connexion" }:
             <button type="button" className="text-xs text-iris" onClick={() => setShowPw((v) => !v)}>{showPw ? "Masquer" : "Afficher"}</button>
           </div>
           <input id="password" type={showPw ? "text" : "password"} required minLength={8} autoComplete={mode === "connexion" ? "current-password" : "new-password"} className="input" value={password} onChange={(e) => setPassword(e.target.value)} />
-          {mode === "inscription" && <p className="mt-1.5 text-xs text-iron">8 caractères au moins.</p>}
+          {mode === "inscription"
+            ? <p className="mt-1.5 text-xs text-iron">8 caractères au moins.</p>
+            : <p className="mt-2 rounded-[14px] bg-[#fff6e5] px-3 py-2 text-xs text-[#8a5a00]">Attention : <strong>une seule erreur</strong> de mot de passe bloque cet appareil pour ce compte. Pas sûr ? Utilisez « Mot de passe oublié ».</p>}
         </div>
         {error && <p className="text-sm text-alarm" role="alert">{error}</p>}
         <button className="btn-solid w-full" disabled={pending}>
