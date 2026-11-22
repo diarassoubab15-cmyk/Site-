@@ -15,7 +15,7 @@ export default async function Connexion({ searchParams }: { searchParams: Promis
       <h1 className="h-section text-4xl sm:text-5xl">Connexion</h1>
       <p className="mb-8 mt-4 text-ash">Un code, et c&apos;est tout. Le même formulaire sert à créer votre compte.</p>
       {!supabaseEnabled && <DemoNotice>n&apos;importe quel code à 6 chiffres est accepté.</DemoNotice>}
-      {erreur && <p className="mb-6 rounded-[6px] border border-alarm/40 px-3 py-2 text-sm text-alarm">Ce lien de connexion a expiré. Demandez un nouveau code.</p>}
+      {erreur && <p className="mb-6 rounded-[6px] border border-alarm/40 px-3 py-2 text-sm text-alarm">Ce lien de connexion n&apos;a pas pu être utilisé (expiré, ou ouvert dans un autre navigateur que celui de la demande). Demandez un nouveau lien depuis ce navigateur.</p>}
       <LoginForm next={safeNext} user={u ? { email: u.user.email ?? "", phone: u.user.phone ?? "" } : null} />
     </section>
   );
