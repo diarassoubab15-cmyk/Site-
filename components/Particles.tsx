@@ -31,8 +31,8 @@ export function Particles() {
       w = window.innerWidth; h = window.innerHeight;
       canvas.width = w * dpr; canvas.height = h * dpr;
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      const n = Math.round(Math.min(70, (w * h) / 16000));
-      ps = Array.from({ length: n }, () => ({ x: Math.random() * w, y: Math.random() * h, vx: (Math.random() - 0.5) * 0.25, vy: (Math.random() - 0.5) * 0.25, r: 0.8 + Math.random() * 1.8, a: 0.25 + Math.random() * 0.5 }));
+      const n = Math.round(Math.min(w < 640 ? 34 : 80, (w * h) / 14000));
+      ps = Array.from({ length: n }, () => ({ x: Math.random() * w, y: Math.random() * h, vx: (Math.random() - 0.5) * 0.25, vy: (Math.random() - 0.5) * 0.25, r: 0.8 + Math.random() * 1.8, a: 0.4 + Math.random() * 0.5 }));
     };
     resize();
 
@@ -86,5 +86,10 @@ export function Particles() {
     };
   }, [pathname]);
 
-  return <canvas ref={ref} className="particles" aria-hidden="true" />;
+  return (
+    <>
+      <div className="ambient" aria-hidden="true" />
+      <canvas ref={ref} className="particles" aria-hidden="true" />
+    </>
+  );
 }

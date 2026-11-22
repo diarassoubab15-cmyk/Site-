@@ -13,7 +13,7 @@ const nav = [
 
 export function Header() {
   return (
-    <header className="nav-drop sticky top-0 z-40 border-b border-line/60 bg-black/90 backdrop-blur-[25px]">
+    <header className="nav-drop sticky top-0 z-40 border-b border-line/60 bg-[#07080e]/80 backdrop-blur-[25px]">
       <div className="container-x flex h-16 items-center justify-between gap-6">
         <Logo />
         <nav aria-label="Navigation principale" className="hidden items-center gap-7 md:flex">

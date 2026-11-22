@@ -4,6 +4,7 @@ import { ProductThumb } from "@/components/ProductThumb";
 import { Stars } from "@/components/Stars";
 import { getAwardPage, getFeaturedShops, type AwardWinner } from "@/lib/catalog";
 import { FeaturedShops } from "@/components/FeaturedShops";
+import { LogoMark } from "@/components/Logo";
 import { formatPrice, formatPriceUnit } from "@/lib/format";
 
 export const metadata: Metadata = {
@@ -29,10 +30,7 @@ export default async function Award() {
   return (
     <div className="award-page" data-accent="#e3b341">
       <section className="container-x flex flex-col items-center pb-16 pt-16 text-center sm:pt-24" aria-labelledby="award-titre">
-        <svg viewBox="0 0 24 24" width="96" height="96" fill="none" className="award-settle" aria-hidden="true">
-          <path d="M7.25 4.25 12 1.5 21.5 7v10L12 22.5 2.5 17V7l4.75-2.75" stroke="#f6d77a" strokeWidth="1.15" strokeLinejoin="round" />
-          <path d="M8 16V8l8 8V8" stroke="#e3b341" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
+        <span className="award-settle inline-flex"><LogoMark size={96} gid="nx-award" /></span>
         <h1 id="award-titre" className="award-title fade-up mt-8" style={{ ["--d" as string]: 2 }}>Award</h1>
         <p className="fade-up mt-6 max-w-xl text-lg leading-relaxed text-[#d8cba6]" style={{ ["--d" as string]: 3 }}>
           Chaque mois, chaque semestre et chaque année, NEXORA récompense les boutiques que les clients préfèrent.

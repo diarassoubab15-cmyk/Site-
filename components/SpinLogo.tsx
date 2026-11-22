@@ -123,22 +123,26 @@ export function SpinLogo({ size = 240 }: { size?: number }) {
         <div className="spin-pop h-full w-full">
           <svg viewBox="0 0 24 24" width="100%" height="100%" fill="none" className="overflow-visible">
             <defs>
-              <linearGradient id="sl-edge" x1="3" y1="2" x2="21" y2="22" gradientUnits="userSpaceOnUse">
-                <stop offset="0" stopColor="#ffffff" />
-                <stop offset="0.55" stopColor="#c9c1ff" stopOpacity="0.55" />
-                <stop offset="1" stopColor="#9281f7" />
-              </linearGradient>
-              <linearGradient id="sl-n" x1="8" y1="8" x2="16" y2="16" gradientUnits="userSpaceOnUse">
-                <stop offset="0" stopColor="#e4ddff" />
-                <stop offset="1" stopColor="#7d6bf0" />
+              {/* Dégradé du logo NEXORA : violet → rose → orange → or */}
+              <linearGradient id="sl-edge" x1="3" y1="6" x2="21" y2="18" gradientUnits="userSpaceOnUse">
+                <stop offset="0" stopColor="#6a2bff" />
+                <stop offset="0.45" stopColor="#c44dff" />
+                <stop offset="0.72" stopColor="#ff8a3d" />
+                <stop offset="1" stopColor="#ffc21a" />
               </linearGradient>
             </defs>
             {/* Cadre : tourne lentement en continu (CSS) */}
             <g className="spin-frame">
-              <path className="spin-draw" pathLength={1} d="M7.25 4.25 12 1.5 21.5 7v10L12 22.5 2.5 17V7l4.75-2.75" stroke="url(#sl-edge)" strokeWidth="1.15" strokeLinejoin="round" />
-              <path className="spin-draw spin-draw-2" pathLength={1} d="M8.4 6.28 12 4.2l7.2 4.15v7.3L12 19.8l-7.2-4.15v-7.3l3.6-2.07" stroke="#9281f7" strokeOpacity="0.35" strokeWidth="0.35" strokeLinejoin="round" />
+              <path className="spin-draw" pathLength={1} d="M7.25 4.25 12 1.5 21.5 7v10L12 22.5 2.5 17V7l4.75-2.75" stroke="url(#sl-edge)" strokeWidth="1.5" strokeLinejoin="round" />
+              <path className="spin-draw spin-draw-2" pathLength={1} d="M8.4 6.28 12 4.2l7.2 4.15v7.3L12 19.8l-7.2-4.15v-7.3l3.6-2.07" stroke="#ff8a3d" strokeOpacity="0.3" strokeWidth="0.3" strokeLinejoin="round" />
             </g>
-            <path className="spin-draw spin-draw-3" pathLength={1} d="M8 16V8l8 8V8" stroke="url(#sl-n)" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+            {/* N relié à deux « nœuds » : les vendeurs et les clients connectés */}
+            <g stroke="url(#sl-edge)" strokeLinecap="round" strokeLinejoin="round">
+              <path className="spin-draw spin-draw-3" pathLength={1} d="M7.9 15.3V8.7l7.9 7.2V10.6" strokeWidth="1.9" />
+              <path className="spin-draw spin-draw-3" pathLength={1} d="M7.9 15.3 6.6 16.7M15.8 10.6V9.8L17 8.5" strokeWidth="0.75" />
+              <circle className="spin-draw spin-draw-3" pathLength={1} cx="5.85" cy="17.45" r="0.95" strokeWidth="0.75" />
+              <circle className="spin-draw spin-draw-3" pathLength={1} cx="17.75" cy="7.75" r="0.95" strokeWidth="0.75" />
+            </g>
           </svg>
         </div>
       </div>

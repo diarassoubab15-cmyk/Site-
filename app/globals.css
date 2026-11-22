@@ -8,13 +8,13 @@
 
 @theme {
   --color-void: #000000;
-  --color-line: #292d30;
+  --color-line: #343a40;
   --color-bone: #f0f0f0;
-  --color-ash: #a1a4a5;
+  --color-ash: #babdc0;
   --color-smoke: #abafb4;
-  --color-iron: #7c8088; /* 5,3:1 sur noir (AA) ; avant #6e727a = 4,35:1 */
+  --color-iron: #8f939b; /* 6,6:1 sur le fond (AA) */
   --color-charcoal: #464a4d;
-  --color-lift: #0b0e14;
+  --color-lift: #11141c;
   --color-iris: #9281f7;
   --color-iris-glow: #baa7ff;
   --color-signal: #3b9eff;
@@ -37,12 +37,12 @@
 }
 
 html {
-  background: #000;
+  background: #05060b;
   scroll-behavior: smooth;
 }
 
 body {
-  background: #000;
+  background: #05060b;
   color: var(--color-bone);
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
@@ -73,7 +73,7 @@ body {
     @apply inline-flex items-center justify-center gap-2 rounded-[6px] border border-alarm/40 px-4 py-2.5 text-sm font-medium text-alarm transition-colors duration-150 hover:border-alarm disabled:opacity-50;
   }
   .card {
-    @apply rounded-[16px] border border-line bg-black p-6 sm:p-8;
+    @apply rounded-[16px] border border-line bg-[#0b0d14]/85 p-6 sm:p-8;
   }
   .pill {
     @apply inline-flex items-center gap-2 rounded-full border border-line px-3 py-1.5 text-sm text-bone;
@@ -222,7 +222,7 @@ body {
 .spin-stage.is-grabbed { cursor: grabbing; }
 .spin-stage:focus-visible { box-shadow: 0 0 0 2px #000, 0 0 0 4px #9281f7; border-radius: 24px; }
 .spin-halo {
-  background: radial-gradient(circle, rgba(146, 129, 247, 0.3) 0%, rgba(146, 129, 247, 0.07) 42%, transparent 68%);
+  background: radial-gradient(circle, rgba(196, 77, 255, 0.3) 0%, rgba(255, 138, 61, 0.08) 42%, transparent 68%);
   animation: haloBreath 5s ease-in-out infinite;
 }
 @keyframes haloBreath { 50% { transform: scale(1.06); opacity: 0.75; } }
@@ -362,7 +362,7 @@ body {
 @keyframes boxDrop { 0% { transform: translateY(-14px); opacity: 0; } 30% { transform: translateY(4px); opacity: 1; } 40%, 85% { transform: translateY(4px); opacity: 1; } 100% { transform: translateY(4px); opacity: 0; } }
 
 /* Page d'un type : son ambiance (couleur en haut de page), index alphabétique */
-.type-page { background: radial-gradient(110% 55% at 50% -8%, color-mix(in srgb, var(--c) 24%, transparent) 0%, transparent 60%), #000; }
+.type-page { background: radial-gradient(110% 55% at 50% -8%, color-mix(in srgb, var(--c) 24%, transparent) 0%, transparent 60%); }
 .type-letter { font-family: var(--font-display); font-size: 2.5rem; line-height: 1; color: var(--c); }
 .type-row { border: 1px solid color-mix(in srgb, var(--c) 30%, transparent); border-radius: 14px; transition: border-color 200ms ease, transform 160ms ease-out; }
 .type-row:active { transform: scale(0.98); }
@@ -528,15 +528,15 @@ body {
 
 /* ---- Produits qui défilent en arrière-plan ---- */
 .marquee { position: absolute; inset: 0; z-index: -1; display: flex; flex-direction: column; justify-content: center; gap: 1rem; overflow: hidden; pointer-events: none;
-  opacity: 0.42; -webkit-mask-image: radial-gradient(ellipse 75% 70% at 50% 50%, #000 15%, transparent 85%); mask-image: radial-gradient(ellipse 75% 70% at 50% 50%, #000 15%, transparent 85%); }
+  opacity: 0.72; -webkit-mask-image: radial-gradient(ellipse 95% 90% at 50% 50%, #000 40%, transparent 98%); mask-image: radial-gradient(ellipse 95% 90% at 50% 50%, #000 40%, transparent 98%); }
 .marquee-row { overflow: hidden; }
-.marquee-track { display: flex; width: max-content; gap: 1rem; animation: marquee calc(var(--n) * 4.5s) linear infinite; }
+.marquee-track { display: flex; width: max-content; gap: 1rem; will-change: transform; animation: marquee calc(var(--n) * 4.5s) linear infinite; }
 .marquee-row[data-dir="right"] .marquee-track { animation-direction: reverse; }
 .marquee-item { width: 9rem; flex-shrink: 0; }
 .marquee-icon { display: flex; aspect-ratio: 1; align-items: center; justify-content: center; border-radius: 14px;
   border: 1px solid color-mix(in srgb, var(--c) 40%, transparent); background: color-mix(in srgb, var(--c) 10%, #000); }
 .marquee-sm .marquee-item { width: 5.5rem; }
-.marquee-sm { opacity: 0.3; gap: 0.6rem; }
+.marquee-sm { opacity: 0.5; gap: 0.6rem; }
 .marquee-sm .marquee-track { gap: 0.6rem; }
 @keyframes marquee { to { transform: translateX(-50%); } }
 @media (prefers-reduced-motion: reduce) { .marquee-track { animation: none; } .logo-spin { animation: none; } }
@@ -551,3 +551,24 @@ body {
 .shop-gallery-item { aspect-ratio: 4 / 5; overflow: hidden; border-radius: 14px; border: 1px solid var(--color-line); }
 .marquee-photo { aspect-ratio: 1; overflow: hidden; border-radius: 14px; border: 1px solid color-mix(in srgb, var(--c) 45%, transparent); }
 .marquee-photo img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+/* ---- Interface lumineuse : lueurs d'ambiance fixes derrière tout le site ---- */
+.ambient { position: fixed; inset: 0; z-index: 0; pointer-events: none;
+  background:
+    radial-gradient(60% 45% at 18% 0%, rgba(146, 129, 247, 0.22) 0%, transparent 70%),
+    radial-gradient(50% 40% at 92% 30%, rgba(227, 179, 65, 0.12) 0%, transparent 70%),
+    radial-gradient(70% 50% at 50% 105%, rgba(59, 158, 255, 0.12) 0%, transparent 70%); }
+
+/* Lisibilité des textes posés sur les photos qui défilent */
+.over-photo { text-shadow: 0 1px 2px rgba(0, 0, 0, 0.9), 0 2px 22px rgba(0, 0, 0, 0.85); }
+.hero-scrim { position: absolute; left: 50%; top: 62%; width: min(640px, 100%); height: 52%; transform: translate(-50%, -50%); z-index: -1; pointer-events: none;
+  background: radial-gradient(closest-side, rgba(5, 6, 11, 0.82), rgba(5, 6, 11, 0.45) 60%, transparent); }
+.hub-tile .hub-title, .hub-tile .text-ash, .type-hero { text-shadow: 0 1px 2px rgba(0, 0, 0, 0.9), 0 2px 16px rgba(0, 0, 0, 0.8); }
+
+/* ---- Logo de page (comme Award) : arrive en tournant, refait un tour au toucher ---- */
+.page-mark { --pm: var(--color-iris); color: #fff; padding: 14px; border-radius: 22px; -webkit-tap-highlight-color: transparent;
+  filter: drop-shadow(0 0 18px color-mix(in srgb, var(--pm) 55%, transparent)); }
+.page-mark-spin { display: inline-flex; animation: awardSettle 900ms cubic-bezier(0.23, 1, 0.32, 1) backwards, pageMarkTurn 900ms cubic-bezier(0.23, 1, 0.32, 1) backwards; }
+@keyframes pageMarkTurn { from { rotate: -360deg; } to { rotate: 0deg; } }
+@media (prefers-reduced-motion: reduce) { .page-mark-spin { animation: none; } }
+.type-page .btn { background: rgba(5, 6, 11, 0.72); backdrop-filter: blur(6px); }

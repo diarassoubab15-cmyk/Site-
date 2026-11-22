@@ -8,7 +8,7 @@ export function Footer() {
     <footer className="mt-24 border-t border-line">
       <div className="container-x grid gap-10 py-14 sm:grid-cols-2 lg:grid-cols-4">
         <div className="space-y-4">
-          <Logo />
+          <Logo gid="nx-foot" />
           <p className="max-w-xs text-sm text-ash">{site.tagline}.</p>
         </div>
         <nav aria-label="Catégories" className="space-y-2 text-sm">
