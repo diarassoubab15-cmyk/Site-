@@ -7,3 +7,6 @@ next-env.d.ts
 .env.local
 .env*.local
 .DS_Store
+
+# Réglages locaux de Claude Code (autorisations propres à cette machine)
+.claude/settings.local.json
