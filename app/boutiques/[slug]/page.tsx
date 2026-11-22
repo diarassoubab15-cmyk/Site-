@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, permanentRedirect } from "next/navigation";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { JsonLd } from "@/components/JsonLd";
 import { PaymentMethods } from "@/components/PaymentMethods";
@@ -10,7 +10,7 @@ import { VideoPlayer } from "@/components/VideoPlayer";
 import { ShopMap } from "@/components/ShopMap";
 import { getShopType } from "@/lib/shop-types";
 import { mapsEmbedUrl, telLink, waLink } from "@/lib/maps";
-import { allSlugs, getShopCreations, getShopPage, getShopTier } from "@/lib/catalog";
+import { allSlugs, getShopCreations, getShopPage, getShopTier, resolveShopSlug } from "@/lib/catalog";
 import { ShopHero } from "@/components/ShopHero";
 import type { Signature } from "@/lib/shop-theme";
 import { formatDate, formatPrice } from "@/lib/format";
@@ -32,8 +32,14 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 export default async function ShopPage({ params }: Props) {
-  const page = await getShopPage((await params).slug);
-  if (!page) notFound();
+  const slug = (await params).slug;
+  const page = await getShopPage(slug);
+  if (!page) {
+    // Ancienne adresse d'une boutique qui a changé de lien : on envoie vers la nouvelle.
+    const current = await resolveShopSlug(slug);
+    if (current && current !== slug) permanentRedirect(`/boutiques/${current}`);
+    notFound();
+  }
   const { shop, cards: items, rating, awards, video } = page;
   const type = shop.category ? getShopType(shop.category) : undefined;
   const place = [shop.district, shop.city, shop.country].filter(Boolean).join(", ");

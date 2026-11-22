@@ -304,3 +304,11 @@ export async function getShopCreations(slug: string): Promise<ShopCreation[]> {
   const { data } = await sb.from("ai_creations").select("id, kind, path, prompt").eq("shop_id", s.id).eq("published", true).eq("status", "done").order("created_at", { ascending: false }).limit(24);
   return (data ?? []).filter((c) => c.path).map((c) => ({ id: c.id, kind: c.kind as ShopCreation["kind"], url: aiUrl(c.path!), prompt: c.prompt }));
 }
+
+// ------------------------------------------------------------------ liens de boutique
+/** Adresse actuelle d'une boutique à partir d'une ancienne adresse (le vendeur a pu la changer), sinon null. */
+export async function resolveShopSlug(slug: string): Promise<string | null> {
+  if (!supabaseEnabled || !/^[a-z0-9-]{1,80}$/.test(slug)) return null;
+  const { data } = await supabasePublic().rpc("resolve_shop_slug", { p_slug: slug });
+  return (data as string | null) ?? null;
+}

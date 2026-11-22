@@ -855,3 +855,19 @@ export const publishAiCreation = action(aiPublishSchema, async ({ id, published 
   if (shop) revalidatePath(`/boutiques/${shop.slug}`);
   return { ok: true };
 });
+
+// ------------------------------------------------------------------ lien de la boutique
+const shopSlugSchema = z.object({
+  slug: z.string().trim().toLowerCase().min(3, "3 caractères au moins").max(40, "40 caractères au plus")
+    .regex(/^[a-z0-9]+(-[a-z0-9]+)*$/, "Lettres minuscules, chiffres et tirets seulement (ex. bazin-bamako)"),
+});
+/** Le vendeur choisit l'adresse de sa boutique ; l'ancienne continue de mener à la boutique. */
+export const setShopSlug = action<z.infer<typeof shopSlugSchema>, { slug: string }>(shopSlugSchema, async ({ slug }, { user, sb }) => {
+  const { data: before } = await sb.from("shops").select("slug").eq("owner_id", user.id).neq("status", "closed").maybeSingle();
+  const { data, error } = await sb.rpc("set_shop_slug", { p_slug: slug });
+  if (error) return dbError(error);
+  revalidatePath("/vendeur");
+  if (before?.slug) revalidatePath(`/boutiques/${before.slug}`);   // l'ancienne page en cache laisse place à la redirection
+  revalidatePath(`/boutiques/${data as string}`);
+  return { ok: true, data: { slug: data as string } };
+});

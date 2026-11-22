@@ -496,6 +496,12 @@ isOneToOne: false
 "set_ai_published":
 { Args: { "p_id": string,"p_published": boolean }; Returns: undefined
                            },
+"set_shop_slug":
+{ Args: { "p_slug": string }; Returns: string
+                           },
+"resolve_shop_slug":
+{ Args: { "p_slug": string }; Returns: string
+                           },
 "claim_tryon":
 { Args: { "p_products": (string)[],"p_shop": string }; Returns: string
                            },

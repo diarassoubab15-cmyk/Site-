@@ -6,6 +6,10 @@ import { loadSeller, loadShopProfile } from "@/lib/server-data";
 import { ShopProfileForm } from "@/components/ShopProfileForm";
 import { ShopThemeForm } from "@/components/ShopThemeForm";
 import { AiStudio } from "@/components/AiStudio";
+import { ShopLinkCard } from "@/components/ShopLinkCard";
+import { headers } from "next/headers";
+import QRCode from "qrcode";
+import { site } from "@/lib/site";
 import { aiStudioState } from "@/app/actions";
 import { getShopType } from "@/lib/shop-types";
 
@@ -16,10 +20,16 @@ export const dynamic = "force-dynamic";
 export default async function Vendeur() {
   const [live, profile] = supabaseEnabled ? await Promise.all([loadSeller(), loadShopProfile()]) : [null, null];
   const studio = profile?.tier === "business" ? await aiStudioState() : null;
+  // Adresse publique du site telle que le vendeur la voit (domaine Vercel ou nom de domaine), sinon celle configurée.
+  const h = await headers();
+  const host = h.get("x-forwarded-host") ?? h.get("host");
+  const base = host && !host.startsWith("localhost") ? `${h.get("x-forwarded-proto") ?? "https"}://${host}` : site.url;
+  const qrSvg = profile ? await QRCode.toString(`${base}/b/${profile.slug}`, { type: "svg", margin: 1, color: { dark: "#0b0b0f", light: "#ffffff" } }) : "";
   return (
     <section className="container-x py-16">
       <h1 className="h-section mb-8 text-4xl sm:text-5xl">Ma boutique</h1>
       <DemoNotice />
+      {profile && <div className="mb-6"><ShopLinkCard base={base} slug={profile.slug} shopName={profile.name} approved={profile.approved} qrSvg={qrSvg} /></div>}
       <SellerView live={live} />
       {profile && <div className="mt-6"><ShopProfileForm profile={profile} slug={profile.slug} /></div>}
       {profile && (

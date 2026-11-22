@@ -250,13 +250,15 @@ export type ShopProfile = {
   slug: string; name: string; category: string; city: string; country: string; district: string; isPhysical: boolean; mapsUrl: string;
   whatsapp: string; callPhone: string; samples: { name: string; price: number }[];
   brandColor: string | null; signature: string | null; displayFont: string | null; tier: "essentiel" | "pro" | "business" | null;
+  /** Boutique autorisée (en ligne) : son lien fonctionne pour les clients. */
+  approved: boolean;
 };
 export async function loadShopProfile(): Promise<ShopProfile | null> {
   const u = await currentUser();
   if (!u) return null;
   const { data: s } = await u.sb
     .from("shops")
-    .select("id, slug, name, category, city, country, district, is_physical, maps_url, whatsapp, call_phone, sample_prices, brand_color, signature, display_font")
+    .select("id, slug, name, status, category, city, country, district, is_physical, maps_url, whatsapp, call_phone, sample_prices, brand_color, signature, display_font")
     .eq("owner_id", u.user.id)
     .neq("status", "closed")
     .maybeSingle();
@@ -264,6 +266,7 @@ export async function loadShopProfile(): Promise<ShopProfile | null> {
   const { data: sub } = await u.sb.from("subscriptions").select("plan").eq("shop_id", s.id).maybeSingle();
   return {
     brandColor: s.brand_color, signature: s.signature, displayFont: s.display_font, tier: (sub?.plan as ShopProfile["tier"]) ?? null,
+    approved: s.status === "approved",
     slug: s.slug, name: s.name, category: s.category, city: s.city, country: s.country, district: s.district ?? "", isPhysical: s.is_physical, mapsUrl: s.maps_url ?? "",
     whatsapp: s.whatsapp ?? "", callPhone: s.call_phone ?? "", samples: Array.isArray(s.sample_prices) ? (s.sample_prices as ShopProfile["samples"]) : [],
   };
