@@ -9,7 +9,7 @@ begin
     select p.oid::regprocedure as sig from pg_proc p join pg_namespace n on n.oid = p.pronamespace
     where n.nspname = 'public' and (p.proname like 'admin\_%' or p.proname in (
       'close_my_shop', 'set_shop_slug', 'claim_ai_creation', 'set_ai_published', 'ai_remaining', 'my_shop',
-      'claim_tryon', 'finish_tryon', 'tryon_remaining', 'tryon_quota', 'seller_my_stats'))
+      'claim_tryon', 'finish_tryon', 'tryon_remaining', 'tryon_quota', 'seller_my_stats', 'shop_covered_until'))
   loop
     execute format('revoke execute on function %s from public, anon', f.sig);
   end loop;
