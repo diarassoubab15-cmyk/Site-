@@ -1,6 +1,6 @@
 import "server-only";
 import { createHash, randomUUID } from "node:crypto";
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { supabaseService } from "@/lib/supabase/server";
 
 /**
@@ -34,4 +34,21 @@ export async function block(device: string, email: string) {
 /** Le propriétaire a prouvé son identité par un lien reçu par e-mail : on lève le blocage de cet appareil. */
 export async function unblock(device: string, email: string) {
   await supabaseService().from("login_blocks").delete().eq("device_id", device).eq("email_hash", hashEmail(email));
+}
+
+// ------------------------------------------------------------------ limite par connexion internet
+const MAX_FAILS_PER_HOUR = 10;
+async function ipHash() {
+  const h = await headers();
+  const ip = (h.get("x-forwarded-for") ?? "").split(",")[0].trim() || h.get("x-real-ip") || "inconnue";
+  return createHash("sha256").update(`nexora:${ip}`).digest("hex");
+}
+/** Trop d'erreurs depuis cette connexion internet dans la dernière heure ? */
+export async function ipLocked() {
+  const since = new Date(Date.now() - 3600_000).toISOString();
+  const { count } = await supabaseService().from("login_attempts").select("id", { count: "exact", head: true }).eq("ip_hash", await ipHash()).gte("created_at", since);
+  return (count ?? 0) >= MAX_FAILS_PER_HOUR;
+}
+export async function recordFailure() {
+  await supabaseService().from("login_attempts").insert({ ip_hash: await ipHash() });
 }

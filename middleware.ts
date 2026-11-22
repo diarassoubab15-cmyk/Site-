@@ -70,6 +70,17 @@ export async function middleware(req: NextRequest) {
   });
   const { data } = await sb.auth.getUser();
 
+  // Double vérification activée mais code pas encore saisi : pages privées fermées tant que ce n'est pas fait.
+  if (data.user && isPrivate) {
+    const { data: aal } = await sb.auth.mfa.getAuthenticatorAssuranceLevel();
+    if (aal?.nextLevel === "aal2" && aal.currentLevel !== "aal2") {
+      const url = req.nextUrl.clone();
+      url.pathname = "/connexion/verification";
+      url.search = `?next=${encodeURIComponent(path)}`;
+      return NextResponse.redirect(url);
+    }
+  }
+
   if (isPrivate) {
     res.headers.set("X-Robots-Tag", "noindex, nofollow");
     if (!data.user) {
