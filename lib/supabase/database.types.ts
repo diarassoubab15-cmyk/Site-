@@ -23,7 +23,13 @@ export type Database = {
           }
         },"public": {
           Tables: {
-            "ai_creations": {
+            "login_blocks": {
+                  Row: { "created_at": string,"device_id": string,"email_hash": string }
+                  ComputedFields: never
+                  Insert: { "created_at"?: string,"device_id": string,"email_hash": string }
+                  Update: { "created_at"?: string,"device_id"?: string,"email_hash"?: string }
+                  Relationships: []
+                },"ai_creations": {
                   Row: {
                     "created_at": string,"id": string,"kind": string,"path": string | null,"prompt": string,"published": boolean,"request_id": string | null,"shop_id": string,"source_id": string | null,"status": string
                   }

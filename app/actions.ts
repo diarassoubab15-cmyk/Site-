@@ -871,3 +871,37 @@ export const setShopSlug = action<z.infer<typeof shopSlugSchema>, { slug: string
   revalidatePath(`/boutiques/${data as string}`);
   return { ok: true, data: { slug: data as string } };
 });
+
+// ------------------------------------------------------------------ connexion par mot de passe (avec blocage de l'appareil)
+const passwordLoginSchema = z.object({ email: z.string().trim().toLowerCase().email("Adresse e-mail invalide").max(200), password: z.string().min(1).max(200) });
+export type PasswordLoginResult = { ok: true } | { ok: false; error: string; blocked?: boolean };
+
+/**
+ * Connexion e-mail + mot de passe, faite par le serveur pour appliquer la règle :
+ * une seule erreur de mot de passe ⇒ cet appareil ne peut plus se connecter à ce compte
+ * (sauf en prouvant qu'il en est le propriétaire avec le lien « Mot de passe oublié »).
+ */
+export async function passwordLogin(raw: unknown): Promise<PasswordLoginResult> {
+  const parsed = passwordLoginSchema.safeParse(raw);
+  if (!parsed.success) return { ok: false, error: parsed.error.issues[0]?.message ?? "Données invalides" };
+  const { email, password } = parsed.data;
+  const { deviceId, isBlocked, block } = await import("@/lib/login-guard");
+  const device = (await deviceId())!;
+  const blockedMsg = "Cet appareil est bloqué pour ce compte après une erreur de mot de passe. Pour le débloquer, touchez « Mot de passe oublié » et ouvrez le lien reçu sur cet appareil.";
+  try {
+    if (await isBlocked(device, email)) return { ok: false, error: blockedMsg, blocked: true };
+  } catch (e) {
+    console.error("blocage :", (e as Error).message);
+    return { ok: false, error: "Connexion momentanément indisponible. Réessayez dans un instant." };
+  }
+  const sb = await supabaseServer();
+  const { error } = await sb.auth.signInWithPassword({ email, password });
+  if (!error) return { ok: true };
+  if (error.status === 429) return { ok: false, error: "Trop d'essais. Patientez une minute." };
+  if (/confirm/i.test(error.message)) return { ok: false, error: "Confirmez d'abord votre adresse : touchez le lien reçu par e-mail lors de l'inscription." };
+  if (error.code === "invalid_credentials" || /invalid login credentials/i.test(error.message)) {
+    await block(device, email).catch((e) => console.error("blocage :", (e as Error).message));
+    return { ok: false, error: "Mot de passe incorrect. Par sécurité, cet appareil ne peut plus se connecter à ce compte. Pour le débloquer, utilisez « Mot de passe oublié ».", blocked: true };
+  }
+  return { ok: false, error: "Connexion impossible pour le moment. Réessayez." };
+}

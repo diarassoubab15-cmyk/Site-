@@ -26,6 +26,12 @@ export async function GET(req: NextRequest) {
     const { data } = await sb.auth.getUser();
     const fullName = (data.user?.user_metadata as { full_name?: string } | undefined)?.full_name?.trim();
     if (data.user && fullName) await sb.from("profiles").update({ full_name: fullName.slice(0, 120) }).eq("id", data.user.id).is("full_name", null);
+    // Lien reçu par e-mail = preuve que c'est le propriétaire : on débloque cet appareil pour ce compte.
+    if (data.user?.email) {
+      const { deviceId, unblock } = await import("@/lib/login-guard");
+      const device = await deviceId(false);
+      if (device) await unblock(device, data.user.email).catch((e) => console.error("déblocage :", (e as Error).message));
+    }
     return NextResponse.redirect(new URL(safeNext, req.url));
   }
   return NextResponse.redirect(new URL(`/connexion?erreur=lien&next=${encodeURIComponent(safeNext)}`, req.url));
