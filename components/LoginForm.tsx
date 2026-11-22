@@ -59,6 +59,7 @@ export function LoginForm({ user, next = "/compte", initialMode = "connexion" }:
       const sb = supabaseBrowser();
       if (mode === "connexion") {
         const r = await passwordLogin({ email: mail, password });
+        if (r.ok && r.mfa) return window.location.assign(`/connexion/verification?next=${encodeURIComponent(next)}`);
         if (r.ok) return go();
         setPassword("");
         return fail(r.error);

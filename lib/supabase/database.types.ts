@@ -23,7 +23,13 @@ export type Database = {
           }
         },"public": {
           Tables: {
-            "login_blocks": {
+            "login_attempts": {
+                  Row: { "created_at": string,"id": number,"ip_hash": string }
+                  ComputedFields: never
+                  Insert: { "created_at"?: string,"id"?: number,"ip_hash": string }
+                  Update: { "created_at"?: string,"id"?: number,"ip_hash"?: string }
+                  Relationships: []
+                },"login_blocks": {
                   Row: { "created_at": string,"device_id": string,"email_hash": string }
                   ComputedFields: never
                   Insert: { "created_at"?: string,"device_id": string,"email_hash": string }

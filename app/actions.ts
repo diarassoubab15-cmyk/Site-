@@ -874,7 +874,7 @@ export const setShopSlug = action<z.infer<typeof shopSlugSchema>, { slug: string
 
 // ------------------------------------------------------------------ connexion par mot de passe (avec blocage de l'appareil)
 const passwordLoginSchema = z.object({ email: z.string().trim().toLowerCase().email("Adresse e-mail invalide").max(200), password: z.string().min(1).max(200) });
-export type PasswordLoginResult = { ok: true } | { ok: false; error: string; blocked?: boolean };
+export type PasswordLoginResult = { ok: true; mfa?: boolean } | { ok: false; error: string; blocked?: boolean };
 
 /**
  * Connexion e-mail + mot de passe, faite par le serveur pour appliquer la règle :
@@ -885,22 +885,28 @@ export async function passwordLogin(raw: unknown): Promise<PasswordLoginResult> 
   const parsed = passwordLoginSchema.safeParse(raw);
   if (!parsed.success) return { ok: false, error: parsed.error.issues[0]?.message ?? "Données invalides" };
   const { email, password } = parsed.data;
-  const { deviceId, isBlocked, block } = await import("@/lib/login-guard");
+  const { deviceId, isBlocked, block, ipLocked, recordFailure } = await import("@/lib/login-guard");
   const device = (await deviceId())!;
   const blockedMsg = "Cet appareil est bloqué pour ce compte après une erreur de mot de passe. Pour le débloquer, touchez « Mot de passe oublié » et ouvrez le lien reçu sur cet appareil.";
   try {
     if (await isBlocked(device, email)) return { ok: false, error: blockedMsg, blocked: true };
+    if (await ipLocked()) return { ok: false, error: "Trop d'erreurs de mot de passe depuis cette connexion internet. Réessayez dans une heure." };
   } catch (e) {
     console.error("blocage :", (e as Error).message);
     return { ok: false, error: "Connexion momentanément indisponible. Réessayez dans un instant." };
   }
   const sb = await supabaseServer();
   const { error } = await sb.auth.signInWithPassword({ email, password });
-  if (!error) return { ok: true };
+  if (!error) {
+    // Double vérification activée sur ce compte : il faut encore le code à 6 chiffres de l'application.
+    const { data: aal } = await sb.auth.mfa.getAuthenticatorAssuranceLevel();
+    return { ok: true, mfa: aal?.nextLevel === "aal2" && aal.currentLevel !== "aal2" };
+  }
   if (error.status === 429) return { ok: false, error: "Trop d'essais. Patientez une minute." };
   if (/confirm/i.test(error.message)) return { ok: false, error: "Confirmez d'abord votre adresse : touchez le lien reçu par e-mail lors de l'inscription." };
   if (error.code === "invalid_credentials" || /invalid login credentials/i.test(error.message)) {
     await block(device, email).catch((e) => console.error("blocage :", (e as Error).message));
+    await recordFailure().catch((e) => console.error("tentative :", (e as Error).message));
     return { ok: false, error: "Mot de passe incorrect. Par sécurité, cet appareil ne peut plus se connecter à ce compte. Pour le débloquer, utilisez « Mot de passe oublié ».", blocked: true };
   }
   return { ok: false, error: "Connexion impossible pour le moment. Réessayez." };
