@@ -8,6 +8,7 @@ import { VideoPlayer } from "@/components/VideoPlayer";
 import { getFeaturedShops, listCards, listShopsByType, type TypeShop } from "@/lib/catalog";
 import { FeaturedShops } from "@/components/FeaturedShops";
 import { ProductMarquee } from "@/components/ProductMarquee";
+import { CarScene } from "@/components/CarScene";
 import { SHOP_TYPES, getShopType } from "@/lib/shop-types";
 import { siteVideo } from "@/lib/site-videos";
 
@@ -50,6 +51,22 @@ export default async function TypePage({ params }: { params: Promise<{ type: str
           <Link href="/vendre" className="btn">Ouvrir une boutique {t.name.toLowerCase()}</Link>
         </div>
       </section>
+
+      {t.slug === "automobile" && (
+        <section className="container-x pb-10" aria-label="Voitures en mouvement">
+          <CarScene color={t.color} />
+          <p className="mt-3 text-sm text-ash">Sur chaque annonce : faites tourner la voiture du doigt et visitez l&apos;intérieur en 360°, comme dans un garage.</p>
+        </section>
+      )}
+      {t.slug === "maison" && (
+        <section className="container-x pb-10">
+          <Link href="/amenager" className="room-cta" data-haptic>
+            <span className="text-lg font-medium text-white">Aménagez votre maison</span>
+            <span className="text-sm text-ash">Placez les meubles dans votre pièce, voyez le rendu, puis recevez un devis avec les meilleurs vendeurs.</span>
+            <span className="btn-solid mt-2 self-start">Essayer maintenant</span>
+          </Link>
+        </section>
+      )}
 
       <section aria-label={`Produits ${t.name.toLowerCase()} à découvrir`} className="pb-12">
         <ProductMarquee products={cards.map((c) => c.product)} type={t.slug} rows={1} />

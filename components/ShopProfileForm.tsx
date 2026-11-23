@@ -1,4 +1,5 @@
 "use client";
+import { PhoneInput } from "./PhoneInput";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
@@ -39,8 +40,8 @@ export function ShopProfileForm({ profile, slug }: { profile: ShopProfile; slug?
       <div className="grid gap-4 sm:grid-cols-2">
         <div><label className="label" htmlFor="pf-city">Ville</label><input id="pf-city" required className="input" value={f.city} onChange={(e) => setF({ ...f, city: e.target.value })} /></div>
         <div><label className="label" htmlFor="pf-district">Quartier</label><input id="pf-district" maxLength={80} className="input" value={f.district} onChange={(e) => setF({ ...f, district: e.target.value })} /></div>
-        <div><label className="label" htmlFor="pf-wa">WhatsApp</label><input id="pf-wa" required inputMode="tel" className="input" value={f.whatsapp} onChange={(e) => setF({ ...f, whatsapp: e.target.value })} /></div>
-        <div><label className="label" htmlFor="pf-call">Appels</label><input id="pf-call" required inputMode="tel" className="input" value={f.callPhone} onChange={(e) => setF({ ...f, callPhone: e.target.value })} /></div>
+        <PhoneInput id="pf-wa" label="WhatsApp" required value={f.whatsapp} onChange={(v) => setF({ ...f, whatsapp: v })} />
+        <PhoneInput id="pf-call" label="Appels" required value={f.callPhone} onChange={(v) => setF({ ...f, callPhone: v })} />
         <label className="flex items-center gap-3 text-sm text-bone sm:col-span-2">
           <input type="checkbox" checked={f.isPhysical} onChange={(e) => setF({ ...f, isPhysical: e.target.checked })} className="accent-[#5433eb]" />
           Boutique physique (les clients peuvent venir)

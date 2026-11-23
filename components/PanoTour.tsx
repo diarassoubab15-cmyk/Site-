@@ -5,7 +5,8 @@ import { createPortal } from "react-dom";
 import type { PanoHandle } from "@/lib/pano-scene";
 
 /** Visite 360° pièce par pièce, en plein écran. La visionneuse n'est téléchargée qu'à l'ouverture. */
-export function PanoTour({ panos, title }: { panos: { url: string; label: string }[]; title: string }) {
+export function PanoTour({ panos, title, variant = "home" }: { panos: { url: string; label: string }[]; title: string; variant?: "home" | "car" }) {
+  const unit = variant === "car" ? "vue" : "pièce";
   const [open, setOpen] = useState(false);
   const dlg = useDialog<HTMLDivElement>(open);
   const [room, setRoom] = useState(0);
@@ -49,7 +50,7 @@ export function PanoTour({ panos, title }: { panos: { url: string; label: string
   return (
     <>
       <button type="button" className="btn w-full" data-haptic onClick={() => { setRoom(0); setOpen(true); }}>
-        <span aria-hidden="true">◎</span> Visite 360° · {panos.length} pièce{panos.length > 1 ? "s" : ""}
+        <span aria-hidden="true">◎</span> {variant === "car" ? "Intérieur 360°" : "Visite 360°"} · {panos.length} {unit}{panos.length > 1 ? "s" : ""}
       </button>
       {/* Rendu à la racine du document : aucune colonne collante ni animation ne peut l'enfermer. */}
       {open && createPortal(
@@ -65,7 +66,7 @@ export function PanoTour({ panos, title }: { panos: { url: string; label: string
                 <img src={panos[room].url} alt={panos[room].label} className="h-full max-w-none" />
               </div>
             )}
-            {state === "loading" && <div className="pointer-events-none absolute inset-0 flex items-center justify-center font-mono text-xs text-ash">chargement de la pièce…</div>}
+            {state === "loading" && <div className="pointer-events-none absolute inset-0 flex items-center justify-center font-mono text-xs text-ash">chargement de la {unit}…</div>}
             {state === "error" && <div className="absolute inset-0 flex items-center justify-center text-sm text-alarm">Panorama indisponible.</div>}
             {state === "ready" && hint && (
               <p className="pointer-events-none absolute bottom-4 left-1/2 -translate-x-1/2 rounded-full border border-white/20 bg-black/60 px-4 py-2 text-xs text-white backdrop-blur-[25px]">
@@ -74,7 +75,7 @@ export function PanoTour({ panos, title }: { panos: { url: string; label: string
             )}
           </div>
           {panos.length > 1 && (
-            <nav aria-label="Pièces" className="flex gap-2 overflow-x-auto p-3">
+            <nav aria-label={variant === "car" ? "Vues" : "Pièces"} className="flex gap-2 overflow-x-auto p-3">
               {panos.map((p, i) => (
                 <button key={p.url} type="button" onClick={() => go(i)} aria-current={i === room} className={`pill shrink-0 ${i === room ? "border-white text-white" : "text-ash"}`}>
                   {p.label}

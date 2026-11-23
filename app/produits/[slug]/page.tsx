@@ -89,13 +89,20 @@ export default async function ProductPage({ params }: Props) {
             </span>
             <span className="text-iron" aria-hidden="true">›</span>
           </Link>
-          {product.panos?.length ? <PanoTour panos={product.panos} title={product.name} /> : null}
+          {product.panos?.length ? <PanoTour panos={product.panos} title={product.name} variant={product.category === "automobile" ? "car" : "home"} /> : null}
           {(product.spin?.length ?? 0) >= 8 ? <SpinViewer frames={product.spin!} title={product.name} /> : null}
-          {product.category === "immobilier" ? (
+          {product.category === "immobilier" || product.category === "automobile" ? (
             <div className="card space-y-4">
               <p className="font-mono text-2xl text-white">{formatPriceUnit(product.price, product.priceUnit)}</p>
-              <p className="text-sm text-ash">Intéressé ? Demandez une visite ou posez vos questions : votre message est transmis au vendeur par NEXORA.</p>
-              <Link href={`/support?boutique=${shop.slug}#contact`} className="btn-solid w-full" data-haptic>Demander une visite</Link>
+              <p className="text-sm text-ash">
+                {product.category === "automobile"
+                  ? "Intéressé ? Demandez un essai, l'historique d'entretien ou une photo d'un détail : votre message est transmis au vendeur par NEXORA."
+                  : "Intéressé ? Demandez une visite ou posez vos questions : votre message est transmis au vendeur par NEXORA."}
+              </p>
+              <Link href={`/support?boutique=${shop.slug}#contact`} className="btn-solid w-full" data-haptic>{product.category === "automobile" ? "Demander un essai" : "Demander une visite"}</Link>
+              {product.category === "immobilier" && (product.images?.length ?? 0) > 0 && (
+                <Link href={`/amenager?bien=${product.slug}`} className="btn w-full">Meubler ce logement (essai virtuel)</Link>
+              )}
             </div>
           ) : (
             <div id="achat" className="scroll-mt-24 space-y-6">

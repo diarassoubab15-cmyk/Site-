@@ -1,4 +1,5 @@
 "use client";
+import { PhoneInput } from "./PhoneInput";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
 import { SuccessCheck } from "./SuccessCheck";
@@ -241,7 +242,7 @@ export function SubscriptionPanel({
           <p className="text-sm text-ash">Après l&apos;envoi, vous recevez un SMS de {methodLabel(open.method)} avec un numéro de transaction. Saisissez-le ci-dessous.</p>
           <div className="grid gap-3 sm:grid-cols-2">
             <div><label htmlFor="opref" className="label">Numéro de transaction (SMS)</label><input id="opref" required minLength={4} maxLength={40} className="input font-mono" value={operatorRef} onChange={(e) => setOperatorRef(e.target.value)} /></div>
-            <div><label htmlFor="payer" className="label">Numéro qui a payé</label><input id="payer" required inputMode="tel" pattern="[+0-9 ]{8,20}" className="input font-mono" value={payerPhone} onChange={(e) => setPayerPhone(e.target.value)} /></div>
+            <PhoneInput id="payer" label="Numéro qui a payé" required value={payerPhone} onChange={setPayerPhone} />
           </div>
           <button className="btn-solid" data-haptic disabled={pending}>{pending ? "Envoi…" : "J'ai payé"}</button>
         </form>

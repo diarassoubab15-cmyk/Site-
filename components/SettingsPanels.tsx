@@ -1,4 +1,5 @@
 "use client";
+import { PhoneInput } from "./PhoneInput";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
@@ -108,7 +109,7 @@ export function CartPanel({ preferred, known }: { preferred: PaymentMethodId | n
         <fieldset className="grid gap-3 sm:grid-cols-3">
           <legend className="label">Livraison (demandée une seule fois)</legend>
           <input aria-label="Nom" required className="input" placeholder="Nom" autoComplete="name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
-          <input aria-label="Téléphone" required className="input" placeholder="Téléphone" inputMode="tel" autoComplete="tel" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
+          <PhoneInput required placeholder="Téléphone" value={form.phone} onChange={(v) => setForm({ ...form, phone: v })} />
           <input aria-label="Ville et quartier" required className="input" placeholder="Ville, quartier" value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })} />
         </fieldset>
       )}
