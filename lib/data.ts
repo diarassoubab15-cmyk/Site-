@@ -41,6 +41,8 @@ export type Product = {
   name: string;
   shop: string; // slug de la boutique
   category: string; // slug de la catégorie
+  /** Sous-partie (Technologie : ordinateurs, téléviseurs…), choisie par le vendeur. */
+  subcategory?: string;
   price: number;
   compareAt?: number;
   stock: number;

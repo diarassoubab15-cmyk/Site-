@@ -703,3 +703,13 @@ a.float-card:focus-visible { outline: 2px solid #5433eb; outline-offset: 3px; }
   background: linear-gradient(120deg, color-mix(in srgb, var(--c, #5433eb) 12%, #fff), #fff); box-shadow: var(--shadow-pill); }
 @media (prefers-reduced-motion: reduce) { .room-item { animation: none; } }
 @media print { header, footer, .page-mark, .ambient, canvas { display: none !important; } }
+
+/* ---- Sous-catégories (Technologie…) ---- */
+.sub-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(118px, 1fr)); gap: 10px; }
+.sub-tile { display: flex; flex-direction: column; align-items: center; gap: 4px; border-radius: 20px; border: 1px solid #ececf0; background: #fff;
+  padding: 14px 8px 12px; text-align: center; font-size: 13px; color: var(--color-white); box-shadow: var(--shadow-pill);
+  transition: transform 150ms ease-out, border-color 150ms ease; -webkit-tap-highlight-color: transparent; }
+.sub-tile:hover { border-color: var(--c); }
+.sub-tile:active { transform: scale(0.96); }
+.sub-tile.is-on { border-color: var(--c); background: color-mix(in srgb, var(--c) 9%, #fff); font-weight: 500; }
+.sub-icon { font-size: 26px; line-height: 1; }

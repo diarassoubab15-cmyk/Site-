@@ -3,6 +3,7 @@ import "server-only";
  * Lecture du catalogue : Supabase si configuré, sinon données de démo (lib/data.ts).
  * Les pages n'appellent que ces fonctions.
  */
+import { subcategoryOf } from "./subcategories";
 import * as demo from "./data";
 import type { Product, Review, Shop } from "./data";
 import type { PaymentMethodId } from "./payments";
@@ -26,7 +27,7 @@ type ShopRow = {
 type ProductRow = {
   id: string; slug: string; name: string; short: string | null; description: string | null; category: string; price: number;
   compare_at: number | null; stock: number; wholesale_min: number | null; wholesale_price: number | null; specs: unknown; glyph: string; tone: string;
-  price_unit: string | null; product_media?: { path: string; kind: string; position: number; label: string | null; status: string }[];
+  price_unit: string | null; subcategory?: string | null; product_media?: { path: string; kind: string; position: number; label: string | null; status: string }[];
   shops: ShopRow;
 };
 
@@ -60,6 +61,7 @@ const toProduct = (p: ProductRow): Product => ({
   name: p.name,
   shop: p.shops.slug,
   category: p.category,
+  subcategory: p.subcategory ?? undefined,
   price: p.price,
   compareAt: p.compare_at ?? undefined,
   stock: p.stock,
@@ -80,7 +82,7 @@ const media = (p: ProductRow, kind: string) =>
 /** Adresse publique d'un fichier du stockage « product-media ». */
 export const mediaUrl = (path: string) => `${(process.env.NEXT_PUBLIC_SUPABASE_URL ?? "").replace(/\/$/, "")}/storage/v1/object/public/product-media/${path}`;
 
-const PRODUCT_COLS = "id, slug, name, short, description, category, price, compare_at, stock, wholesale_min, wholesale_price, specs, glyph, tone, price_unit, product_media(path, kind, position, label, status), shops!inner(slug, name, city, country, description, created_at, accepts_cod, response_time, payments)";
+const PRODUCT_COLS = "id, slug, name, short, description, category, subcategory, price, compare_at, stock, wholesale_min, wholesale_price, specs, glyph, tone, price_unit, product_media(path, kind, position, label, status), shops!inner(slug, name, city, country, description, created_at, accepts_cod, response_time, payments)";
 
 async function ratingsFor(ids: string[]) {
   if (!ids.length) return new Map<string, Rating>();
@@ -104,7 +106,12 @@ const demoCard = (p: Product): CardItem => ({ product: p, shop: demo.getShop(p.s
 const clean = (q: string) => q.replace(/[,()%*\\:."']/g, " ").trim().slice(0, 60);
 
 // ------------------------------------------------------------------ API
-export async function listCards(opts: { q?: string; category?: string; limit?: number; inStock?: boolean } = {}): Promise<CardItem[]> {
+export async function listCards(opts: { q?: string; category?: string; sub?: string; limit?: number; inStock?: boolean } = {}): Promise<CardItem[]> {
+  if (opts.sub) {
+    // Sous-partie : choisie par le vendeur ou devinée d'après le nom (filtre fait ici, sur la catégorie).
+    const all = await listCards({ ...opts, sub: undefined, limit: 500 });
+    return all.filter((c) => subcategoryOf(c.product) === opts.sub).slice(0, opts.limit ?? 500);
+  }
   if (!supabaseEnabled) {
     let list = demo.searchProducts(opts.q ?? "", opts.category);
     if (opts.inStock) list = list.filter((p) => p.stock > 0);

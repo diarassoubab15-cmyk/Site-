@@ -137,7 +137,7 @@ export async function loadAdmin(): Promise<LiveAdmin | null> {
   if (!u || u.profile?.role !== "admin") return null;
   const { sb } = u;
   const [{ data: shopRows }, { data: contacts }, { data: tickets }, { data: pays }, { data: rw }, { data: vids }, { data: edits }, { data: subs }] = await Promise.all([
-    sb.from("shops").select("id, name, city, country, category, status, created_at").order("created_at", { ascending: false }),
+    sb.from("shops").select("id, name, city, country, category, status, status_reason, created_at").order("created_at", { ascending: false }),
     // Coordonnées du responsable : jamais lisibles directement, seulement par cette fonction réservée à l'admin.
     sb.rpc("admin_shop_contacts"),
     sb.from("tickets").select("*").order("created_at", { ascending: false }).limit(200),
@@ -162,6 +162,7 @@ export async function loadAdmin(): Promise<LiveAdmin | null> {
     sellers: shops.map((s) => ({
       id: s.id, shopName: s.name, owner: s.owner_name ?? "", email: s.contact_email ?? "", phone: s.contact_phone ?? "",
       city: s.city, country: s.country, category: s.category, status: shopStatusFr[s.status], createdAt: s.created_at.slice(0, 10),
+      reason: s.status_reason ?? null,
       plan: subByShop.get(s.id)?.plan ?? null,
       // Actif = coché ET pas encore expiré (même règle que la base pour afficher la boutique).
       planActive: !!subByShop.get(s.id)?.active && (!subByShop.get(s.id)?.current_period_end || subByShop.get(s.id)!.current_period_end! > new Date().toISOString()),
@@ -192,7 +193,7 @@ export type KnownUser = NonNullable<Awaited<ReturnType<typeof loadKnownUser>>>;
 // ------------------------------------------------------------------ produits du vendeur
 export type SellerProductMedia = { id: string; kind: "photo" | "pano" | "spin" | "model3d"; url: string; label: string | null; position: number; aiGenerated: boolean; status: string };
 export type SellerProduct = {
-  id: string; slug: string; name: string; category: string; price: number; priceUnit: "mois" | "nuit" | "jour" | null; compareAt: number | null;
+  id: string; slug: string; name: string; category: string; subcategory: string | null; price: number; priceUnit: "mois" | "nuit" | "jour" | null; compareAt: number | null;
   stock: number; short: string; description: string; specs: [string, string][]; wholesaleMin: number | null; wholesalePrice: number | null;
   published: boolean; media: SellerProductMedia[];
 };
@@ -207,13 +208,13 @@ export async function loadSellerProducts(): Promise<{ shop: { id: string; status
   if (!shop) return { shop: null, products: [] };
   const { data } = await u.sb
     .from("products")
-    .select("id, slug, name, category, price, price_unit, compare_at, stock, short, description, specs, wholesale_min, wholesale_price, published, product_media(id, kind, path, label, position, ai_generated, status)")
+    .select("id, slug, name, category, subcategory, price, price_unit, compare_at, stock, short, description, specs, wholesale_min, wholesale_price, published, product_media(id, kind, path, label, position, ai_generated, status)")
     .eq("shop_id", shop.id)
     .order("created_at", { ascending: false });
   return {
     shop,
     products: (data ?? []).map((p) => ({
-      id: p.id, slug: p.slug, name: p.name, category: p.category, price: p.price, priceUnit: p.price_unit as SellerProduct["priceUnit"], compareAt: p.compare_at,
+      id: p.id, slug: p.slug, name: p.name, category: p.category, subcategory: p.subcategory, price: p.price, priceUnit: p.price_unit as SellerProduct["priceUnit"], compareAt: p.compare_at,
       stock: p.stock, short: p.short ?? "", description: p.description ?? "", specs: Array.isArray(p.specs) ? (p.specs as [string, string][]) : [],
       wholesaleMin: p.wholesale_min, wholesalePrice: p.wholesale_price, published: p.published,
       media: (p.product_media ?? [])
