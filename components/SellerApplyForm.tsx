@@ -13,6 +13,7 @@ import { supabaseEnabled } from "@/lib/supabase/env";
 import { applySeller } from "@/app/actions";
 import type { KnownUser } from "@/lib/server-data";
 import { SuccessCheck } from "./SuccessCheck";
+import { LoginForm } from "./LoginForm";
 import { ShopTypeIcon } from "./ShopTypeIcon";
 
 const steps = ["Boutique", "Adresse", "Contact", "Argent reçu", "Forfait"] as const;
@@ -61,13 +62,14 @@ export function SellerApplyForm({ initialPlan, known }: { initialPlan: string; k
   const myShop = supabaseEnabled ? (known?.shopStatus ? { status: known.shopStatus } : null) : demo.sellers.find((x) => x.id === demo.myShopId);
   if (supabaseEnabled && !known) {
     return (
-      <div className="card space-y-4">
-        <p className="text-lg font-medium text-white">D&apos;abord, votre compte NEXORA</p>
-        <p className="text-sm text-ash">Il faut un compte pour gérer votre boutique. Pas encore de compte ? Inscrivez-vous en 1 minute avec votre e-mail, puis revenez ici automatiquement.</p>
-        <div className="flex flex-wrap gap-2">
-          <a href="/connexion?mode=inscription&next=/vendre" className="btn-solid">Créer mon compte</a>
-          <a href="/connexion?next=/vendre" className="btn">J&apos;ai déjà un compte</a>
+      // Le compte se crée ici même, sans quitter la page : la création de boutique s'enchaîne aussitôt.
+      <div className="mx-auto max-w-lg space-y-4">
+        <div>
+          <p className="font-mono text-xs text-iron">Étape 0 sur 5</p>
+          <p className="mt-1 text-2xl font-medium text-white">Votre compte NEXORA</p>
+          <p className="mt-1 text-sm text-ash">Nom, e-mail et mot de passe : 30 secondes. Ensuite, vous créez votre boutique sur cette même page.</p>
         </div>
+        <LoginForm next="/vendre" initialMode="inscription" />
       </div>
     );
   }
