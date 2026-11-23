@@ -6,7 +6,7 @@ import { NotificationPrefs } from "./NotificationPrefs";
 import { SubscriptionPanel } from "./SubscriptionPanel";
 import { SellerStats } from "./SellerStats";
 import { SellerVideos } from "./SellerVideos";
-import { plans } from "@/lib/plans";
+import { allPlans } from "@/lib/plans";
 import { formatPrice } from "@/lib/format";
 import { paymentMethods, type PaymentMethodId } from "@/lib/payments";
 import { uid, update, useDemo } from "@/lib/demo-store";
@@ -50,7 +50,7 @@ export function SellerView({ live }: { live?: LiveSeller | null }) {
   }
 
   const [dot, label] = statusText[shop.status];
-  const plan = plans.find((p) => p.id === shop.plan);
+  const plan = allPlans.find((p) => p.id === shop.plan);
   const closed = shop.status === "fermé";
 
   function run(real: () => Promise<{ ok: boolean; error?: string }>, fake: () => void, after?: () => void, success = "Enregistré") {

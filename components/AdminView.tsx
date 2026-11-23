@@ -7,7 +7,7 @@ import { supabaseEnabled } from "@/lib/supabase/env";
 import { toast } from "@/lib/toast";
 import type { LiveAdmin } from "@/lib/views";
 import { adminResolveTicket, adminSetShopStatus, adminSetSubscription } from "@/app/actions";
-import { plans } from "@/lib/plans";
+import { allPlans, type PlanId } from "@/lib/plans";
 import { CountUp } from "./CountUp";
 import { AdminPayments } from "./AdminPayments";
 import { AdminRewards } from "./AdminRewards";
@@ -21,9 +21,8 @@ const tabs: { id: SellerStatus | "tous"; label: string }[] = [
   { id: "suspendu", label: "Suspendus" },
   { id: "refusé", label: "Refusés" },
 ];
-type PlanId = "essentiel" | "pro" | "business";
-const planName = (id?: string | null) => plans.find((p) => p.id === id)?.name ?? "Aucun";
-const planColor = (id?: string | null) => plans.find((p) => p.id === id)?.color ?? "#8a8f98";
+const planName = (id?: string | null) => allPlans.find((p) => p.id === id)?.name ?? "Aucun";
+const planColor = (id?: string | null) => allPlans.find((p) => p.id === id)?.color ?? "#8a8f98";
 const frDate = (d: string) => new Date(d).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" });
 
 const dot: Record<SellerStatus, string> = { "en attente": "bg-amber", autorisé: "bg-pulse", suspendu: "bg-alarm", refusé: "bg-iron", fermé: "bg-charcoal" };
@@ -161,10 +160,10 @@ export function AdminView({ live }: { live?: LiveAdmin | null }) {
                   <fieldset>
                     <legend className="label">Forfait</legend>
                     <div className="flex flex-wrap gap-2">
-                      {plans.map((pl) => (
+                      {allPlans.map((pl) => (
                         <label key={pl.id} className={`flex cursor-pointer items-center gap-2 rounded-full border px-3 py-1.5 text-sm ${planDraft.plan === pl.id ? "border-white text-white" : "border-line text-bone"}`}>
                           <input type="radio" name={`plan-${s.id}`} className="accent-[#5433eb]" checked={planDraft.plan === pl.id} onChange={() => setPlanDraft({ ...planDraft, plan: pl.id })} />
-                          {pl.name} <span className="font-mono text-xs text-iron">{pl.monthly.toLocaleString("fr-FR")} F</span>
+                          {pl.name} <span className="font-mono text-xs text-iron">{pl.monthly ? `${pl.monthly.toLocaleString("fr-FR")} F` : "gratuit"}</span>
                         </label>
                       ))}
                     </div>

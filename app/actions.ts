@@ -202,7 +202,7 @@ const applySchema = z
     payoutMethod: PAYOUT,
     payoutAccount: z.string().trim().min(6).max(40),
     cod: z.boolean(),
-    plan: z.enum(["essentiel", "pro", "business"]),
+    plan: z.enum(["decouverte", "essentiel", "pro", "business"]),
   })
   .refine((f) => !f.isPhysical || f.mapsUrl || f.lat !== null, { message: "Boutique physique : collez le lien Google Maps ou utilisez votre position" });
 
@@ -277,7 +277,7 @@ export const adminSetShopStatus = action(z.object({ shopId: z.string().uuid(), s
 
 /** Forfait d'un vendeur choisi par l'administrateur : activer (1 à 24 mois), changer ou désactiver. */
 export const adminSetSubscription = action(
-  z.object({ shopId: z.string().uuid(), plan: z.enum(["essentiel", "pro", "business"]), active: z.boolean(), months: z.number().int().min(1).max(24).default(1) }),
+  z.object({ shopId: z.string().uuid(), plan: z.enum(["decouverte", "essentiel", "pro", "business"]), active: z.boolean(), months: z.number().int().min(1).max(24).default(1) }),
   async ({ shopId, plan, active, months }, { sb }) => {
     const { error } = await sb.rpc("admin_set_subscription", { p_shop: shopId, p_plan: plan, p_active: active, p_months: months });
     if (error) return dbError(error);

@@ -281,7 +281,8 @@ export async function listShopsByType(type: string): Promise<TypeShop[]> {
 export async function getShopTier(slug: string): Promise<"essentiel" | "pro" | "business" | null> {
   if (!supabaseEnabled) return null;
   const { data } = await supabasePublic().rpc("shop_tier", { p_slug: slug });
-  return (data as "essentiel" | "pro" | "business" | null) ?? null;
+  // Formule gratuite : même vitrine que Base.
+  return data === "decouverte" ? "essentiel" : (data as "essentiel" | "pro" | "business" | null) ?? null;
 }
 
 // ------------------------------------------------------------------ « À la une » (boutiques Ultra, rotation hebdomadaire)

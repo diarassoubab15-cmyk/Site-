@@ -44,7 +44,9 @@ export function SubscriptionPanel({
   const ownerName = supabaseEnabled ? live?.owner.name ?? "" : demo.profile?.name ?? "";
   const ownerPhone = supabaseEnabled ? live?.owner.phone ?? "" : demo.profile?.phone ?? "";
 
-  const [plan, setPlan] = useState(shop.plan ?? "pro");
+  // Formule gratuite : le formulaire propose de passer à un forfait payant (Base par défaut).
+  const isFree = (subscription?.plan ?? shop.plan) === "decouverte";
+  const [plan, setPlan] = useState(shop.plan && shop.plan !== "decouverte" ? shop.plan : "essentiel");
   const [annual, setAnnual] = useState(false);
   const methods: SubMethod[] = supabaseEnabled ? live?.payMethods ?? ["orange_money"] : ["orange_money", "wave", "mtn_momo", "moov_money"];
   const [method, setMethod] = useState<SubMethod>("orange_money");
@@ -115,7 +117,9 @@ export function SubscriptionPanel({
         <h2 id="abo" className="text-xl font-medium text-white">Abonnement</h2>
         <p className="mt-2 flex items-center gap-2 text-sm">
           <span className={`h-2 w-2 rounded-full ${activeNow ? "bg-pulse" : "bg-amber"}`} aria-hidden="true" />
-          {activeNow ? (
+          {isFree && activeNow ? (
+            <span className="text-bone">Formule Découverte (gratuite) · 10 produits en ligne au plus · votre boutique est visible</span>
+          ) : activeNow ? (
             <span className="text-bone">
               {freeNow ? "Mois offert en cours" : `${planName(subscription?.plan ?? shop.plan ?? "pro")} actif`}{until ? ` · couvert jusqu'au ${formatDate(until.toISOString())}` : ""} · votre boutique est visible
             </span>
@@ -148,7 +152,8 @@ export function SubscriptionPanel({
       )}
 
       {/* Aucune demande en cours : choisir le forfait */}
-      {!open && canRenew && (
+      {!open && isFree && <p className="text-sm text-ash">Envie de plus de produits, d&apos;une boutique animée ou du Studio IA ? Passez à un forfait payant :</p>}
+      {!open && (canRenew || isFree) && (
         <form
           className="space-y-4"
           onSubmit={(e) => {
@@ -185,7 +190,7 @@ export function SubscriptionPanel({
           </label>
           <div className="flex flex-wrap items-center justify-between gap-4 border-t border-line pt-4">
             <p className="text-sm text-ash">À payer : <span className="font-mono text-lg text-white">{formatPrice(amountFor(plan, annual))}</span></p>
-            <button className="btn-solid" data-haptic disabled={pending}>{pending ? "…" : activeNow ? "Renouveler mon abonnement" : "Payer mon abonnement"}</button>
+            <button className="btn-solid" data-haptic disabled={pending}>{pending ? "…" : isFree ? "Passer à ce forfait" : activeNow ? "Renouveler mon abonnement" : "Payer mon abonnement"}</button>
           </div>
           <p className="text-xs text-iron">Paiement par {methodLabel(method)}. Vous devrez d&apos;abord contacter l&apos;administrateur sur WhatsApp ou par téléphone.</p>
         </form>

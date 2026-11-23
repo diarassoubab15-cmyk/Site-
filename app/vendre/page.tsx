@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { SellerApplyForm } from "@/components/SellerApplyForm";
 import { SellerStory } from "@/components/SellerStory";
-import { plans } from "@/lib/plans";
+import { allPlans } from "@/lib/plans";
 import { supabaseEnabled } from "@/lib/supabase/env";
 import { loadKnownUser } from "@/lib/server-data";
 
@@ -20,7 +20,8 @@ const how = [
 
 export default async function Vendre({ searchParams }: { searchParams: Promise<{ forfait?: string }> }) {
   const { forfait } = await searchParams;
-  const initialPlan = plans.some((p) => p.id === forfait) ? forfait! : "pro";
+  // Par défaut : la formule gratuite, pour démarrer sans frein. Le lien d'un forfait (/vendre?forfait=pro) la remplace.
+  const initialPlan = allPlans.some((p) => p.id === forfait) ? forfait! : "decouverte";
   const known = supabaseEnabled ? await loadKnownUser() : null;
   return (
     <>

@@ -272,7 +272,7 @@ export async function loadShopProfile(): Promise<ShopProfile | null> {
   if (!s) return null;
   const { data: sub } = await u.sb.from("subscriptions").select("plan").eq("shop_id", s.id).maybeSingle();
   return {
-    brandColor: s.brand_color, signature: s.signature, displayFont: s.display_font, tier: (sub?.plan as ShopProfile["tier"]) ?? null,
+    brandColor: s.brand_color, signature: s.signature, displayFont: s.display_font, tier: sub?.plan === "decouverte" ? "essentiel" : (sub?.plan as ShopProfile["tier"]) ?? null,
     approved: s.status === "approved",
     slug: s.slug, name: s.name, category: s.category, city: s.city, country: s.country, district: s.district ?? "", isPhysical: s.is_physical, mapsUrl: s.maps_url ?? "",
     whatsapp: s.whatsapp ?? "", callPhone: s.call_phone ?? "", samples: Array.isArray(s.sample_prices) ? (s.sample_prices as ShopProfile["samples"]) : [],

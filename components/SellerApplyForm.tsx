@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
 import { categories } from "@/lib/data";
-import { plans } from "@/lib/plans";
+import { allPlans } from "@/lib/plans";
 import { paymentMethods, type PaymentMethodId } from "@/lib/payments";
 import { getShopType, SHOP_TYPES } from "@/lib/shop-types";
 import { coordsFromMapsUrl, isMapsUrl, mapsLinkFromCoords } from "@/lib/maps";
@@ -273,7 +273,7 @@ export function SellerApplyForm({ initialPlan, known }: { initialPlan: string; k
 
         {step === 4 && (
           <div className="space-y-3">
-            {plans.map((pl) => (
+            {allPlans.map((pl) => (
               <label key={pl.id} className={`flex cursor-pointer items-start justify-between gap-4 rounded-[18px] border px-4 py-3 ${val("plan") === pl.id ? "" : "border-line"}`}
                 style={val("plan") === pl.id ? { borderColor: pl.color, background: `color-mix(in srgb, ${pl.color} 6%, transparent)` } : undefined}>
                 <span className="flex items-start gap-3">
@@ -284,11 +284,15 @@ export function SellerApplyForm({ initialPlan, known }: { initialPlan: string; k
                     <span className="mt-0.5 block text-xs text-iron">{pl.products}</span>
                   </span>
                 </span>
-                <span className="shrink-0 text-right font-mono text-sm text-white">{pl.monthly.toLocaleString("fr-FR")}<span className="block text-[11px] text-iron">FCFA / mois</span></span>
+                <span className="shrink-0 text-right font-mono text-sm text-white">{pl.monthly ? pl.monthly.toLocaleString("fr-FR") : "Gratuit"}<span className="block text-[11px] text-iron">{pl.monthly ? "FCFA / mois" : "pour toujours"}</span></span>
               </label>
             ))}
             <p className="text-sm"><a href="/tarifs" target="_blank" rel="noopener" className="link">Comparer les forfaits en détail</a></p>
-            <p className="text-xs text-iron">Rien à payer maintenant. Après l&apos;autorisation, vous contacterez l&apos;administrateur puis paierez votre forfait.</p>
+            <p className="text-xs text-iron">
+              {val("plan") === "decouverte"
+                ? "Rien à payer, ni maintenant ni plus tard : votre boutique sera en ligne dès que NEXORA l'aura autorisée."
+                : "Rien à payer maintenant. Après l'autorisation, vous contacterez l'administrateur puis paierez votre forfait."}
+            </p>
           </div>
         )}
 
