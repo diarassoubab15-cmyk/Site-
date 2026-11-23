@@ -130,6 +130,7 @@ export function AdminView({ live }: { live?: LiveAdmin | null }) {
               <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                 <div className="min-w-0">
                   <p className="flex flex-wrap items-center gap-2 text-white"><span className={`h-2 w-2 rounded-full ${dot[s.status]}`} />{s.shopName} <span className="badge">{s.status}</span></p>
+                  {s.status === "suspendu" && s.reason && <p className="mt-1 rounded-full bg-[#fdecec] px-2.5 py-0.5 text-xs text-alarm">{s.reason}</p>}
                   <p className="mt-1 text-sm text-ash">{s.owner} · {s.city}, {s.country} · {categories.find((c) => c.slug === s.category)?.name ?? s.category}</p>
                   <p className="mt-1 font-mono text-xs text-iris">{s.email} <span className="text-ash">· {s.phone}</span></p>
                   <p className="mt-2 flex flex-wrap items-center gap-2 text-sm">
@@ -145,7 +146,7 @@ export function AdminView({ live }: { live?: LiveAdmin | null }) {
                     <button className="btn-danger px-3 py-1.5 text-xs" disabled={pending} onClick={() => setStatus(s.id, "refusé")}>Refuser</button>
                   </>)}
                   {s.status === "autorisé" && <button className="btn-danger px-3 py-1.5 text-xs" disabled={pending} onClick={() => setStatus(s.id, "suspendu")}>Suspendre</button>}
-                  {(s.status === "suspendu" || s.status === "refusé") && <button className="btn px-3 py-1.5 text-xs" disabled={pending} onClick={() => setStatus(s.id, "autorisé")}>Autoriser</button>}
+                  {(s.status === "suspendu" || s.status === "refusé") && <button className="btn-solid px-3 py-1.5 text-xs" disabled={pending} onClick={() => setStatus(s.id, "autorisé")}>{s.status === "suspendu" ? "Autoriser à reprendre" : "Autoriser"}</button>}
                   {s.status === "fermé" && <span className="text-xs text-iron">Fermée par le vendeur</span>}
                   {s.status !== "fermé" && (
                     <button className="btn px-3 py-1.5 text-xs" aria-expanded={openPlan === s.id} onClick={() => { setOpenPlan(openPlan === s.id ? null : s.id); setPlanDraft({ plan: (s.plan as PlanId) ?? "pro", months: 1 }); }}>

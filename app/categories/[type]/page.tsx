@@ -9,6 +9,8 @@ import { getFeaturedShops, listCards, listShopsByType, type TypeShop } from "@/l
 import { FeaturedShops } from "@/components/FeaturedShops";
 import { ProductMarquee } from "@/components/ProductMarquee";
 import { CarScene } from "@/components/CarScene";
+import { SubcategoryNav } from "@/components/SubcategoryNav";
+import { subcategoriesOf } from "@/lib/subcategories";
 import { SHOP_TYPES, getShopType } from "@/lib/shop-types";
 import { siteVideo } from "@/lib/site-videos";
 
@@ -52,6 +54,12 @@ export default async function TypePage({ params }: { params: Promise<{ type: str
         </div>
       </section>
 
+      {subcategoriesOf(t.slug).length > 0 && (
+        <section className="container-x pb-10" aria-labelledby="sous-titre">
+          <h2 id="sous-titre" className="mb-4 text-xl font-medium text-white">Que cherchez-vous ?</h2>
+          <SubcategoryNav category={t.slug} color={t.light} />
+        </section>
+      )}
       {t.slug === "automobile" && (
         <section className="container-x pb-10" aria-label="Voitures en mouvement">
           <CarScene color={t.color} />

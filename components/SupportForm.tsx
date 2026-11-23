@@ -113,6 +113,9 @@ export function SupportForm({ shop, known: liveKnown }: { shop?: string; known?:
         <label className="label" htmlFor="s-msg">{kind === "contact" ? "Votre question" : "Que s'est-il passé ?"}</label>
         <textarea id="s-msg" required rows={5} maxLength={2000} className="input" value={message} onChange={(e) => setMessage(e.target.value)} />
       </div>
+      {kind === "signalement" && (
+        <p className="rounded-[14px] bg-[#fff6e5] px-3 py-2 text-xs leading-relaxed text-[#8a5a00]">Dès votre signalement, la boutique est <strong>suspendue</strong> : elle n&apos;est plus visible ni joignable jusqu&apos;à ce que NEXORA vérifie et l&apos;autorise de nouveau. Signalez seulement un vrai problème (arnaque, produit faux, comportement grave).</p>
+      )}
       {kind === "remboursement" && (
         <p className="text-xs leading-relaxed text-iron">Le vendeur a 72 h pour vous rembourser ou prouver la livraison. Passé ce délai, l&apos;administrateur tranche, et le vendeur peut être suspendu.</p>
       )}

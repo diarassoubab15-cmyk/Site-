@@ -121,14 +121,14 @@ isOneToOne: false
                   ]
                 },"payout_accounts": {
                   Row: {
-                    "created_at": string,"id": string,"last4": string,"provider_token": string,"shop_id": string,"type": Database["public"]['Enums']["payout_type"]
+                    "created_at": string,"id": string,"last4": string,"pay_number": string | null,"provider_token": string,"shop_id": string,"type": Database["public"]['Enums']["payout_type"]
                   }
                   ComputedFields: never
                   Insert: {
-                    "created_at"?: string,"id"?: string,"last4": string,"provider_token": string,"shop_id": string,"type": Database["public"]['Enums']["payout_type"]
+                    "created_at"?: string,"id"?: string,"last4": string,"pay_number"?: string | null,"provider_token": string,"shop_id": string,"type": Database["public"]['Enums']["payout_type"]
                   }
                   Update: {
-                    "created_at"?: string,"id"?: string,"last4"?: string,"provider_token"?: string,"shop_id"?: string,"type"?: Database["public"]['Enums']["payout_type"]
+                    "created_at"?: string,"id"?: string,"last4"?: string,"pay_number"?: string | null,"provider_token"?: string,"shop_id"?: string,"type"?: Database["public"]['Enums']["payout_type"]
                   }
                   Relationships: [
                     {
@@ -199,14 +199,14 @@ isOneToOne: false
                   ]
                 },"products": {
                   Row: {
-                    "category": string,"compare_at": number | null,"created_at": string,"description": string | null,"glyph": string,"id": string,"images": (string)[],"name": string,"price": number,"price_unit": string | null,"published": boolean,"shop_id": string,"short": string | null,"slug": string,"specs": NonNullable<Json>,"stock": number,"tone": string,"updated_at": string,"wholesale_min": number | null,"wholesale_price": number | null
+                    "category": string,"compare_at": number | null,"created_at": string,"description": string | null,"glyph": string,"id": string,"images": (string)[],"name": string,"price": number,"price_unit": string | null,"published": boolean,"shop_id": string,"short": string | null,"slug": string,"specs": NonNullable<Json>,"stock": number,"subcategory": string | null,"tone": string,"updated_at": string,"wholesale_min": number | null,"wholesale_price": number | null
                   }
                   ComputedFields: never
                   Insert: {
-                    "category": string,"compare_at"?: number | null,"created_at"?: string,"description"?: string | null,"glyph"?: string,"id"?: string,"images"?: (string)[],"name": string,"price": number,"price_unit"?: string | null,"published"?: boolean,"shop_id": string,"short"?: string | null,"slug": string,"specs"?: NonNullable<Json>,"stock"?: number,"tone"?: string,"updated_at"?: string,"wholesale_min"?: number | null,"wholesale_price"?: number | null
+                    "category": string,"compare_at"?: number | null,"created_at"?: string,"description"?: string | null,"glyph"?: string,"id"?: string,"images"?: (string)[],"name": string,"price": number,"price_unit"?: string | null,"published"?: boolean,"shop_id": string,"short"?: string | null,"slug": string,"specs"?: NonNullable<Json>,"stock"?: number,"subcategory"?: string | null,"tone"?: string,"updated_at"?: string,"wholesale_min"?: number | null,"wholesale_price"?: number | null
                   }
                   Update: {
-                    "category"?: string,"compare_at"?: number | null,"created_at"?: string,"description"?: string | null,"glyph"?: string,"id"?: string,"images"?: (string)[],"name"?: string,"price"?: number,"price_unit"?: string | null,"published"?: boolean,"shop_id"?: string,"short"?: string | null,"slug"?: string,"specs"?: NonNullable<Json>,"stock"?: number,"tone"?: string,"updated_at"?: string,"wholesale_min"?: number | null,"wholesale_price"?: number | null
+                    "category"?: string,"compare_at"?: number | null,"created_at"?: string,"description"?: string | null,"glyph"?: string,"id"?: string,"images"?: (string)[],"name"?: string,"price"?: number,"price_unit"?: string | null,"published"?: boolean,"shop_id"?: string,"short"?: string | null,"slug"?: string,"specs"?: NonNullable<Json>,"stock"?: number,"subcategory"?: string | null,"tone"?: string,"updated_at"?: string,"wholesale_min"?: number | null,"wholesale_price"?: number | null
                   }
                   Relationships: [
                     {
@@ -289,6 +289,18 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"shop_comments": {
+                  Row: {
+                    "author_id": string | null,"author_name": string,"body": string,"created_at": string,"hidden": boolean,"id": string,"rating": number | null,"seller_reply": string | null,"shop_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "author_id"?: string | null,"author_name"?: string,"body": string,"created_at"?: string,"hidden"?: boolean,"id"?: string,"rating"?: number | null,"seller_reply"?: string | null,"shop_id": string
+                  }
+                  Update: {
+                    "author_id"?: string | null,"author_name"?: string,"body"?: string,"created_at"?: string,"hidden"?: boolean,"id"?: string,"rating"?: number | null,"seller_reply"?: string | null,"shop_id"?: string
+                  }
+                  Relationships: []
                 },"shop_videos": {
                   Row: {
                     "admin_note": string | null,"attempts": number,"created_at": string,"decided_at": string | null,"description": string,"duration_s": number | null,"error": string | null,"id": string,"is_active": boolean,"poster_path": string | null,"ref": string,"rendered_at": string | null,"script": Json | null,"shop_id": string,"started_at": string | null,"status": Database["public"]['Enums']["video_status"],"video_path": string | null
@@ -467,6 +479,15 @@ isOneToOne: false
                            },
 "admin_set_subscription":
 { Args: { "p_shop": string,"p_plan": Database["public"]['Enums']["plan_id"],"p_active": boolean,"p_months"?: number }; Returns: undefined
+                           },
+"order_pay_info":
+{ Args: { "p_ref": string }; Returns: { "shop_name": string,"method": Database["public"]['Enums']["payment_method"],"total": number,"pay_number": string | null,"pay_type": Database["public"]['Enums']["payout_type"] | null,"whatsapp": string | null }[]
+                           },
+"reply_shop_comment":
+{ Args: { "p_comment": string,"p_reply": string }; Returns: undefined
+                           },
+"admin_hide_shop_comment":
+{ Args: { "p_comment": string,"p_hidden": boolean }; Returns: undefined
                            },
 "admin_shop_contacts":
 { Args: Record<PropertyKey, never>; Returns: {

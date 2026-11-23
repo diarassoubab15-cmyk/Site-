@@ -127,6 +127,8 @@ export async function createTicket(raw: unknown): Promise<ActionResult<string>> 
   }
   let shopId: string | null = null;
   if (t.shopSlug) shopId = (await u.sb.from("shops").select("id").eq("slug", t.shopSlug).maybeSingle()).data?.id ?? null;
+  // Signalement depuis une commande : la boutique est celle de la commande (elle sera suspendue jusqu'à la décision de l'admin).
+  if (!shopId && t.orderId) shopId = (await u.sb.from("orders").select("shop_id").eq("id", t.orderId).maybeSingle()).data?.shop_id ?? null;
   const { data, error } = await u.sb
     .from("tickets")
     .insert({ author_id: u.user.id, kind: ticketKindDb[t.kind], message: t.message, order_id: t.orderId ?? null, shop_id: shopId })
@@ -223,7 +225,9 @@ export const applySeller = action(applySchema, async (f, { user, sb }) => {
   if (error) return dbError(error);
   const digits = f.payoutAccount.replace(/\s/g, "");
   // En production : le compte est enregistré chez le prestataire de paiement, qui renvoie un jeton.
-  await sb.from("payout_accounts").insert({ shop_id: shop.id, type: f.payoutMethod, provider_token: `a-relier:${f.payoutMethod}`, last4: digits.slice(-4) });
+  // Numéro Orange Money / Wave / MTN / Moov : donné à l'acheteur après sa commande, pour qu'il paie le vendeur directement.
+  const payNumber = f.payoutMethod !== "bank" && /^[+0-9 ]{6,40}$/.test(f.payoutAccount.trim()) ? f.payoutAccount.trim() : null;
+  await sb.from("payout_accounts").insert({ shop_id: shop.id, type: f.payoutMethod, provider_token: `a-relier:${f.payoutMethod}`, last4: digits.slice(-4), pay_number: payNumber });
   await sb.from("subscriptions").insert({ shop_id: shop.id, plan: f.plan, active: false });
   await sb.from("profiles").update({ full_name: f.owner, phone: f.callPhone, city: f.city, country: f.country }).eq("id", user.id);
   revalidatePath("/vendeur");
@@ -233,7 +237,8 @@ export const applySeller = action(applySchema, async (f, { user, sb }) => {
 export const addPayout = action(z.object({ type: PAYOUT, number: z.string().trim().min(6).max(40) }), async ({ type, number }, { user, sb }) => {
   const { data: shop } = await sb.from("shops").select("id").eq("owner_id", user.id).neq("status", "closed").maybeSingle();
   if (!shop) return fail("Aucune boutique active");
-  const { error } = await sb.from("payout_accounts").insert({ shop_id: shop.id, type, provider_token: `a-relier:${type}`, last4: number.replace(/\s/g, "").slice(-4) });
+  const payNumber = type !== "bank" && type !== "card" && /^[+0-9 ]{6,40}$/.test(number) ? number : null;
+  const { error } = await sb.from("payout_accounts").insert({ shop_id: shop.id, type, provider_token: `a-relier:${type}`, last4: number.replace(/\s/g, "").slice(-4), pay_number: payNumber });
   if (error) return dbError(error);
   revalidatePath("/vendeur");
   return { ok: true };
@@ -481,6 +486,7 @@ const productSchema = z.object({
   id: z.string().uuid().optional(),
   name: z.string().trim().min(2, "Nom trop court").max(120),
   category: z.enum(CATEGORIES),
+  subcategory: z.string().regex(/^[a-z0-9-]{2,30}$/).nullable().optional(),
   price: z.number().int().min(1, "Prix invalide").max(1_000_000_000),
   priceUnit: z.enum(["mois", "nuit", "jour"]).nullable(),
   compareAt: z.number().int().positive().nullable(),
@@ -504,7 +510,7 @@ export const saveProduct = action<z.infer<typeof productSchema>, { id: string; s
   if (p.compareAt !== null && p.compareAt <= p.price) return fail("L'ancien prix doit être supérieur au prix actuel.");
   if ((p.wholesaleMin === null) !== (p.wholesalePrice === null)) return fail("Prix de gros : indiquez la quantité minimale ET le prix.");
   const row = {
-    name: p.name, category: p.category, price: p.price, price_unit: p.priceUnit, compare_at: p.compareAt, stock: p.stock,
+    name: p.name, category: p.category, subcategory: p.category === "electronique" ? p.subcategory ?? null : null, price: p.price, price_unit: p.priceUnit, compare_at: p.compareAt, stock: p.stock,
     short: p.short || null, description: p.description || null, specs: p.specs, wholesale_min: p.wholesaleMin, wholesale_price: p.wholesalePrice, published: p.published,
   };
   if (p.id) {
@@ -923,4 +929,86 @@ export async function passwordLogin(raw: unknown): Promise<PasswordLoginResult> 
     return { ok: false, error: "Mot de passe incorrect. Par sécurité, cet appareil ne peut plus se connecter à ce compte. Pour le débloquer, utilisez « Mot de passe oublié ».", blocked: true };
   }
   return { ok: false, error: "Connexion impossible pour le moment. Réessayez." };
+}
+
+// ------------------------------------------------------------------ commentaires des boutiques
+export type ShopCommentView = { id: string; author: string; body: string; rating: number | null; reply: string | null; hidden: boolean; date: string; mine: boolean };
+
+/** Commentaires d'une boutique (lus à chaque visite, hors cache) et ce que le visiteur peut faire. */
+export async function getShopComments(slug: string): Promise<{ comments: ShopCommentView[]; viewer: { loggedIn: boolean; isOwner: boolean; isAdmin: boolean } }> {
+  const u = await currentUser();
+  const sb = u?.sb ?? (await supabaseServer());
+  const { data: shop } = await sb.from("shops").select("id, owner_id").eq("slug", slug).maybeSingle();
+  const viewer = { loggedIn: !!u, isOwner: !!u && shop?.owner_id === u.user.id, isAdmin: u?.profile?.role === "admin" };
+  if (!shop) return { comments: [], viewer };
+  const { data } = await sb.from("shop_comments").select("id, author_id, author_name, body, rating, seller_reply, hidden, created_at").eq("shop_id", shop.id).order("created_at", { ascending: false }).limit(100);
+  return {
+    viewer,
+    comments: (data ?? []).map((c) => ({ id: c.id, author: c.author_name, body: c.body, rating: c.rating, reply: c.seller_reply, hidden: c.hidden, date: c.created_at.slice(0, 10), mine: !!u && c.author_id === u.user.id })),
+  };
+}
+
+export const addShopComment = action(
+  z.object({ slug: z.string().min(1).max(90), body: z.string().trim().min(3, "Écrivez au moins quelques mots").max(800), rating: z.number().int().min(1).max(5).nullable() }),
+  async ({ slug, body, rating }, { user, sb }) => {
+    const { data: shop } = await sb.from("shops").select("id, owner_id").eq("slug", slug).eq("status", "approved").maybeSingle();
+    if (!shop) return fail("Boutique introuvable");
+    if (shop.owner_id === user.id) return fail("Vous ne pouvez pas commenter votre propre boutique.");
+    const { error } = await sb.from("shop_comments").insert({ shop_id: shop.id, author_id: user.id, author_name: "-", body, rating });
+    if (error) return fail(/Trop de commentaires/.test(error.message) ? "Vous avez déjà commenté 3 fois aujourd'hui. Revenez demain." : "Commentaire impossible pour le moment.");
+    return { ok: true };
+  },
+);
+
+export const replyShopComment = action(z.object({ id: z.string().uuid(), reply: z.string().trim().max(800) }), async ({ id, reply }, { sb }) => {
+  const { error } = await sb.rpc("reply_shop_comment", { p_comment: id, p_reply: reply });
+  return error ? dbError(error) : { ok: true };
+});
+
+export const deleteShopComment = action(z.object({ id: z.string().uuid() }), async ({ id }, { sb }) => {
+  const { error } = await sb.from("shop_comments").delete().eq("id", id);
+  return error ? dbError(error) : { ok: true };
+});
+
+export const hideShopComment = action(z.object({ id: z.string().uuid(), hidden: z.boolean() }), async ({ id, hidden }, { sb }) => {
+  const { error } = await sb.rpc("admin_hide_shop_comment", { p_comment: id, p_hidden: hidden });
+  return error ? dbError(error) : { ok: true };
+});
+
+// ------------------------------------------------------------------ paiement d'une commande
+export type OrderPayInfo = { shopName: string; method: string; total: number; payNumber: string | null; payType: string | null; whatsapp: string | null };
+
+/** Après la commande : où envoyer l'argent (numéro Orange Money / Wave du vendeur), visible du seul acheteur. */
+export async function getOrderPayInfo(ref: string): Promise<OrderPayInfo | null> {
+  const u = await currentUser();
+  if (!u || !/^[A-Z0-9-]{4,40}$/i.test(ref)) return null;
+  const { data } = await u.sb.rpc("order_pay_info", { p_ref: ref });
+  const r = data?.[0];
+  return r ? { shopName: r.shop_name, method: r.method, total: r.total, payNumber: r.pay_number, payType: r.pay_type, whatsapp: r.whatsapp } : null;
+}
+
+/** Carte bancaire : ouvre la page de paiement sécurisée du prestataire, pour le montant exact calculé par la base. */
+export async function payOrderByCard(ref: string): Promise<ActionResult<string>> {
+  const u = await currentUser();
+  if (!u) return fail("Connectez-vous pour payer.", true);
+  const { data: o } = await u.sb.from("orders").select("ref, total, method, status, product_name, shop_name, shipping_name, shipping_phone, shipping_city")
+    .eq("ref", ref).eq("buyer_id", u.user.id).maybeSingle();
+  if (!o || o.method !== "card") return fail("Commande introuvable");
+  if (o.status !== "pending_payment") return fail("Cette commande est déjà payée.");
+  const { headers } = await import("next/headers");
+  const h = await headers();
+  const base = process.env.NEXT_PUBLIC_SITE_URL ?? `${h.get("x-forwarded-proto") ?? "https"}://${h.get("host")}`;
+  const { startCardPayment } = await import("@/lib/card-payment");
+  const r = await startCardPayment({
+    ref: o.ref, amount: o.total, description: `${o.product_name ?? "Commande"} - ${o.shop_name ?? "NEXORA"}`,
+    returnUrl: `${base}/compte?paiement=${encodeURIComponent(o.ref)}`, notifyUrl: `${base}/api/paiement/carte`,
+    customer: { name: o.shipping_name ?? "Client NEXORA", phone: o.shipping_phone ?? "", city: o.shipping_city ?? "Bamako", email: u.user.email ?? undefined },
+  });
+  return r.ok ? { ok: true, data: r.url } : fail(r.error);
+}
+
+/** Le paiement par carte est-il branché ? (pour l'afficher comme disponible ou « bientôt »). */
+export async function cardPaymentStatus(): Promise<boolean> {
+  const { cardPaymentReady } = await import("@/lib/card-payment");
+  return cardPaymentReady();
 }

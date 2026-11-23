@@ -11,7 +11,8 @@ import { paymentMethods, type PaymentMethodId } from "@/lib/payments";
 import { today, uid, update, useDemo } from "@/lib/demo-store";
 import { supabaseEnabled } from "@/lib/supabase/env";
 import { useBuyerContext } from "@/lib/use-buyer-context";
-import { placeOrder } from "@/app/actions";
+import { cardPaymentStatus, placeOrder } from "@/app/actions";
+import { OrderPayment } from "./OrderPayment";
 import { SuccessCheck } from "./SuccessCheck";
 
 type Known = { name: string; city: string } | null;
@@ -26,6 +27,9 @@ export function BuyBox({ product, shop }: { product: Product; shop: Shop }) {
   const [form, setForm] = useState({ name: "", phone: "", city: "" });
   const [done, setDone] = useState<string | null>(null);
   const [error, setError] = useState("");
+  // Carte : proposée comme disponible seulement quand le prestataire de paiement est branché.
+  const [cardReady, setCardReady] = useState(!supabaseEnabled);
+  useEffect(() => { if (supabaseEnabled) cardPaymentStatus().then(setCardReady).catch(() => setCardReady(false)); }, []);
   // Moyen de paiement préféré (Réglages) : présélectionné s'il est accepté par cette boutique.
   const preferred = live.preferredPayment as PaymentMethodId | null | undefined;
   useEffect(() => {
@@ -66,12 +70,12 @@ export function BuyBox({ product, shop }: { product: Product; shop: Shop }) {
       <div className="card pop space-y-4" role="status">
         <p className="eyebrow flex items-center gap-3 text-pulse"><SuccessCheck />Commande envoyée</p>
         <p className="text-white">Commande <span className="font-mono text-iris">{done}</span> transmise à {shop.name}.</p>
-        <p className="text-sm text-ash">
-          {method === "cash_on_delivery"
-            ? "Vous paierez en main propre au livreur, à la réception du colis."
-            : `Paiement ${paymentMethods[method].label} : vous allez être redirigé vers l'opérateur. L'argent est versé directement au vendeur.`}{" "}
-          Si le colis n&apos;arrive pas, signalez-le depuis votre compte : vous serez remboursé ou le vendeur sera sanctionné.
-        </p>
+        {method === "cash_on_delivery"
+          ? <p className="text-sm text-ash">Vous paierez en main propre au livreur, à la réception du colis.</p>
+          : supabaseEnabled
+            ? <OrderPayment orderRef={done} method={method} total={total} />
+            : <p className="text-sm text-ash">Paiement {paymentMethods[method].label} : en version réelle, le numéro du vendeur (ou la page de paiement par carte) s&apos;affiche ici.</p>}
+        <p className="text-sm text-ash">Si le colis n&apos;arrive pas, signalez-le depuis votre compte : vous serez remboursé ou le vendeur sera sanctionné.</p>
         <Link href="/compte" className="btn">Suivre ma commande</Link>
       </div>
     );
@@ -99,14 +103,19 @@ export function BuyBox({ product, shop }: { product: Product; shop: Shop }) {
       <fieldset>
         <legend className="label">Paiement</legend>
         <div className="grid gap-2">
-          {shop.payments.map((m) => (
-            <label key={m} className={`flex cursor-pointer items-center gap-3 rounded-[6px] border px-3 py-2.5 text-sm transition-colors ${method === m ? "border-white text-white" : "border-line text-bone hover:border-iron"}`}>
-              <input type="radio" name="method" value={m} checked={method === m} onChange={() => setMethod(m)} className="accent-[#5433eb]" />
-              <span className="h-2 w-2 rounded-full" style={{ background: paymentMethods[m].color }} aria-hidden="true" />
-              {paymentMethods[m].label}
-              {m === "cash_on_delivery" && <span className="ml-auto text-xs text-pulse">payer à la réception</span>}
-            </label>
-          ))}
+          {shop.payments.map((m) => {
+            const off = m === "card" && !cardReady;
+            return (
+              <label key={m} className={`flex items-center gap-3 rounded-[14px] border px-3 py-2.5 text-sm transition-colors ${off ? "cursor-not-allowed border-line text-iron" : method === m ? "cursor-pointer border-white text-white" : "cursor-pointer border-line text-bone hover:border-iron"}`}>
+                <input type="radio" name="method" value={m} checked={method === m} disabled={off} onChange={() => setMethod(m)} className="accent-[#5433eb]" />
+                <span className="h-2 w-2 rounded-full" style={{ background: paymentMethods[m].color }} aria-hidden="true" />
+                {m === "card" ? "Carte Visa / Mastercard" : paymentMethods[m].label}
+                {m === "cash_on_delivery" && <span className="ml-auto text-xs text-pulse">payer à la réception</span>}
+                {m === "card" && <span className="ml-auto text-xs text-iron">{off ? "bientôt" : "tous les pays"}</span>}
+                {(m === "orange_money" || m === "wave") && <span className="ml-auto text-xs text-iron">direct au vendeur</span>}
+              </label>
+            );
+          })}
         </div>
         {!shop.acceptsCashOnDelivery && <p className="mt-2 text-xs text-iron">Ce vendeur ne propose pas le paiement à la livraison.</p>}
       </fieldset>
@@ -123,7 +132,7 @@ export function BuyBox({ product, shop }: { product: Product; shop: Shop }) {
         <p className="text-sm text-ash">Livraison à <span className="text-bone">{known.name}</span>, {known.city} · <Link href="/compte#profil" className="link">modifier</Link></p>
       )}
       {supabaseEnabled && live.loaded && !live.loggedIn && !out && (
-        <p className="text-sm text-ash">Connectez-vous en 30 secondes avec un code reçu par e-mail ou SMS pour commander.</p>
+        <p className="text-sm text-ash">Connectez-vous (ou créez votre compte en 1 minute) pour commander.</p>
       )}
 
       <div className="flex items-center justify-between border-t border-line pt-5">

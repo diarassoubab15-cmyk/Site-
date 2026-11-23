@@ -263,7 +263,10 @@ export function SellerApplyForm({ initialPlan, known }: { initialPlan: string; k
                 </label>
               ))}
             </div>
-            <div><label className="label" htmlFor="payoutAccount">{val("payoutMethod", "orange_money") === "bank" ? "IBAN / RIB" : "Numéro marchand ou de téléphone"}</label><input id="payoutAccount" required className="input font-mono" value={val("payoutAccount")} onChange={(e) => set("payoutAccount", e.target.value)} /></div>
+            {val("payoutMethod", "orange_money") === "bank"
+              ? <div><label className="label" htmlFor="payoutAccount">IBAN / RIB</label><input id="payoutAccount" required className="input font-mono" value={val("payoutAccount")} onChange={(e) => set("payoutAccount", e.target.value)} /></div>
+              : <PhoneInput id="payoutAccount" label={`Votre numéro ${payoutLabel(val("payoutMethod", "orange_money") as PaymentMethodId)}`} required value={val("payoutAccount")} onChange={(v) => set("payoutAccount", v)} />}
+            <p className="text-xs text-iron">Après chaque commande payée par {val("payoutMethod", "orange_money") === "bank" ? "mobile money" : payoutLabel(val("payoutMethod", "orange_money") as PaymentMethodId)}, ce numéro est donné à l&apos;acheteur (et à lui seul) pour qu&apos;il vous paie directement.</p>
             <label className="flex items-center gap-3 text-sm text-bone"><input type="checkbox" checked={val("cod", "1") === "1"} onChange={(e) => set("cod", e.target.checked ? "1" : "0")} className="accent-[#5433eb]" />J&apos;accepte le paiement à la livraison</label>
           </div>
         )}

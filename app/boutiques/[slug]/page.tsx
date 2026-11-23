@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { ShopComments } from "@/components/ShopComments";
 import Link from "next/link";
 import { notFound, permanentRedirect } from "next/navigation";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
@@ -124,6 +125,7 @@ export default async function ShopPage({ params }: Props) {
       <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4" data-reveal suppressHydrationWarning>
         {items.map((c) => <ProductCard key={c.product.slug} item={c} />)}
       </div>
+      <ShopComments slug={shop.slug} shopName={shop.name} />
       <JsonLd
         data={{
           "@context": "https://schema.org",

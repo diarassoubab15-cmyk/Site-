@@ -1,4 +1,5 @@
 "use client";
+import { subcategoriesOf } from "@/lib/subcategories";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
@@ -16,6 +17,7 @@ export function ProductEditor({ product }: { product?: SellerProduct }) {
   const [category, setCategory] = useState(product?.category ?? "mode");
   const [specs, setSpecs] = useState<[string, string][]>(product?.specs?.length ? product.specs : [["", ""]]);
   const immobilier = category === "immobilier";
+  const subs = subcategoriesOf(category);
 
   function submit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -25,6 +27,7 @@ export function ProductEditor({ product }: { product?: SellerProduct }) {
       id: product?.id,
       name: s("name"),
       category: category as "mode",
+      subcategory: subs.length ? s("subcategory") || null : null,
       price: num(s("price")) ?? 0,
       priceUnit: immobilier && s("priceUnit") ? (s("priceUnit") as "mois") : null,
       compareAt: num(s("compareAt")),
@@ -58,6 +61,15 @@ export function ProductEditor({ product }: { product?: SellerProduct }) {
             {categories.map((c) => <option key={c.slug} value={c.slug}>{c.name}</option>)}
           </select>
         </div>
+        {subs.length > 0 && (
+          <div>
+            <label className="label" htmlFor="subcategory">Type de produit</label>
+            <select id="subcategory" name="subcategory" className="input" defaultValue={product?.subcategory ?? ""} key={category}>
+              <option value="">Choisir (ordinateur, télévision…)</option>
+              {subs.map((x) => <option key={x.slug} value={x.slug}>{x.icon} {x.name}</option>)}
+            </select>
+          </div>
+        )}
         <div>
           <label className="label" htmlFor="price">{immobilier ? "Prix ou loyer (FCFA)" : "Prix (FCFA)"}</label>
           <div className="flex gap-2">
