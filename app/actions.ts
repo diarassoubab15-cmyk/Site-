@@ -987,11 +987,11 @@ export async function getOrderPayInfo(ref: string): Promise<OrderPayInfo | null>
   return r ? { shopName: r.shop_name, method: r.method, total: r.total, payNumber: r.pay_number, payType: r.pay_type, whatsapp: r.whatsapp } : null;
 }
 
-/** Carte bancaire : ouvre la page de paiement sécurisée du prestataire, pour le montant exact calculé par la base. */
+/** Carte bancaire : ouvre la page de paiement sécurisée de PayDunya, pour le montant exact calculé par la base. */
 export async function payOrderByCard(ref: string): Promise<ActionResult<string>> {
   const u = await currentUser();
   if (!u) return fail("Connectez-vous pour payer.", true);
-  const { data: o } = await u.sb.from("orders").select("ref, total, method, status, product_name, shop_name, shipping_name, shipping_phone, shipping_city")
+  const { data: o } = await u.sb.from("orders").select("ref, total, method, status, product_name, shop_name")
     .eq("ref", ref).eq("buyer_id", u.user.id).maybeSingle();
   if (!o || o.method !== "card") return fail("Commande introuvable");
   if (o.status !== "pending_payment") return fail("Cette commande est déjà payée.");
@@ -1000,9 +1000,9 @@ export async function payOrderByCard(ref: string): Promise<ActionResult<string>>
   const base = process.env.NEXT_PUBLIC_SITE_URL ?? `${h.get("x-forwarded-proto") ?? "https"}://${h.get("host")}`;
   const { startCardPayment } = await import("@/lib/card-payment");
   const r = await startCardPayment({
-    ref: o.ref, amount: o.total, description: `${o.product_name ?? "Commande"} - ${o.shop_name ?? "NEXORA"}`,
-    returnUrl: `${base}/compte?paiement=${encodeURIComponent(o.ref)}`, notifyUrl: `${base}/api/paiement/carte`,
-    customer: { name: o.shipping_name ?? "Client NEXORA", phone: o.shipping_phone ?? "", city: o.shipping_city ?? "Bamako", email: u.user.email ?? undefined },
+    ref: o.ref, amount: o.total, description: `${o.product_name ?? "Commande"} - ${o.shop_name ?? "NEXORA"} (réf. ${o.ref})`,
+    returnUrl: `${base}/compte?paiement=${encodeURIComponent(o.ref)}`, cancelUrl: `${base}/compte?paiement-annule=${encodeURIComponent(o.ref)}`,
+    notifyUrl: `${base}/api/paiement/carte`, siteUrl: base,
   });
   return r.ok ? { ok: true, data: r.url } : fail(r.error);
 }

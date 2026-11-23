@@ -1,55 +1,55 @@
 import "server-only";
 /**
- * Paiement par carte (Visa, Mastercard…) via la page sécurisée de CinetPay, prestataire agréé en Afrique de l'Ouest.
- * Le client ne saisit jamais sa carte sur NEXORA : il est envoyé sur la page de CinetPay puis revient.
- * Actif seulement si CINETPAY_APIKEY et CINETPAY_SITE_ID sont définis (variables secrètes du serveur, sur Vercel).
+ * Paiement par carte (Visa, Mastercard) via la page sécurisée de PayDunya, prestataire présent au Mali.
+ * Le client ne saisit jamais sa carte sur NEXORA : il est envoyé sur la page de PayDunya puis revient.
+ *
+ * Variables secrètes du serveur (Vercel → Settings → Environment Variables, cochées « Sensitive ») :
+ *   PAYDUNYA_MASTER_KEY, PAYDUNYA_PRIVATE_KEY, PAYDUNYA_TOKEN
+ *   PAYDUNYA_MODE = "test" pour essayer sans argent réel (par défaut : réel)
  */
-const API = "https://api-checkout.cinetpay.com/v2";
+const base = () => (process.env.PAYDUNYA_MODE === "test" ? "https://app.paydunya.com/sandbox-api/v1" : "https://app.paydunya.com/api/v1");
+const headers = () => ({
+  "content-type": "application/json",
+  "PAYDUNYA-MASTER-KEY": process.env.PAYDUNYA_MASTER_KEY ?? "",
+  "PAYDUNYA-PRIVATE-KEY": process.env.PAYDUNYA_PRIVATE_KEY ?? "",
+  "PAYDUNYA-TOKEN": process.env.PAYDUNYA_TOKEN ?? "",
+});
 
-export const cardPaymentReady = () => !!(process.env.CINETPAY_APIKEY && process.env.CINETPAY_SITE_ID);
+export const cardPaymentReady = () => !!(process.env.PAYDUNYA_MASTER_KEY && process.env.PAYDUNYA_PRIVATE_KEY && process.env.PAYDUNYA_TOKEN);
 
 export async function startCardPayment(o: {
-  ref: string; amount: number; description: string; returnUrl: string; notifyUrl: string;
-  customer: { name: string; phone: string; city: string; email?: string; country?: string };
+  ref: string; amount: number; description: string; returnUrl: string; cancelUrl: string; notifyUrl: string; siteUrl: string;
 }): Promise<{ ok: true; url: string } | { ok: false; error: string }> {
   if (!cardPaymentReady()) return { ok: false, error: "Le paiement par carte sera bientôt disponible. Choisissez Orange Money, Wave ou le paiement à la livraison." };
-  const [first, ...rest] = o.customer.name.trim().split(/\s+/);
   try {
-    const res = await fetch(`${API}/payment`, {
+    const res = await fetch(`${base()}/checkout-invoice/create`, {
       method: "POST",
-      headers: { "content-type": "application/json" },
+      headers: headers(),
       body: JSON.stringify({
-        apikey: process.env.CINETPAY_APIKEY, site_id: process.env.CINETPAY_SITE_ID,
-        transaction_id: o.ref, amount: Math.ceil(o.amount / 5) * 5, currency: "XOF", description: o.description.replace(/[^\p{L}\p{N} .,'-]/gu, " ").slice(0, 120),
-        notify_url: o.notifyUrl, return_url: o.returnUrl, channels: "CREDIT_CARD", lang: "fr",
-        customer_name: rest.join(" ") || first, customer_surname: first, customer_email: o.customer.email || "client@nexora.africa",
-        customer_phone_number: o.customer.phone.replace(/\s/g, ""), customer_address: o.customer.city, customer_city: o.customer.city,
-        customer_country: o.customer.country ?? "ML", customer_state: o.customer.country ?? "ML", customer_zip_code: "00000",
+        invoice: { total_amount: o.amount, description: o.description.slice(0, 200), channels: ["card"] },
+        store: { name: "NEXORA", website_url: o.siteUrl },
+        actions: { return_url: o.returnUrl, cancel_url: o.cancelUrl, callback_url: o.notifyUrl },
+        custom_data: { ref: o.ref },
       }),
       signal: AbortSignal.timeout(20_000),
     });
-    const json = (await res.json()) as { code?: string; message?: string; data?: { payment_url?: string } };
-    if (json.code === "201" && json.data?.payment_url) return { ok: true, url: json.data.payment_url };
-    console.error("CinetPay : création refusée", json.code, json.message);
+    const json = (await res.json()) as { response_code?: string; response_text?: string };
+    if (json.response_code === "00" && json.response_text?.startsWith("https://")) return { ok: true, url: json.response_text };
+    console.error("PayDunya : création refusée", json.response_code, json.response_text);
     return { ok: false, error: "Paiement par carte indisponible pour le moment. Réessayez ou choisissez un autre moyen." };
   } catch (e) {
-    console.error("CinetPay injoignable", (e as Error).message);
+    console.error("PayDunya injoignable", (e as Error).message);
     return { ok: false, error: "Paiement par carte indisponible pour le moment. Réessayez dans un instant." };
   }
 }
 
-/** Statut réel d'un paiement, demandé à CinetPay (on ne croit jamais le navigateur). */
-export async function checkCardPayment(ref: string): Promise<"ACCEPTED" | "REFUSED" | "PENDING" | null> {
-  if (!cardPaymentReady()) return null;
+/** Statut réel d'un paiement, redemandé à PayDunya avec le jeton de la facture (on ne croit jamais le navigateur). */
+export async function confirmCardPayment(token: string): Promise<{ status: string; ref: string | null; amount: number } | null> {
+  if (!cardPaymentReady() || !/^[A-Za-z0-9_-]{6,80}$/.test(token)) return null;
   try {
-    const res = await fetch(`${API}/payment/check`, {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ apikey: process.env.CINETPAY_APIKEY, site_id: process.env.CINETPAY_SITE_ID, transaction_id: ref }),
-      signal: AbortSignal.timeout(15_000),
-    });
-    const json = (await res.json()) as { data?: { status?: string } };
-    const st = json.data?.status;
-    return st === "ACCEPTED" || st === "REFUSED" ? st : "PENDING";
+    const res = await fetch(`${base()}/checkout-invoice/confirm/${token}`, { headers: headers(), signal: AbortSignal.timeout(15_000) });
+    const json = (await res.json()) as { response_code?: string; status?: string; custom_data?: { ref?: string }; invoice?: { total_amount?: number | string } };
+    if (json.response_code !== "00") return null;
+    return { status: json.status ?? "pending", ref: json.custom_data?.ref ?? null, amount: Number(json.invoice?.total_amount ?? 0) };
   } catch { return null; }
 }
