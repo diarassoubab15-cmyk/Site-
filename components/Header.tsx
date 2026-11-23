@@ -1,11 +1,13 @@
 import Link from "next/link";
 import { Logo } from "./Logo";
 import { CartBadge } from "./SettingsPanels";
+import { AccountNav } from "./AccountNav";
 
 const nav = [
   { href: "/award", label: "Award" },
   { href: "/categories", label: "Catégories" },
   { href: "/marketplace", label: "Produits" },
+  { href: "/trouver", label: "Assistant" },
   { href: "/tarifs", label: "Tarifs" },
   { href: "/reglages", label: "Réglages" },
   { href: "/support", label: "Aide & SAV" },
@@ -25,12 +27,7 @@ export function Header() {
         </nav>
         <div className="hidden items-center gap-3 md:flex">
           <CartBadge />
-          <Link href="/connexion" className="text-sm text-bone hover:text-white">
-            Se connecter
-          </Link>
-          <Link href="/connexion?mode=inscription" className="btn-solid px-4 py-2">
-            S&apos;inscrire
-          </Link>
+          <AccountNav variant="desktop" />
           <Link href="/vendre" className="btn hidden px-4 py-2 lg:inline-flex">
             Créer ma boutique
           </Link>
@@ -43,7 +40,8 @@ export function Header() {
             <span className="hidden group-open:inline">Fermer</span>
           </summary>
           <div className="absolute right-0 top-12 w-64 rounded-[22px] bg-black p-2 shadow-[var(--shadow-float)]">
-            {[...nav, { href: "/connexion", label: "Se connecter" }, { href: "/connexion?mode=inscription", label: "S'inscrire" }].map((n) => (
+            <AccountNav variant="mobile" />
+            {nav.map((n) => (
               <Link key={n.href} href={n.href} className="block rounded-full px-4 py-2.5 text-sm text-bone hover:bg-lift hover:text-white">
                 {n.label}
               </Link>

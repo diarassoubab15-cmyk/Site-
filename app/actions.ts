@@ -270,6 +270,19 @@ export const adminSetShopStatus = action(z.object({ shopId: z.string().uuid(), s
   return { ok: true };
 });
 
+/** Forfait d'un vendeur choisi par l'administrateur : activer (1 à 24 mois), changer ou désactiver. */
+export const adminSetSubscription = action(
+  z.object({ shopId: z.string().uuid(), plan: z.enum(["essentiel", "pro", "business"]), active: z.boolean(), months: z.number().int().min(1).max(24).default(1) }),
+  async ({ shopId, plan, active, months }, { sb }) => {
+    const { error } = await sb.rpc("admin_set_subscription", { p_shop: shopId, p_plan: plan, p_active: active, p_months: months });
+    if (error) return dbError(error);
+    revalidatePath("/admin");
+    revalidatePath("/vendeur");
+    revalidatePath("/", "layout");
+    return { ok: true };
+  },
+);
+
 export const adminResolveTicket = action(z.object({ ticketId: z.string().uuid(), refundOrderId: z.string().uuid().optional() }), async ({ ticketId, refundOrderId }, { sb }) => {
   if (refundOrderId) {
     const { error } = await sb.from("orders").update({ status: "refunded" }).eq("id", refundOrderId);
@@ -642,11 +655,11 @@ export const adminRejectEdit = action(z.object({ id: z.string().uuid(), note: z.
 
 // ------------------------------------------------------------------ accueil : pages en plus selon le compte
 /** Vendeur (boutique non fermée) et/ou fondateur : rien n'est révélé aux autres visiteurs. */
-export async function getHubRoles(): Promise<ActionResult<{ seller: boolean; admin: boolean }>> {
+export async function getHubRoles(): Promise<ActionResult<{ seller: boolean; admin: boolean; loggedIn?: boolean }>> {
   const u = await currentUser();
-  if (!u) return { ok: true, data: { seller: false, admin: false } };
+  if (!u) return { ok: true, data: { seller: false, admin: false, loggedIn: false } };
   const { data: shop } = await u.sb.from("shops").select("id").eq("owner_id", u.user.id).neq("status", "closed").maybeSingle();
-  return { ok: true, data: { seller: !!shop, admin: u.profile?.role === "admin" } };
+  return { ok: true, data: { seller: !!shop, admin: u.profile?.role === "admin", loggedIn: true } };
 }
 
 // ------------------------------------------------------------------ fiche publique de la boutique (mise à jour par le vendeur)
