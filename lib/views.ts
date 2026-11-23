@@ -82,7 +82,11 @@ export type LiveSeller = {
   stats: { delivered: number; revenue: number; openOrders: number; rating: number | null; reviews: number; rank: number | null; competitors: number } | null;
   videos: VideoView[];
   videoQuota: { used: number; limit: number };
+  /** Ventes notées par le vendeur (WhatsApp, téléphone, boutique) et demandes WhatsApp du mois. */
+  offline?: { sales: ManualSaleView[]; monthCount: number; monthAmount: number; leads: number; products: { id: string; name: string; price: number }[] };
 };
+
+export type ManualSaleView = { id: string; label: string; qty: number; amount: number; channel: "whatsapp" | "telephone" | "boutique" | "autre"; customer: string; phone: string; soldOn: string };
 
 export type LiveAdmin = { sellers: DemoSeller[]; tickets: (Ticket & { shopId?: string })[]; payments: DemoSubPayment[]; rewards: import("./rewards").RewardView[]; videos: VideoView[]; edits: EditRequestView[] };
 

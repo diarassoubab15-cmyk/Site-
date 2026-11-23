@@ -9,9 +9,9 @@ import type { DemoSubPayment } from "./demo-store";
 import { adminPaymentInfo, subscriptionMethods } from "./payment-info";
 import { periodOf, type RewardView } from "./rewards";
 import { storageUrl } from "./site-videos";
-import type { VideoView } from "./views";
+import type { ManualSaleView, VideoView } from "./views";
 
-const VIDEO_QUOTA: Record<string, number> = { essentiel: 1, pro: 3, business: 10 };
+const VIDEO_QUOTA: Record<string, number> = { decouverte: 0, essentiel: 1, pro: 3, business: 10 };
 type VideoRow = { id: string; ref: string; shop_id: string; description: string; status: string; video_path: string | null; poster_path: string | null; is_active: boolean; script: unknown; admin_note: string | null; error: string | null; created_at: string };
 const videoView = (v: VideoRow, shopName?: string): VideoView => ({
   id: v.id, ref: v.ref, shopId: v.shop_id, shopName, description: v.description, status: v.status as VideoView["status"],
@@ -99,13 +99,17 @@ export async function loadSeller(): Promise<LiveSeller | null> {
   ]);
   const now = new Date();
   const month = periodOf("month", `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, "0")}`)!;
-  const [{ data: covered }, { data: rw }, { data: st }, { data: vids }] = await Promise.all([
+  const [{ data: covered }, { data: rw }, { data: st }, { data: vids }, { data: sales }, { count: leads }, { data: prods }] = await Promise.all([
     sb.rpc("shop_covered_until", { p_shop: shop.id }),
     sb.from("rewards").select("*").eq("shop_id", shop.id).is("revoked_at", null).order("created_at", { ascending: false }),
     sb.rpc("seller_my_stats", { p_from: month.from, p_to: month.to }),
     sb.from("shop_videos").select("*").eq("shop_id", shop.id).order("created_at", { ascending: false }).limit(20),
+    sb.from("manual_sales").select("id, label, qty, amount, channel, customer_name, customer_phone, sold_on").eq("shop_id", shop.id).order("sold_on", { ascending: false }).order("created_at", { ascending: false }).limit(60),
+    sb.from("whatsapp_leads").select("id", { count: "exact", head: true }).eq("shop_id", shop.id).gte("created_at", month.from),
+    sb.from("products").select("id, name, price").eq("shop_id", shop.id).order("name").limit(500),
   ]);
   const monthStart = month.from.slice(0, 10);
+  const monthSales = (sales ?? []).filter((x) => x.sold_on >= monthStart);
   const videosUsed = (vids ?? []).filter((v) => v.status !== "failed" && v.created_at.slice(0, 10) >= monthStart).length;
   const s0 = st?.[0];
   const payment = pays?.[0] ? paymentView(pays[0]) : null;
@@ -113,7 +117,7 @@ export async function loadSeller(): Promise<LiveSeller | null> {
     owner,
     coveredUntil: covered && covered !== "infinity" ? String(covered) : null,
     videos: (vids ?? []).map((v) => videoView(v)),
-    videoQuota: { used: videosUsed, limit: VIDEO_QUOTA[sub?.plan ?? "essentiel"] ?? 1 },
+    videoQuota: { used: videosUsed, limit: VIDEO_QUOTA[sub?.plan ?? "decouverte"] ?? 0 },
     rewards: (rw ?? []).map((r) => rewardView(r, shop.name)),
     stats: s0 ? { delivered: s0.delivered, revenue: Number(s0.revenue), openOrders: s0.open_orders, rating: s0.rating === null ? null : Number(s0.rating), reviews: s0.reviews, rank: shop.status === "approved" ? s0.rank : null, competitors: s0.competitors } : null,
     subscription: sub ? { plan: sub.plan, annual: sub.annual, active: sub.active, until: sub.current_period_end } : null,
@@ -129,6 +133,13 @@ export async function loadSeller(): Promise<LiveSeller | null> {
       buyer: o.shipping_name, city: o.shipping_city, phone: o.shipping_phone,
     })),
     prefs,
+    offline: {
+      sales: (sales ?? []).map((x) => ({ id: x.id, label: x.label, qty: x.qty, amount: x.amount, channel: x.channel as ManualSaleView["channel"], customer: x.customer_name ?? "", phone: x.customer_phone ?? "", soldOn: x.sold_on })),
+      monthCount: monthSales.length,
+      monthAmount: monthSales.reduce((n, x) => n + x.amount, 0),
+      leads: leads ?? 0,
+      products: (prods ?? []).map((p) => ({ id: p.id, name: p.name, price: p.price })),
+    },
   };
 }
 

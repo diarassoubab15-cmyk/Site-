@@ -1012,3 +1012,45 @@ export async function cardPaymentStatus(): Promise<boolean> {
   const { cardPaymentReady } = await import("@/lib/card-payment");
   return cardPaymentReady();
 }
+
+// ------------------------------------------------------------------ ventes hors site et demandes WhatsApp
+const SALE_CHANNEL = z.enum(["whatsapp", "telephone", "boutique", "autre"]);
+
+/** Le vendeur note une vente faite par WhatsApp, au téléphone ou en boutique : elle compte dans son tableau de bord. */
+export const addManualSale = action(
+  z.object({
+    productId: z.string().uuid().nullable(),
+    label: z.string().trim().min(2, "Indiquez ce qui a été vendu").max(120),
+    qty: z.number().int().min(1).max(100000),
+    amount: z.number().int().min(0).max(1_000_000_000),
+    channel: SALE_CHANNEL,
+    customerName: z.string().trim().max(80),
+    customerPhone: z.string().trim().max(30).refine((v) => !v || /^[+0-9 ]{6,30}$/.test(v), "Numéro du client invalide"),
+    soldOn: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  }),
+  async (f, { user, sb }) => {
+    const { data: shop } = await sb.from("shops").select("id").eq("owner_id", user.id).neq("status", "closed").maybeSingle();
+    if (!shop) return fail("Aucune boutique active");
+    if (f.soldOn > new Date().toISOString().slice(0, 10)) return fail("La date de vente ne peut pas être dans le futur.");
+    const { error } = await sb.from("manual_sales").insert({
+      shop_id: shop.id, product_id: f.productId, label: f.label, qty: f.qty, amount: f.amount, channel: f.channel,
+      customer_name: f.customerName || null, customer_phone: f.customerPhone || null, sold_on: f.soldOn,
+    });
+    if (error) return dbError(error);
+    revalidatePath("/vendeur");
+    return { ok: true };
+  },
+);
+
+export const deleteManualSale = action(z.object({ id: z.string().uuid() }), async ({ id }, { sb }) => {
+  const { error } = await sb.from("manual_sales").delete().eq("id", id);
+  if (error) return dbError(error);
+  revalidatePath("/vendeur");
+  return { ok: true };
+});
+
+/** Un client touche « Commander sur WhatsApp » : la demande est comptée pour le vendeur (aucune donnée du client). */
+export async function logWhatsAppLead(shopSlug: string, productSlug?: string): Promise<void> {
+  if (!/^[a-z0-9-]{2,90}$/.test(shopSlug) || (productSlug && !/^[a-z0-9-]{2,90}$/.test(productSlug))) return;
+  try { await supabaseService().rpc("log_whatsapp_lead", { p_shop_slug: shopSlug, p_product_slug: productSlug }); } catch { /* compteur seulement */ }
+}

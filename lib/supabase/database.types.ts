@@ -301,6 +301,30 @@ isOneToOne: false
                     "author_id"?: string | null,"author_name"?: string,"body"?: string,"created_at"?: string,"hidden"?: boolean,"id"?: string,"rating"?: number | null,"seller_reply"?: string | null,"shop_id"?: string
                   }
                   Relationships: []
+                },"manual_sales": {
+                  Row: {
+                    "amount": number,"channel": string,"created_at": string,"customer_name": string | null,"customer_phone": string | null,"id": string,"label": string,"product_id": string | null,"qty": number,"shop_id": string,"sold_on": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "amount": number,"channel"?: string,"created_at"?: string,"customer_name"?: string | null,"customer_phone"?: string | null,"id"?: string,"label": string,"product_id"?: string | null,"qty"?: number,"shop_id": string,"sold_on"?: string
+                  }
+                  Update: {
+                    "amount"?: number,"channel"?: string,"created_at"?: string,"customer_name"?: string | null,"customer_phone"?: string | null,"id"?: string,"label"?: string,"product_id"?: string | null,"qty"?: number,"shop_id"?: string,"sold_on"?: string
+                  }
+                  Relationships: []
+                },"whatsapp_leads": {
+                  Row: {
+                    "created_at": string,"id": number,"product_id": string | null,"shop_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "created_at"?: string,"id"?: number,"product_id"?: string | null,"shop_id": string
+                  }
+                  Update: {
+                    "created_at"?: string,"id"?: number,"product_id"?: string | null,"shop_id"?: string
+                  }
+                  Relationships: []
                 },"shop_videos": {
                   Row: {
                     "admin_note": string | null,"attempts": number,"created_at": string,"decided_at": string | null,"description": string,"duration_s": number | null,"error": string | null,"id": string,"is_active": boolean,"poster_path": string | null,"ref": string,"rendered_at": string | null,"script": Json | null,"shop_id": string,"started_at": string | null,"status": Database["public"]['Enums']["video_status"],"video_path": string | null
@@ -488,6 +512,9 @@ isOneToOne: false
                            },
 "admin_hide_shop_comment":
 { Args: { "p_comment": string,"p_hidden": boolean }; Returns: undefined
+                           },
+"log_whatsapp_lead":
+{ Args: { "p_shop_slug": string,"p_product_slug"?: string }; Returns: undefined
                            },
 "admin_shop_contacts":
 { Args: Record<PropertyKey, never>; Returns: {

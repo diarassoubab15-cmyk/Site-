@@ -7,6 +7,7 @@ import { ShopProfileForm } from "@/components/ShopProfileForm";
 import { ShopThemeForm } from "@/components/ShopThemeForm";
 import { AiStudio } from "@/components/AiStudio";
 import { ShopLinkCard } from "@/components/ShopLinkCard";
+import { ManualSales } from "@/components/ManualSales";
 import { headers } from "next/headers";
 import QRCode from "qrcode";
 import { site } from "@/lib/site";
@@ -31,6 +32,7 @@ export default async function Vendeur() {
       <DemoNotice />
       {profile && <div className="mb-6"><ShopLinkCard base={base} slug={profile.slug} shopName={profile.name} approved={profile.approved} qrSvg={qrSvg} /></div>}
       <SellerView live={live} />
+      {live?.offline && live.shop && live.shop.status !== "fermé" && <div className="mt-6"><ManualSales offline={live.offline} /></div>}
       {profile && <div className="mt-6"><ShopProfileForm profile={profile} slug={profile.slug} /></div>}
       {profile && (
         <div className="mt-6">

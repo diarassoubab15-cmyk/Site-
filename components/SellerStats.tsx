@@ -27,9 +27,11 @@ export function SellerStats({ shop, live }: { shop: { id: string; shopName: stri
   const rewards: RewardView[] = supabaseEnabled ? live?.rewards ?? [] : demo.rewards.filter((r) => r.shopId === shop.id && !r.revoked);
   const month = new Date().toLocaleDateString("fr-FR", { month: "long", year: "numeric" });
 
+  // Ventes du site + ventes notées par le vendeur (WhatsApp, téléphone, boutique).
+  const off = supabaseEnabled ? live?.offline : null;
   const tiles: [string, React.ReactNode][] = [
-    ["Ventes livrées", <CountUp key="d" value={stats?.delivered ?? 0} />],
-    ["Chiffre d'affaires", formatPrice(stats?.revenue ?? 0)],
+    ["Ventes (site + WhatsApp)", <CountUp key="d" value={(stats?.delivered ?? 0) + (off?.monthCount ?? 0)} />],
+    ["Chiffre d'affaires", formatPrice((stats?.revenue ?? 0) + (off?.monthAmount ?? 0))],
     ["Commandes à traiter", <CountUp key="o" value={stats?.openOrders ?? 0} />],
     ["Note moyenne", stats?.rating ? `${stats.rating}/5` : "—"],
   ];
