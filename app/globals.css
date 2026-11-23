@@ -648,3 +648,58 @@ a.float-card:focus-visible { outline: 2px solid #5433eb; outline-offset: 3px; }
 .ai-link { display: inline-flex; align-items: center; gap: 8px; border-radius: 9999px; padding: 8px 16px; font-size: 14px; color: #5433eb;
   background: rgba(84, 51, 235, 0.08); transition: background-color 150ms ease; }
 .ai-link:hover { background: rgba(84, 51, 235, 0.14); }
+
+/* ---- Téléphone avec indicatif : le sélecteur natif est posé, invisible, sur le drapeau ---- */
+.phone-field { position: relative; display: flex; align-items: stretch; border-radius: 18px; background: #fff; border: 1px solid #e4e4e8;
+  transition: border-color 150ms ease, box-shadow 150ms ease; }
+.phone-field:focus-within { border-color: #5433eb; box-shadow: 0 0 0 4px rgba(84, 51, 235, 0.12); }
+.phone-code { display: flex; align-items: center; gap: 6px; padding: 0 10px 0 14px; border-right: 1px solid #ececf0; font-size: 14px;
+  color: var(--color-white); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.phone-code::after { content: ""; width: 7px; height: 7px; border-right: 1.5px solid #77757b; border-bottom: 1.5px solid #77757b; transform: rotate(45deg) translateY(-2px); margin-left: 2px; }
+.phone-field select { position: absolute; left: 0; top: 0; bottom: 0; width: 7.5rem; opacity: 0; cursor: pointer; font-size: 16px; }
+.phone-field input { flex: 1; min-width: 0; background: transparent; padding: 10px 16px 10px 12px; font-size: 14px; color: var(--color-white); outline: none; }
+.phone-field input::placeholder { color: #9a9aa2; }
+
+/* ---- Scène Automobile : parallaxe et roues (transform uniquement) ---- */
+.car-scene { position: relative; height: clamp(180px, 34vw, 320px); overflow: hidden; border-radius: 28px; box-shadow: var(--shadow-float); }
+.car-layer { animation: car-scroll linear infinite; }
+.car-far { animation-duration: 40s; }
+.car-near { animation-duration: 18s; }
+.car-road { animation-duration: 1.2s; }
+@keyframes car-scroll { to { transform: translateX(-800px); } }
+.car-road { animation-name: car-road; }
+@keyframes car-road { to { transform: translateX(-80px); } }
+.car-wheel { animation: car-spin 0.5s linear infinite; }
+@keyframes car-spin { to { transform: rotate(360deg); } }
+.car-body { animation: car-bob 0.9s ease-in-out infinite alternate; }
+@keyframes car-bob { to { transform: translateY(1.6px); } }
+.car-beam { animation: car-beam 3s ease-in-out infinite alternate; }
+@keyframes car-beam { from { opacity: 0.55; } to { opacity: 1; } }
+.car-moto { animation: car-moto 9s cubic-bezier(0.45, 0, 0.3, 1) infinite; transform: translateX(-120px); }
+@keyframes car-moto { 0%, 40% { transform: translateX(-120px); } 100% { transform: translateX(900px); } }
+.car-window { animation: car-win 5s steps(1) infinite; }
+@keyframes car-win { 50% { opacity: 0.15; } }
+@media (prefers-reduced-motion: reduce) {
+  .car-layer, .car-wheel, .car-body, .car-beam, .car-moto, .car-window { animation: none; }
+  .car-moto { transform: translateX(120px); }
+}
+
+/* ---- Aménager ma maison ---- */
+.room-stage { position: relative; aspect-ratio: 16 / 10; overflow: hidden; border-radius: 28px; background: #f3ede4; box-shadow: var(--shadow-float);
+  touch-action: none; user-select: none; -webkit-user-select: none; }
+@media (max-width: 640px) { .room-stage { aspect-ratio: 4 / 3.4; } }
+.room-item { position: absolute; cursor: grab; touch-action: none; border-radius: 10px; outline: none; transform-origin: 50% 100%;
+  filter: drop-shadow(0 10px 8px rgba(0, 0, 0, 0.22)); transition: filter 150ms ease; animation: room-drop 380ms cubic-bezier(0.2, 0.9, 0.3, 1.3); }
+.room-item:active { cursor: grabbing; }
+.room-item.is-sel, .room-item:focus-visible { filter: drop-shadow(0 0 0 #5433eb) drop-shadow(0 0 2px #5433eb) drop-shadow(0 14px 10px rgba(0, 0, 0, 0.25)); }
+@keyframes room-drop { from { opacity: 0; translate: 0 -18px; } to { opacity: 1; translate: 0 0; } }
+.room-pick { display: flex; width: 100%; flex-direction: column; align-items: center; gap: 4px; border-radius: 16px; border: 1px solid #ececf0;
+  background: #fff; padding: 8px; text-align: center; transition: border-color 150ms ease, transform 150ms ease-out; }
+.room-pick:hover { border-color: #5433eb; }
+.room-pick:active { transform: scale(0.96); }
+.room-pick-img { display: flex; height: 64px; width: 100%; align-items: center; justify-content: center; }
+.room-pick-img svg { max-height: 100%; width: 100%; }
+.room-cta { display: flex; flex-direction: column; gap: 6px; border-radius: 28px; padding: 24px; color: inherit;
+  background: linear-gradient(120deg, color-mix(in srgb, var(--c, #5433eb) 12%, #fff), #fff); box-shadow: var(--shadow-pill); }
+@media (prefers-reduced-motion: reduce) { .room-item { animation: none; } }
+@media print { header, footer, .page-mark, .ambient, canvas { display: none !important; } }

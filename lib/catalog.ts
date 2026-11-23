@@ -11,7 +11,7 @@ import { supabasePublic } from "./supabase/server";
 import { storageUrl } from "./site-videos";
 
 export type Rating = { average: number; count: number };
-export type CardItem = { product: Product; shop: Pick<Shop, "slug" | "name" | "verified" | "acceptsCashOnDelivery" | "city">; rating: Rating };
+export type CardItem = { product: Product; shop: Pick<Shop, "slug" | "name" | "verified" | "acceptsCashOnDelivery" | "city" | "payments">; rating: Rating };
 
 const rate = (list: { rating: number }[]): Rating =>
   list.length ? { average: Math.round((list.reduce((s, r) => s + r.rating, 0) / list.length) * 10) / 10, count: list.length } : { average: 0, count: 0 };

@@ -23,12 +23,12 @@ const SETTINGS: Record<Kind, { max: number; side: number; quality: number; title
 const rand = () => crypto.randomUUID().replace(/-/g, "").slice(0, 16);
 
 /** Envoi et gestion des médias d'un produit (le fichier va directement dans le dossier de la boutique). */
-export function MediaManager({ shopId, productId, kind, items }: { shopId: string; productId: string; kind: Kind; items: SellerProductMedia[] }) {
+export function MediaManager({ shopId, productId, kind, items, title, help }: { shopId: string; productId: string; kind: Kind; items: SellerProductMedia[]; title?: string; help?: string }) {
   const router = useRouter();
   const input = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState<string | null>(null);
   const [pending, start] = useTransition();
-  const cfg = SETTINGS[kind];
+  const cfg = { ...SETTINGS[kind], ...(title ? { title } : {}), ...(help ? { help } : {}) };
   const list = items.filter((m) => m.kind === kind).sort((a, b) => a.position - b.position);
   const room = list.length;
 

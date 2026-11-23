@@ -1,4 +1,5 @@
 "use client";
+import { PhoneInput } from "./PhoneInput";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
@@ -114,7 +115,7 @@ export function BuyBox({ product, shop }: { product: Product; shop: Shop }) {
         <fieldset className="space-y-3">
           <legend className="label">Livraison <span className="font-normal text-iron">(demandé une seule fois)</span></legend>
           <input required placeholder="Nom complet" autoComplete="name" className="input" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
-          <input required placeholder="Téléphone" autoComplete="tel" inputMode="tel" pattern="[+0-9 ]{8,}" className="input" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
+          <PhoneInput required placeholder="Téléphone" value={form.phone} onChange={(v) => setForm({ ...form, phone: v })} />
           <input required placeholder="Ville et quartier" autoComplete="address-level2" className="input" value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })} />
         </fieldset>
       )}

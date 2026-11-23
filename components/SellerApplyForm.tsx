@@ -1,4 +1,5 @@
 "use client";
+import { PhoneInput } from "./PhoneInput";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
@@ -242,8 +243,8 @@ export function SellerApplyForm({ initialPlan, known }: { initialPlan: string; k
 
         {step === 2 && (
           <div className="grid gap-4 sm:grid-cols-2">
-            <div><label className="label" htmlFor="whatsapp">Numéro WhatsApp</label><input id="whatsapp" required inputMode="tel" autoComplete="tel" className="input" placeholder="+223 70 00 00 00" value={whatsapp} onChange={(e) => set("whatsapp", e.target.value)} /></div>
-            <div><label className="label" htmlFor="callPhone">Numéro pour les appels</label><input id="callPhone" required inputMode="tel" className="input" value={callPhone} onChange={(e) => set("callPhone", e.target.value)} /></div>
+            <PhoneInput id="whatsapp" label="Numéro WhatsApp" required value={whatsapp} onChange={(v) => set("whatsapp", v)} />
+            <PhoneInput id="callPhone" label="Numéro pour les appels" required value={callPhone} onChange={(v) => set("callPhone", v)} />
             <p className="-mt-2 text-xs text-iron sm:col-span-2">Ces deux numéros s&apos;affichent sur votre boutique (boutons « WhatsApp » et « Appeler »). Même numéro ? Laissez le second tel quel.</p>
             {/* Déjà connus par le compte : pré-remplis, rien n'est redemandé */}
             <div><label className="label" htmlFor="owner">Nom du responsable</label><input id="owner" required autoComplete="name" className="input" value={val("owner", p?.name)} onChange={(e) => set("owner", e.target.value)} /></div>
