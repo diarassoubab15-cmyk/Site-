@@ -465,6 +465,9 @@ isOneToOne: false
 "admin_set_shop_status":
 { Args: { "p_reason"?: string,"p_shop": string,"p_status": Database["public"]['Enums']["shop_status"] }; Returns: undefined
                            },
+"admin_set_subscription":
+{ Args: { "p_shop": string,"p_plan": Database["public"]['Enums']["plan_id"],"p_active": boolean,"p_months"?: number }; Returns: undefined
+                           },
 "admin_shop_contacts":
 { Args: Record<PropertyKey, never>; Returns: {
               "contact_email": string,"contact_phone": string,"id": string,"owner_name": string

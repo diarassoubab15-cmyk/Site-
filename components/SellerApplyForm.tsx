@@ -5,7 +5,7 @@ import { useEffect, useState, useTransition } from "react";
 import { categories } from "@/lib/data";
 import { plans } from "@/lib/plans";
 import { paymentMethods, type PaymentMethodId } from "@/lib/payments";
-import { getShopType } from "@/lib/shop-types";
+import { getShopType, SHOP_TYPES } from "@/lib/shop-types";
 import { coordsFromMapsUrl, isMapsUrl, mapsLinkFromCoords } from "@/lib/maps";
 import { today, uid, update, useDemo } from "@/lib/demo-store";
 import { supabaseEnabled } from "@/lib/supabase/env";
@@ -14,7 +14,15 @@ import type { KnownUser } from "@/lib/server-data";
 import { SuccessCheck } from "./SuccessCheck";
 import { ShopTypeIcon } from "./ShopTypeIcon";
 
-const steps = ["Boutique", "Adresse", "Contact", "Encaissement", "Forfait"] as const;
+const steps = ["Boutique", "Adresse", "Contact", "Argent reçu", "Forfait"] as const;
+/** Titre et explication de chaque étape, en mots simples. */
+const stepHelp: [string, string][] = [
+  ["Votre boutique", "Son nom, ce que vous vendez, et quelques exemples de prix. Vous ajouterez tous vos produits et leurs photos plus tard."],
+  ["Où se trouve votre boutique ?", "Pour que les clients de votre ville vous trouvent. Si vous vendez seulement en ligne, indiquez juste le pays et la ville."],
+  ["Comment vos clients vous joignent", "Les boutons « WhatsApp » et « Appeler » de votre boutique utiliseront ces numéros."],
+  ["Où recevoir l'argent de vos ventes", "Vos clients vous paient directement sur ce compte. NEXORA ne prend aucune commission."],
+  ["Choisissez votre forfait", "Rien à payer aujourd'hui : vous paierez seulement après la vérification de votre boutique. Vous pourrez changer de forfait plus tard."],
+];
 const payoutChoices: (PaymentMethodId | "bank")[] = ["orange_money", "wave", "mtn_momo", "moov_money", "bank"];
 const payoutLabel = (m: PaymentMethodId | "bank") => (m === "bank" ? "Compte bancaire" : paymentMethods[m].label);
 type Sample = { name: string; price: string };
@@ -53,9 +61,12 @@ export function SellerApplyForm({ initialPlan, known }: { initialPlan: string; k
   if (supabaseEnabled && !known) {
     return (
       <div className="card space-y-4">
-        <p className="text-white">Connectez-vous pour créer votre boutique.</p>
-        <p className="text-sm text-ash">Un code reçu par e-mail ou SMS suffit. Vos réponses seront reprises ensuite.</p>
-        <a href="/connexion?next=/vendre" className="btn-solid">Se connecter</a>
+        <p className="text-lg font-medium text-white">D&apos;abord, votre compte NEXORA</p>
+        <p className="text-sm text-ash">Il faut un compte pour gérer votre boutique. Pas encore de compte ? Inscrivez-vous en 1 minute avec votre e-mail, puis revenez ici automatiquement.</p>
+        <div className="flex flex-wrap gap-2">
+          <a href="/connexion?mode=inscription&next=/vendre" className="btn-solid">Créer mon compte</a>
+          <a href="/connexion?next=/vendre" className="btn">J&apos;ai déjà un compte</a>
+        </div>
       </div>
     );
   }
@@ -166,15 +177,31 @@ export function SellerApplyForm({ initialPlan, known }: { initialPlan: string; k
           </ol>
         </div>
 
+        <div>
+          <p className="font-mono text-xs text-iron">Étape {step + 1} sur {steps.length}</p>
+          <h2 className="mt-1 text-2xl font-medium text-white">{stepHelp[step][0]}</h2>
+          <p className="mt-1 text-sm text-ash">{stepHelp[step][1]}</p>
+        </div>
+
         {step === 0 && (
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="sm:col-span-2"><label className="label" htmlFor="shopName">Nom de la boutique</label><input id="shopName" required maxLength={60} className="input" value={val("shopName")} onChange={(e) => set("shopName", e.target.value)} placeholder="Ex. : Atelier Kenté" /></div>
-            <div className="sm:col-span-2"><label className="label" htmlFor="category">Type de boutique</label>
-              <select id="category" required className="input" value={val("category")} onChange={(e) => set("category", e.target.value)}>
-                <option value="">Choisir…</option>
-                {categories.map((c) => <option key={c.slug} value={c.slug}>{c.name}</option>)}
-              </select>
-            </div>
+            <fieldset className="sm:col-span-2">
+              <legend className="label">Que vendez-vous ? <span className="text-iron">(touchez une case)</span></legend>
+              <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                {SHOP_TYPES.map((t) => {
+                  const on = val("category") === t.slug;
+                  return (
+                    <label key={t.slug} className={`flex cursor-pointer flex-col items-center gap-2 rounded-[18px] border px-2 py-3 text-center text-sm transition-colors ${on ? "text-white" : "border-line text-bone hover:border-iron"}`}
+                      style={on ? { borderColor: t.color, background: `color-mix(in srgb, ${t.color} 8%, transparent)` } : undefined}>
+                      <input type="radio" name="category" required value={t.slug} checked={on} onChange={() => set("category", t.slug)} className="sr-only" />
+                      <span style={{ color: t.color }}><ShopTypeIcon slug={t.slug} size={28} /></span>
+                      {t.name}
+                    </label>
+                  );
+                })}
+              </div>
+            </fieldset>
             <fieldset className="space-y-2 sm:col-span-2">
               <legend className="label">Quelques produits et leurs prix <span className="text-iron">(1 à 5, pour présenter votre boutique)</span></legend>
               {samples.map((s, i) => (
@@ -227,8 +254,7 @@ export function SellerApplyForm({ initialPlan, known }: { initialPlan: string; k
 
         {step === 3 && (
           <div className="space-y-4">
-            <p className="text-sm text-ash">Où voulez-vous recevoir l&apos;argent de vos clients ? Il arrive <strong className="text-white">directement</strong> sur ce compte, sans passer par NEXORA.</p>
-            <div className="grid gap-2 sm:grid-cols-2">
+                        <div className="grid gap-2 sm:grid-cols-2">
               {payoutChoices.map((m) => (
                 <label key={m} className={`flex cursor-pointer items-center gap-3 rounded-[6px] border px-3 py-2.5 text-sm ${val("payoutMethod", "orange_money") === m ? "border-white text-white" : "border-line text-bone"}`}>
                   <input type="radio" name="payoutMethod" checked={val("payoutMethod", "orange_money") === m} onChange={() => set("payoutMethod", m)} className="accent-[#5433eb]" />
@@ -244,18 +270,27 @@ export function SellerApplyForm({ initialPlan, known }: { initialPlan: string; k
         {step === 4 && (
           <div className="space-y-3">
             {plans.map((pl) => (
-              <label key={pl.id} className={`flex cursor-pointer items-center justify-between gap-4 rounded-[6px] border px-4 py-3 ${val("plan") === pl.id ? "border-white" : "border-line"}`}>
-                <span className="flex items-center gap-3"><input type="radio" name="plan" checked={val("plan") === pl.id} onChange={() => set("plan", pl.id)} className="accent-[#5433eb]" /><span className="text-white">{pl.name}</span><span className="text-xs text-ash">{pl.products}</span></span>
-                <span className="font-mono text-sm text-bone">{pl.monthly.toLocaleString("fr-FR")} FCFA/mois</span>
+              <label key={pl.id} className={`flex cursor-pointer items-start justify-between gap-4 rounded-[18px] border px-4 py-3 ${val("plan") === pl.id ? "" : "border-line"}`}
+                style={val("plan") === pl.id ? { borderColor: pl.color, background: `color-mix(in srgb, ${pl.color} 6%, transparent)` } : undefined}>
+                <span className="flex items-start gap-3">
+                  <input type="radio" name="plan" checked={val("plan") === pl.id} onChange={() => set("plan", pl.id)} className="mt-1 accent-[#5433eb]" />
+                  <span>
+                    <span className="flex flex-wrap items-center gap-2 font-medium" style={{ color: pl.color }}>{pl.name}{pl.highlighted && <span className="rounded-full bg-[#5433eb] px-2 py-0.5 text-[11px] text-[#ffffff]">Conseillé</span>}</span>
+                    <span className="mt-0.5 block text-sm text-ash">{pl.pitch}</span>
+                    <span className="mt-0.5 block text-xs text-iron">{pl.products}</span>
+                  </span>
+                </span>
+                <span className="shrink-0 text-right font-mono text-sm text-white">{pl.monthly.toLocaleString("fr-FR")}<span className="block text-[11px] text-iron">FCFA / mois</span></span>
               </label>
             ))}
+            <p className="text-sm"><a href="/tarifs" target="_blank" rel="noopener" className="link">Comparer les forfaits en détail</a></p>
             <p className="text-xs text-iron">Rien à payer maintenant. Après l&apos;autorisation, vous contacterez l&apos;administrateur puis paierez votre forfait.</p>
           </div>
         )}
 
         <div className="flex justify-between gap-3 border-t border-line pt-5">
           <button type="button" className="btn" onClick={() => { setError(""); setStep(Math.max(0, step - 1)); }} disabled={step === 0}>Retour</button>
-          <button type="submit" data-haptic className="btn-solid" disabled={pending}>{pending ? "Envoi…" : step === steps.length - 1 ? "Créer ma boutique" : "Continuer"}</button>
+          <button type="submit" data-haptic className="btn-solid" disabled={pending}>{pending ? "Envoi…" : step === steps.length - 1 ? "Envoyer ma demande" : "Continuer →"}</button>
         </div>
         {error && <p className="text-sm text-alarm" role="alert">{error}</p>}
         <p className="font-mono text-xs text-iron">brouillon enregistré automatiquement</p>

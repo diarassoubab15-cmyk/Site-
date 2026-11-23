@@ -136,7 +136,7 @@ export async function loadAdmin(): Promise<LiveAdmin | null> {
   const u = await currentUser();
   if (!u || u.profile?.role !== "admin") return null;
   const { sb } = u;
-  const [{ data: shopRows }, { data: contacts }, { data: tickets }, { data: pays }, { data: rw }, { data: vids }, { data: edits }] = await Promise.all([
+  const [{ data: shopRows }, { data: contacts }, { data: tickets }, { data: pays }, { data: rw }, { data: vids }, { data: edits }, { data: subs }] = await Promise.all([
     sb.from("shops").select("id, name, city, country, category, status, created_at").order("created_at", { ascending: false }),
     // Coordonnées du responsable : jamais lisibles directement, seulement par cette fonction réservée à l'admin.
     sb.rpc("admin_shop_contacts"),
@@ -145,7 +145,9 @@ export async function loadAdmin(): Promise<LiveAdmin | null> {
     sb.from("rewards").select("*").order("created_at", { ascending: false }).limit(200),
     sb.from("shop_videos").select("*").in("status", ["queued", "rendering", "review", "approved"]).order("created_at", { ascending: false }).limit(100),
     sb.from("product_edit_requests").select(EDIT_COLS).eq("status", "review").order("created_at").limit(100),
+    sb.from("subscriptions").select("shop_id, plan, active, current_period_end"),
   ]);
+  const subByShop = new Map((subs ?? []).map((x) => [x.shop_id, x]));
   const contactById = new Map((contacts ?? []).map((c) => [c.id, c]));
   const shops = (shopRows ?? []).map((s) => ({ ...s, owner_name: contactById.get(s.id)?.owner_name ?? null, contact_email: contactById.get(s.id)?.contact_email ?? null, contact_phone: contactById.get(s.id)?.contact_phone ?? null }));
   const shopById = new Map(shops.map((s) => [s.id, s]));
@@ -160,6 +162,10 @@ export async function loadAdmin(): Promise<LiveAdmin | null> {
     sellers: shops.map((s) => ({
       id: s.id, shopName: s.name, owner: s.owner_name ?? "", email: s.contact_email ?? "", phone: s.contact_phone ?? "",
       city: s.city, country: s.country, category: s.category, status: shopStatusFr[s.status], createdAt: s.created_at.slice(0, 10),
+      plan: subByShop.get(s.id)?.plan ?? null,
+      // Actif = coché ET pas encore expiré (même règle que la base pour afficher la boutique).
+      planActive: !!subByShop.get(s.id)?.active && (!subByShop.get(s.id)?.current_period_end || subByShop.get(s.id)!.current_period_end! > new Date().toISOString()),
+      planUntil: subByShop.get(s.id)?.current_period_end?.slice(0, 10) ?? null,
     })),
     tickets: (tickets ?? []).map(ticketView),
   };

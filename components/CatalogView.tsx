@@ -12,6 +12,7 @@ export function CatalogView({ items, active, q }: { items: CardItem[]; active?: 
         <input id="q" name="q" defaultValue={q} placeholder="Rechercher un produit, une boutique…" className="input max-w-md" />
         <button className="btn" type="submit">Rechercher</button>
       </form>
+      <p className="-mt-3 mb-6"><Link href={q ? `/trouver?d=${encodeURIComponent(q)}` : "/trouver"} className="ai-link"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 2.5c.6 4.6 2.9 6.9 7.5 7.5-4.6.6-6.9 2.9-7.5 7.5-.6-4.6-2.9-6.9-7.5-7.5 4.6-.6 6.9-2.9 7.5-7.5Z" fill="currentColor" /></svg> Décrire ce que je cherche à l&apos;assistant</Link></p>
       <nav aria-label="Catégories" className="mb-10 flex flex-wrap gap-2">
         <Link href="/marketplace" className={`pill ${!active ? "border-white text-white" : "text-ash hover:text-white"}`}>Tout</Link>
         {categories.map((c) => (
@@ -27,7 +28,7 @@ export function CatalogView({ items, active, q }: { items: CardItem[]; active?: 
       ) : (
         <div className="card text-center">
           <p className="text-white">Aucun produit ne correspond à « {q} ».</p>
-          <p className="mt-2 text-sm text-ash">Essayez un autre mot, ou <Link href="/support" className="link">demandez au SAV</Link> : nous trouverons un vendeur.</p>
+          <p className="mt-2 text-sm text-ash">Essayez un autre mot, <Link href={`/trouver?d=${encodeURIComponent(q ?? "")}`} className="link">décrivez-le à l&apos;assistant</Link>, ou <Link href="/support" className="link">demandez au SAV</Link> : nous trouverons un vendeur.</p>
         </div>
       )}
     </>

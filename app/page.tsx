@@ -32,6 +32,10 @@ export default async function Home() {
             <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M4 10h11m-4.5-5L15 10l-4.5 5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /></svg>
           </button>
         </form>
+        <Link href="/trouver" className="ai-link fade-up mt-4" style={{ ["--d" as string]: 8 }} data-haptic>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 2.5c.6 4.6 2.9 6.9 7.5 7.5-4.6.6-6.9 2.9-7.5 7.5-.6-4.6-2.9-6.9-7.5-7.5 4.6-.6 6.9-2.9 7.5-7.5Z" fill="currentColor" /></svg>
+          Pas sûr du nom ? Décrivez ce que vous cherchez
+        </Link>
 
         <nav aria-label="Catégories" className="cat-pills fade-up mt-6 flex w-full max-w-3xl gap-2 sm:flex-wrap sm:justify-center" style={{ ["--d" as string]: 9 }}>
           {SHOP_TYPES.map((t) => (
