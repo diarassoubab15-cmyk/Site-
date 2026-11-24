@@ -47,7 +47,11 @@ const placeOrderSchema = z.object({
   slug: z.string().min(1),
   qty: z.number().int().min(1).max(10000),
   method: PAYMENT,
-  shipping: z.object({ name: z.string().trim().min(2).max(80), phone: PHONE, city: z.string().trim().min(2).max(120) }).optional(),
+  shipping: z.object({
+    name: z.string().trim().min(2).max(80), phone: PHONE, city: z.string().trim().min(2).max(120),
+    district: z.string().trim().min(2, "Indiquez votre quartier").max(80), landmark: z.string().trim().max(160),
+  }).optional(),
+  zoneId: z.string().uuid().nullable().optional(),
 });
 
 export const placeOrder = action<z.infer<typeof placeOrderSchema>, string>(placeOrderSchema, async (input, { user, profile, sb }) => {
@@ -55,15 +59,17 @@ export const placeOrder = action<z.infer<typeof placeOrderSchema>, string>(place
   if (!product) return fail("Produit indisponible");
   // Les coordonnées ne sont demandées qu'une fois : enregistrées sur le profil.
   if (input.shipping) {
-    await sb.from("profiles").update({ full_name: input.shipping.name, phone: input.shipping.phone, city: input.shipping.city }).eq("id", user.id);
+    await sb.from("profiles").update({ full_name: input.shipping.name, phone: input.shipping.phone, city: input.shipping.city, district: input.shipping.district, landmark: input.shipping.landmark || null }).eq("id", user.id);
   }
   const name = input.shipping?.name ?? profile?.full_name;
   const phone = input.shipping?.phone ?? profile?.phone;
   const city = input.shipping?.city ?? profile?.city;
+  const district = input.shipping?.district ?? profile?.district ?? null;
+  const landmark = input.shipping ? input.shipping.landmark || null : profile?.landmark ?? null;
   if (!name || !phone || !city) return fail("Adresse de livraison incomplète");
   const { data, error } = await sb
     .from("orders")
-    .insert({ buyer_id: user.id, shop_id: product.shop_id, product_id: product.id, qty: input.qty, total: 1, method: input.method, shipping_name: name, shipping_phone: phone, shipping_city: city })
+    .insert({ buyer_id: user.id, shop_id: product.shop_id, product_id: product.id, qty: input.qty, total: 1, method: input.method, shipping_name: name, shipping_phone: phone, shipping_city: city, shipping_district: district, shipping_landmark: landmark, delivery_zone_id: input.zoneId ?? null })
     .select("ref")
     .single();
   if (error) return dbError(error);
@@ -142,9 +148,9 @@ export async function createTicket(raw: unknown): Promise<ActionResult<string>> 
 
 // ------------------------------------------------------------------ profil, préférences, compte
 export const updateProfile = action(
-  z.object({ name: z.string().trim().max(80), phone: z.string().trim().max(20), city: z.string().trim().max(120), country: z.string().trim().max(60) }),
+  z.object({ name: z.string().trim().max(80), phone: z.string().trim().max(30), city: z.string().trim().max(120), country: z.string().trim().max(60), district: z.string().trim().max(80).default(""), landmark: z.string().trim().max(160).default("") }),
   async (p, { user, sb }) => {
-    const { error } = await sb.from("profiles").update({ full_name: p.name, phone: p.phone, city: p.city, country: p.country }).eq("id", user.id);
+    const { error } = await sb.from("profiles").update({ full_name: p.name, phone: p.phone, city: p.city, country: p.country, district: p.district || null, landmark: p.landmark || null }).eq("id", user.id);
     if (error) return dbError(error);
     revalidatePath("/compte");
     return { ok: true };
@@ -304,11 +310,12 @@ export const adminResolveTicket = action(z.object({ ticketId: z.string().uuid(),
  * Ce que la fiche produit doit savoir de l'utilisateur, sans embarquer le client Supabase
  * dans le navigateur (≈ 75 Ko de moins sur la page la plus visitée).
  */
-export async function getBuyerContext(slug: string): Promise<{ loggedIn: boolean; known: { name: string; city: string } | null; reviewableOrderId: string | null; preferredPayment?: string | null }> {
+export async function getBuyerContext(slug: string): Promise<{ loggedIn: boolean; known: { name: string; city: string; district?: string | null; landmark?: string | null } | null; reviewableOrderId: string | null; preferredPayment?: string | null }> {
   const u = await currentUser();
   if (!u) return { loggedIn: false, known: null, reviewableOrderId: null };
   const p = u.profile;
-  const known = p?.full_name && p?.phone && p?.city ? { name: p.full_name, city: p.city } : null;
+  // Ancien profil sans quartier : on redemande l'adresse une fois, au nouveau format malien.
+  const known = p?.full_name && p?.phone && p?.city && p?.district ? { name: p.full_name, city: p.city, district: p.district, landmark: p.landmark } : null;
   const { data: orders } = await u.sb.from("orders").select("id").eq("buyer_id", u.user.id).eq("product_slug", String(slug).slice(0, 100)).eq("status", "delivered");
   let reviewableOrderId: string | null = null;
   if (orders?.length) {
@@ -1053,4 +1060,38 @@ export const deleteManualSale = action(z.object({ id: z.string().uuid() }), asyn
 export async function logWhatsAppLead(shopSlug: string, productSlug?: string): Promise<void> {
   if (!/^[a-z0-9-]{2,90}$/.test(shopSlug) || (productSlug && !/^[a-z0-9-]{2,90}$/.test(productSlug))) return;
   try { await supabaseService().rpc("log_whatsapp_lead", { p_shop_slug: shopSlug, p_product_slug: productSlug }); } catch { /* compteur seulement */ }
+}
+
+// ------------------------------------------------------------------ zones et frais de livraison du vendeur
+export const addDeliveryZone = action(
+  z.object({ name: z.string().trim().min(2, "Nom de la zone trop court").max(60), fee: z.number().int().min(0).max(1_000_000), delay: z.string().trim().max(40) }),
+  async ({ name, fee, delay }, { user, sb }) => {
+    const { data: shop } = await sb.from("shops").select("id, slug").eq("owner_id", user.id).neq("status", "closed").maybeSingle();
+    if (!shop) return fail("Aucune boutique active");
+    const { count } = await sb.from("shop_delivery_zones").select("id", { count: "exact", head: true }).eq("shop_id", shop.id);
+    const { error } = await sb.from("shop_delivery_zones").insert({ shop_id: shop.id, name, fee, delay: delay || null, position: count ?? 0 });
+    if (error) return dbError(error);
+    revalidatePath("/vendeur");
+    revalidatePath(`/boutiques/${shop.slug}`);
+    revalidatePath("/produits/[slug]", "page");
+    return { ok: true };
+  },
+);
+
+export const deleteDeliveryZone = action(z.object({ id: z.string().uuid() }), async ({ id }, { sb }) => {
+  const { error } = await sb.from("shop_delivery_zones").delete().eq("id", id);
+  if (error) return dbError(error);
+  revalidatePath("/vendeur");
+  revalidatePath("/produits/[slug]", "page");
+  return { ok: true };
+});
+
+/** Zones de la boutique du vendeur connecté (espace vendeur). */
+export async function myDeliveryZones(): Promise<{ id: string; name: string; fee: number; delay: string | null }[]> {
+  const u = await currentUser();
+  if (!u) return [];
+  const { data: shop } = await u.sb.from("shops").select("id").eq("owner_id", u.user.id).neq("status", "closed").maybeSingle();
+  if (!shop) return [];
+  const { data } = await u.sb.from("shop_delivery_zones").select("id, name, fee, delay").eq("shop_id", shop.id).order("position").order("created_at");
+  return data ?? [];
 }

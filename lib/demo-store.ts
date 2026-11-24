@@ -55,7 +55,7 @@ export type DemoSubPayment = {
   adminNote?: string;
   createdAt: string;
 };
-export type Profile = { name: string; email: string; phone: string; city: string; country: string };
+export type Profile = { name: string; email: string; phone: string; city: string; country: string; district?: string; landmark?: string };
 export type NotificationPrefs = {
   orderUpdates: boolean;
   deliveryUpdates: boolean;

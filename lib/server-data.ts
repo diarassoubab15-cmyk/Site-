@@ -72,7 +72,7 @@ export async function loadAccount(): Promise<LiveAccount | null> {
     prefsOf(sb, user.id),
   ]);
   return {
-    profile: { name: profile?.full_name ?? "", email: user.email ?? "", phone: profile?.phone ?? user.phone ?? "", city: profile?.city ?? "", country: profile?.country ?? "" },
+    profile: { name: profile?.full_name ?? "", email: user.email ?? "", phone: profile?.phone ?? user.phone ?? "", city: profile?.city ?? "", country: profile?.country ?? "", district: profile?.district ?? "", landmark: profile?.landmark ?? "" },
     orders: (orders ?? []).map((o) => ({
       id: o.ref, uuid: o.id, product: o.product_slug ?? "", productName: o.product_name ?? "Produit retiré", shop: o.shop_name ?? "",
       qty: o.qty, total: o.total, method: o.method as PaymentMethodId, status: orderStatusFr[o.status], createdAt: o.created_at.slice(0, 10),
@@ -130,7 +130,9 @@ export async function loadSeller(): Promise<LiveSeller | null> {
     orders: (orders ?? []).map((o) => ({
       id: o.ref, uuid: o.id, product: o.product_slug ?? "", productName: o.product_name ?? "", shop: o.shop_name ?? "", qty: o.qty, total: o.total,
       method: o.method as PaymentMethodId, status: orderStatusFr[o.status], createdAt: o.created_at.slice(0, 10),
-      buyer: o.shipping_name, city: o.shipping_city, phone: o.shipping_phone,
+      buyer: o.shipping_name, phone: o.shipping_phone,
+      // Adresse à la malienne pour le livreur : quartier, ville, point de repère, zone choisie.
+      city: [o.shipping_district, o.shipping_city].filter(Boolean).join(", ") + (o.shipping_landmark ? ` · repère : ${o.shipping_landmark}` : "") + (o.delivery_zone ? ` · livraison ${o.delivery_zone}${o.delivery_fee ? ` (${o.delivery_fee.toLocaleString("fr-FR")} F)` : ""}` : ""),
     })),
     prefs,
     offline: {

@@ -77,7 +77,7 @@ export function AccountView({ live }: { live?: LiveAccount | null }) {
   function saveProfile(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const f = new FormData(e.currentTarget);
-    const v = { name: String(f.get("name") ?? ""), phone: String(f.get("phone") ?? ""), city: String(f.get("city") ?? ""), country: String(f.get("country") ?? "") };
+    const v = { name: String(f.get("name") ?? ""), phone: String(f.get("phone") ?? ""), city: String(f.get("city") ?? ""), country: String(f.get("country") ?? ""), district: String(f.get("district") ?? ""), landmark: String(f.get("landmark") ?? "") };
     run(() => updateProfile(v), () => update((s) => ({ ...s, profile: { ...v, email: String(f.get("email") ?? s.profile?.email ?? "") } })), "Profil enregistré");
     setEdit(false);
   }
@@ -160,13 +160,15 @@ export function AccountView({ live }: { live?: LiveAccount | null }) {
               <input name="name" defaultValue={p.name} placeholder="Nom" aria-label="Nom" className="input" />
               {!supabaseEnabled && <input name="email" defaultValue={p.email} placeholder="E-mail" aria-label="E-mail" className="input" />}
               <input name="phone" defaultValue={p.phone} placeholder="Téléphone" aria-label="Téléphone" className="input" />
-              <input name="city" defaultValue={p.city} placeholder="Ville et quartier" aria-label="Ville et quartier" className="input" />
+              <input name="city" defaultValue={p.city} placeholder="Ville" aria-label="Ville" className="input" />
+              <input name="district" defaultValue={p.district ?? ""} placeholder="Quartier" aria-label="Quartier" className="input" />
+              <input name="landmark" defaultValue={p.landmark ?? ""} placeholder="Point de repère (près de…)" aria-label="Point de repère" maxLength={160} className="input" />
               <input name="country" defaultValue={p.country} placeholder="Pays" aria-label="Pays" className="input" />
               <button className="btn-solid w-full" disabled={pending}>Enregistrer</button>
             </form>
           ) : (
             <dl className="space-y-2 text-sm">
-              {([["Nom", p.name], ["E-mail", p.email], ["Téléphone", p.phone], ["Adresse", [p.city, p.country].filter(Boolean).join(", ")]] as const).map(([k, v]) => (
+              {([["Nom", p.name], ["E-mail", p.email], ["Téléphone", p.phone], ["Adresse", [p.district, p.city, p.country].filter(Boolean).join(", ")], ["Point de repère", p.landmark ?? ""]] as const).map(([k, v]) => (
                 <div key={k} className="flex justify-between gap-4"><dt className="text-ash">{k}</dt><dd className="text-right text-bone">{v || "—"}</dd></div>
               ))}
             </dl>

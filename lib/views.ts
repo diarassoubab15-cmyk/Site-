@@ -57,7 +57,7 @@ export type ActionResult<T = undefined> = { ok: true; data?: T } | { ok: false; 
 
 /** Données réelles passées par le serveur aux composants (mode Supabase). */
 export type LiveAccount = {
-  profile: { name: string; email: string; phone: string; city: string; country: string };
+  profile: { name: string; email: string; phone: string; city: string; country: string; district?: string; landmark?: string };
   orders: DemoOrder[];
   tickets: Ticket[];
   prefs: import("./demo-store").NotificationPrefs;

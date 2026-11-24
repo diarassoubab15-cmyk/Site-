@@ -89,14 +89,14 @@ isOneToOne: true
                   ]
                 },"orders": {
                   Row: {
-                    "buyer_id": string | null,"created_at": string,"id": string,"method": Database["public"]['Enums']["payment_method"],"product_id": string | null,"product_name": string | null,"product_slug": string | null,"qty": number,"ref": string,"shipping_city": string,"shipping_name": string,"shipping_phone": string,"shop_id": string | null,"shop_name": string | null,"status": Database["public"]['Enums']["order_status"],"total": number,"updated_at": string
+                    "buyer_id": string | null,"created_at": string,"delivery_fee": number,"delivery_zone": string | null,"delivery_zone_id": string | null,"shipping_district": string | null,"shipping_landmark": string | null,"id": string,"method": Database["public"]['Enums']["payment_method"],"product_id": string | null,"product_name": string | null,"product_slug": string | null,"qty": number,"ref": string,"shipping_city": string,"shipping_name": string,"shipping_phone": string,"shop_id": string | null,"shop_name": string | null,"status": Database["public"]['Enums']["order_status"],"total": number,"updated_at": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "buyer_id"?: string | null,"created_at"?: string,"id"?: string,"method": Database["public"]['Enums']["payment_method"],"product_id"?: string | null,"product_name"?: string | null,"product_slug"?: string | null,"qty": number,"ref"?: string,"shipping_city": string,"shipping_name": string,"shipping_phone": string,"shop_id"?: string | null,"shop_name"?: string | null,"status"?: Database["public"]['Enums']["order_status"],"total": number,"updated_at"?: string
+                    "buyer_id"?: string | null,"created_at"?: string,"delivery_fee"?: number,"delivery_zone"?: string | null,"delivery_zone_id"?: string | null,"shipping_district"?: string | null,"shipping_landmark"?: string | null,"id"?: string,"method": Database["public"]['Enums']["payment_method"],"product_id"?: string | null,"product_name"?: string | null,"product_slug"?: string | null,"qty": number,"ref"?: string,"shipping_city": string,"shipping_name": string,"shipping_phone": string,"shop_id"?: string | null,"shop_name"?: string | null,"status"?: Database["public"]['Enums']["order_status"],"total": number,"updated_at"?: string
                   }
                   Update: {
-                    "buyer_id"?: string | null,"created_at"?: string,"id"?: string,"method"?: Database["public"]['Enums']["payment_method"],"product_id"?: string | null,"product_name"?: string | null,"product_slug"?: string | null,"qty"?: number,"ref"?: string,"shipping_city"?: string,"shipping_name"?: string,"shipping_phone"?: string,"shop_id"?: string | null,"shop_name"?: string | null,"status"?: Database["public"]['Enums']["order_status"],"total"?: number,"updated_at"?: string
+                    "buyer_id"?: string | null,"created_at"?: string,"delivery_fee"?: number,"delivery_zone"?: string | null,"delivery_zone_id"?: string | null,"shipping_district"?: string | null,"shipping_landmark"?: string | null,"id"?: string,"method"?: Database["public"]['Enums']["payment_method"],"product_id"?: string | null,"product_name"?: string | null,"product_slug"?: string | null,"qty"?: number,"ref"?: string,"shipping_city"?: string,"shipping_name"?: string,"shipping_phone"?: string,"shop_id"?: string | null,"shop_name"?: string | null,"status"?: Database["public"]['Enums']["order_status"],"total"?: number,"updated_at"?: string
                   }
                   Relationships: [
                     {
@@ -219,14 +219,14 @@ isOneToOne: false
                   ]
                 },"profiles": {
                   Row: {
-                    "city": string | null,"country": string | null,"created_at": string,"email": string | null,"full_name": string | null,"id": string,"phone": string | null,"preferred_payment": Database["public"]['Enums']["payment_method"] | null,"role": Database["public"]['Enums']["user_role"]
+                    "city": string | null,"country": string | null,"created_at": string,"district": string | null,"landmark": string | null,"email": string | null,"full_name": string | null,"id": string,"phone": string | null,"preferred_payment": Database["public"]['Enums']["payment_method"] | null,"role": Database["public"]['Enums']["user_role"]
                   }
                   ComputedFields: never
                   Insert: {
-                    "city"?: string | null,"country"?: string | null,"created_at"?: string,"email"?: string | null,"full_name"?: string | null,"id": string,"phone"?: string | null,"preferred_payment"?: Database["public"]['Enums']["payment_method"] | null,"role"?: Database["public"]['Enums']["user_role"]
+                    "city"?: string | null,"country"?: string | null,"created_at"?: string,"district"?: string | null,"landmark"?: string | null,"email"?: string | null,"full_name"?: string | null,"id": string,"phone"?: string | null,"preferred_payment"?: Database["public"]['Enums']["payment_method"] | null,"role"?: Database["public"]['Enums']["user_role"]
                   }
                   Update: {
-                    "city"?: string | null,"country"?: string | null,"created_at"?: string,"email"?: string | null,"full_name"?: string | null,"id"?: string,"phone"?: string | null,"preferred_payment"?: Database["public"]['Enums']["payment_method"] | null,"role"?: Database["public"]['Enums']["user_role"]
+                    "city"?: string | null,"country"?: string | null,"created_at"?: string,"district"?: string | null,"landmark"?: string | null,"email"?: string | null,"full_name"?: string | null,"id"?: string,"phone"?: string | null,"preferred_payment"?: Database["public"]['Enums']["payment_method"] | null,"role"?: Database["public"]['Enums']["user_role"]
                   }
                   Relationships: [
                     
@@ -323,6 +323,18 @@ isOneToOne: false
                   }
                   Update: {
                     "created_at"?: string,"id"?: number,"product_id"?: string | null,"shop_id"?: string
+                  }
+                  Relationships: []
+                },"shop_delivery_zones": {
+                  Row: {
+                    "created_at": string,"delay": string | null,"fee": number,"id": string,"name": string,"position": number,"shop_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "created_at"?: string,"delay"?: string | null,"fee"?: number,"id"?: string,"name": string,"position"?: number,"shop_id": string
+                  }
+                  Update: {
+                    "created_at"?: string,"delay"?: string | null,"fee"?: number,"id"?: string,"name"?: string,"position"?: number,"shop_id"?: string
                   }
                   Relationships: []
                 },"shop_videos": {

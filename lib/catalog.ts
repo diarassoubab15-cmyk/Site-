@@ -320,3 +320,12 @@ export async function resolveShopSlug(slug: string): Promise<string | null> {
   const { data } = await supabasePublic().rpc("resolve_shop_slug", { p_slug: slug });
   return (data as string | null) ?? null;
 }
+
+export type DeliveryZone = { id: string; name: string; fee: number; delay: string | null };
+
+/** Zones et frais de livraison d'une boutique (choisis par le vendeur), dans son ordre. */
+export async function getDeliveryZones(shopSlug: string): Promise<DeliveryZone[]> {
+  if (!supabaseEnabled) return [];
+  const { data } = await supabasePublic().from("shop_delivery_zones").select("id, name, fee, delay, position, shops!inner(slug)").eq("shops.slug", shopSlug).order("position").order("created_at");
+  return (data ?? []).map((z) => ({ id: z.id, name: z.name, fee: z.fee, delay: z.delay }));
+}
