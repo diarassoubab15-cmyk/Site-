@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { ShopPixels } from "@/components/ShopPixels";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
@@ -47,7 +48,8 @@ export default async function ProductPage({ params }: Props) {
   const { product, shop, rating, reviews: list, related } = page;
   const cat = getCategory(product.category) ?? { slug: product.category, name: product.category };
   // Présentation animée en motion design : boutiques Ultra, produits avec au moins une vraie photo.
-  const tier = product.images?.length ? await getShopTier(shop.slug) : null;
+  // Forfait de la boutique : présentation animée (Ultra) et pixels publicitaires (Pro et Ultra).
+  const tier = product.images?.length || shop.pixels ? await getShopTier(shop.slug) : null;
   const typeColor = getShopType(product.category)?.color ?? "#5433eb";
   const zones = await getDeliveryZones(shop.slug);
   // Message WhatsApp déjà rédigé : le vendeur sait tout de suite quel produit et d'où vient le client.
@@ -169,6 +171,7 @@ export default async function ProductPage({ params }: Props) {
         </section>
       )}
 
+      {shop.pixels && (tier === "pro" || tier === "business") && <ShopPixels fb={shop.pixels.fb} tiktok={shop.pixels.tiktok} product={{ id: product.slug, name: product.name, price: product.price }} />}
       <JsonLd
         data={{
           "@context": "https://schema.org",

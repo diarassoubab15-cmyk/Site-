@@ -1157,3 +1157,23 @@ export const settleCash = action(z.object({ orderId: z.string().uuid() }), async
   revalidatePath("/vendeur");
   return { ok: true };
 });
+
+// ------------------------------------------------------------------ pixels publicitaires (Pro et Ultra)
+export const setShopPixels = action(
+  z.object({
+    fb: z.string().trim().regex(/^$|^[0-9]{6,20}$/, "Identifiant du pixel Facebook : chiffres seulement (6 à 20)"),
+    tiktok: z.string().trim().toUpperCase().regex(/^$|^[A-Z0-9]{10,30}$/, "Identifiant du pixel TikTok : lettres majuscules et chiffres (10 à 30)"),
+  }),
+  async ({ fb, tiktok }, { user, sb }) => {
+    const { data: shop } = await sb.from("shops").select("id, slug").eq("owner_id", user.id).neq("status", "closed").maybeSingle();
+    if (!shop) return fail("Aucune boutique active");
+    const { data: sub } = await sb.from("subscriptions").select("plan").eq("shop_id", shop.id).maybeSingle();
+    if ((fb || tiktok) && sub?.plan !== "pro" && sub?.plan !== "business") return fail("Les pixels publicitaires sont inclus dans les forfaits Pro et Ultra.");
+    const { error } = await sb.from("shops").update({ fb_pixel_id: fb || null, tiktok_pixel_id: tiktok || null }).eq("id", shop.id);
+    if (error) return dbError(error);
+    revalidatePath("/vendeur");
+    revalidatePath(`/boutiques/${shop.slug}`);
+    revalidatePath("/produits/[slug]", "page");
+    return { ok: true };
+  },
+);

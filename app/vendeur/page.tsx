@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { ShopPixelsForm } from "@/components/ShopPixelsForm";
 import { DemoNotice } from "@/components/DemoNotice";
 import { SellerView } from "@/components/SellerView";
 import { supabaseEnabled } from "@/lib/supabase/env";
@@ -39,6 +40,7 @@ export default async function Vendeur() {
       {live?.shop && live.shop.status === "autorisé" && <div className="mt-6"><SellerBooks orders={live.orders} offlineAmount={live.offline?.monthAmount ?? 0} lowStock={live.lowStock ?? []} /></div>}
       {profile && <div className="mt-6"><DeliveryZones zones={zones} /></div>}
       {profile && <div className="mt-6"><CouriersPanel couriers={live?.couriers ?? []} /></div>}
+      {profile && <div className="mt-6"><ShopPixelsForm fb={profile.fbPixel} tiktok={profile.tiktokPixel} allowed={profile.tier === "pro" || profile.tier === "business"} /></div>}
       {profile && <div className="mt-6"><ShopProfileForm profile={profile} slug={profile.slug} /></div>}
       {profile && (
         <div className="mt-6">

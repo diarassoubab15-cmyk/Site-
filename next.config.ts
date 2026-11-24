@@ -7,12 +7,13 @@ const supabase = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
 // le chargement dans une iframe (clickjacking) et les envois vers des domaines inconnus.
 const csp = [
   "default-src 'self'",
-  `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""}`,
+  // Pixels publicitaires des boutiques Pro et Ultra (Facebook, TikTok), chargés seulement sur leurs pages.
+  `script-src 'self' 'unsafe-inline' https://connect.facebook.net https://analytics.tiktok.com${isDev ? " 'unsafe-eval'" : ""}`,
   "style-src 'self' 'unsafe-inline'",
   `img-src 'self' data: blob: https:${supabase ? ` ${supabase}` : ""}`,
   `media-src 'self' blob:${supabase ? ` ${supabase}` : ""}`,
   "font-src 'self' data:",
-  `connect-src 'self'${supabase ? ` ${supabase} ${supabase.replace("https", "wss")}` : ""}`,
+  `connect-src 'self' https://www.facebook.com https://connect.facebook.net https://analytics.tiktok.com${supabase ? ` ${supabase} ${supabase.replace("https", "wss")}` : ""}`,
   // Carte Google Maps des boutiques physiques (chargée seulement à la demande du visiteur).
   "frame-src https://www.google.com",
   "frame-ancestors 'none'",

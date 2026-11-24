@@ -28,6 +28,8 @@ export type Shop = {
   lat?: number;
   lng?: number;
   whatsapp?: string;
+  /** Pixels publicitaires (forfaits Pro et Ultra seulement : vérifié à l'affichage). */
+  pixels?: { fb: string | null; tiktok: string | null };
   callPhone?: string;
   samplePrices?: { name: string; price: number }[];
   /** Apparence (Pro / Ultra) */

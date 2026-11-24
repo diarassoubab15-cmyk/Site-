@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { ShopPixels } from "@/components/ShopPixels";
 import { ShopComments } from "@/components/ShopComments";
 import Link from "next/link";
 import { notFound, permanentRedirect } from "next/navigation";
@@ -127,6 +128,7 @@ export default async function ShopPage({ params }: Props) {
         {items.map((c) => <ProductCard key={c.product.slug} item={c} />)}
       </div>
       <ShopComments slug={shop.slug} shopName={shop.name} />
+      {shop.pixels && (tier === "pro" || tier === "business") && <ShopPixels fb={shop.pixels.fb} tiktok={shop.pixels.tiktok} />}
       <JsonLd
         data={{
           "@context": "https://schema.org",
