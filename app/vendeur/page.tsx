@@ -13,6 +13,7 @@ import QRCode from "qrcode";
 import { site } from "@/lib/site";
 import { aiStudioState, myDeliveryZones } from "@/app/actions";
 import { DeliveryZones } from "@/components/DeliveryZones";
+import { CouriersPanel, SellerBooks } from "@/components/SellerCod";
 import { getShopType } from "@/lib/shop-types";
 
 export const metadata: Metadata = { title: "Ma boutique", robots: { index: false, follow: false } };
@@ -35,7 +36,9 @@ export default async function Vendeur() {
       {profile && <div className="mb-6"><ShopLinkCard base={base} slug={profile.slug} shopName={profile.name} approved={profile.approved} qrSvg={qrSvg} /></div>}
       <SellerView live={live} />
       {live?.offline && live.shop && live.shop.status !== "fermé" && <div className="mt-6"><ManualSales offline={live.offline} /></div>}
+      {live?.shop && live.shop.status === "autorisé" && <div className="mt-6"><SellerBooks orders={live.orders} offlineAmount={live.offline?.monthAmount ?? 0} lowStock={live.lowStock ?? []} /></div>}
       {profile && <div className="mt-6"><DeliveryZones zones={zones} /></div>}
+      {profile && <div className="mt-6"><CouriersPanel couriers={live?.couriers ?? []} /></div>}
       {profile && <div className="mt-6"><ShopProfileForm profile={profile} slug={profile.slug} /></div>}
       {profile && (
         <div className="mt-6">

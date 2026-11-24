@@ -6,6 +6,7 @@ import { NotificationPrefs } from "./NotificationPrefs";
 import { SubscriptionPanel } from "./SubscriptionPanel";
 import { SellerStats } from "./SellerStats";
 import { SellerVideos } from "./SellerVideos";
+import { OrderCodActions } from "./SellerCod";
 import { allPlans } from "@/lib/plans";
 import { formatPrice } from "@/lib/format";
 import { paymentMethods, type PaymentMethodId } from "@/lib/payments";
@@ -140,6 +141,7 @@ export function SellerView({ live }: { live?: LiveSeller | null }) {
                     <p className="text-sm text-white">{o.productName} <span className="text-ash">× {o.qty}</span> · <span className="font-mono">{formatPrice(o.total)}</span></p>
                     <p className="mt-1 font-mono text-xs text-ash">{o.id} · {paymentMethods[o.method].label} · {o.status}</p>
                     <p className="mt-1 text-xs text-iron">{o.buyer} · {o.city} · {o.phone}</p>
+                    <OrderCodActions order={o} couriers={live?.couriers ?? []} shopName={shop.shopName} />
                   </div>
                   <div className="flex flex-wrap gap-2">
                     {o.status === "confirmée" && (

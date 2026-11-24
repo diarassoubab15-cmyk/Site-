@@ -115,12 +115,13 @@ export async function listCards(opts: { q?: string; category?: string; sub?: str
   }
   if (!supabaseEnabled) {
     let list = demo.searchProducts(opts.q ?? "", opts.category);
-    if (opts.inStock) list = list.filter((p) => p.stock > 0);
+    if (opts.inStock !== false) list = list.filter((p) => p.stock > 0);
     return list.slice(0, opts.limit ?? 500).map(demoCard);
   }
   let query = supabasePublic().from("products").select(PRODUCT_COLS).eq("published", true).order("created_at", { ascending: true }).limit(opts.limit ?? 500);
   if (opts.category) query = query.eq("category", opts.category);
-  if (opts.inStock) query = query.gt("stock", 0);
+  // Produits épuisés masqués des listes (leur fiche reste accessible par son lien).
+  if (opts.inStock !== false) query = query.gt("stock", 0);
   const q = clean(opts.q ?? "");
   if (q) query = query.or(`name.ilike.%${q}%,short.ilike.%${q}%`);
   const { data, error } = await query;
@@ -162,7 +163,7 @@ export async function getShopPage(slug: string) {
   const sb = supabasePublic();
   const { data: s } = await sb.from("shops").select("id, slug, name, city, country, description, created_at, accepts_cod, response_time, payments, category, district, is_physical, maps_url, lat, lng, whatsapp, call_phone, sample_prices, brand_color, signature, display_font, verified_at").eq("slug", slug).eq("status", "approved").maybeSingle();
   if (!s) return null;
-  const { data } = await sb.from("products").select(PRODUCT_COLS).eq("shop_id", s.id).eq("published", true);
+  const { data } = await sb.from("products").select(PRODUCT_COLS).eq("shop_id", s.id).eq("published", true).gt("stock", 0);
   const cards = await toCards((data ?? []) as unknown as ProductRow[]);
   const all = cards.filter((c) => c.rating.count);
   const count = all.reduce((n, c) => n + c.rating.count, 0);

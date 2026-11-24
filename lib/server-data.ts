@@ -99,15 +99,18 @@ export async function loadSeller(): Promise<LiveSeller | null> {
   ]);
   const now = new Date();
   const month = periodOf("month", `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, "0")}`)!;
-  const [{ data: covered }, { data: rw }, { data: st }, { data: vids }, { data: sales }, { count: leads }, { data: prods }] = await Promise.all([
+  const [{ data: covered }, { data: rw }, { data: st }, { data: vids }, { data: sales }, { count: leads }, { data: prods }, { data: couriers }, { data: refusals }] = await Promise.all([
     sb.rpc("shop_covered_until", { p_shop: shop.id }),
     sb.from("rewards").select("*").eq("shop_id", shop.id).is("revoked_at", null).order("created_at", { ascending: false }),
     sb.rpc("seller_my_stats", { p_from: month.from, p_to: month.to }),
     sb.from("shop_videos").select("*").eq("shop_id", shop.id).order("created_at", { ascending: false }).limit(20),
     sb.from("manual_sales").select("id, label, qty, amount, channel, customer_name, customer_phone, sold_on").eq("shop_id", shop.id).order("sold_on", { ascending: false }).order("created_at", { ascending: false }).limit(60),
     sb.from("whatsapp_leads").select("id", { count: "exact", head: true }).eq("shop_id", shop.id).gte("created_at", month.from),
-    sb.from("products").select("id, name, price").eq("shop_id", shop.id).order("name").limit(500),
+    sb.from("products").select("id, name, price, stock, category, published").eq("shop_id", shop.id).order("name").limit(500),
+    sb.from("shop_couriers").select("id, name, phone").eq("shop_id", shop.id).order("created_at"),
+    sb.rpc("seller_order_refusals"),
   ]);
+  const refusalsByOrder = new Map((refusals ?? []).map((x) => [x.order_id, x.refusals]));
   const monthStart = month.from.slice(0, 10);
   const monthSales = (sales ?? []).filter((x) => x.sold_on >= monthStart);
   const videosUsed = (vids ?? []).filter((v) => v.status !== "failed" && v.created_at.slice(0, 10) >= monthStart).length;
@@ -133,7 +136,16 @@ export async function loadSeller(): Promise<LiveSeller | null> {
       buyer: o.shipping_name, phone: o.shipping_phone,
       // Adresse à la malienne pour le livreur : quartier, ville, point de repère, zone choisie.
       city: [o.shipping_district, o.shipping_city].filter(Boolean).join(", ") + (o.shipping_landmark ? ` · repère : ${o.shipping_landmark}` : "") + (o.delivery_zone ? ` · livraison ${o.delivery_zone}${o.delivery_fee ? ` (${o.delivery_fee.toLocaleString("fr-FR")} F)` : ""}` : ""),
+      cod: {
+        confirmToken: o.confirm_token, buyerConfirmed: !!o.buyer_confirmed_at, courierId: o.courier_id, courierToken: o.courier_token,
+        refused: !!o.refused_at, cashCollected: !!o.cash_collected_at, cashSettled: !!o.cash_settled_at, deliveryFee: o.delivery_fee ?? 0,
+        // Refus passés de ce client sur tout NEXORA (cette commande comprise si elle a été refusée).
+        buyerRefusals: refusalsByOrder.get(o.id) ?? 0,
+      },
     })),
+    couriers: couriers ?? [],
+    // Alerte de stock : produits en ligne à 3 unités ou moins (hors immobilier, où « stock » = biens disponibles).
+    lowStock: (prods ?? []).filter((p) => p.published && p.category !== "immobilier" && p.stock <= 3).map((p) => ({ id: p.id, name: p.name, stock: p.stock })),
     prefs,
     offline: {
       sales: (sales ?? []).map((x) => ({ id: x.id, label: x.label, qty: x.qty, amount: x.amount, channel: x.channel as ManualSaleView["channel"], customer: x.customer_name ?? "", phone: x.customer_phone ?? "", soldOn: x.sold_on })),

@@ -1104,3 +1104,56 @@ export const adminSetVerified = action(z.object({ shopId: z.string().uuid(), ver
   revalidatePath("/", "layout");
   return { ok: true };
 });
+
+// ------------------------------------------------------------------ paiement à la livraison : confirmation, livreurs, argent
+/** Le client confirme sa commande depuis le lien reçu sur WhatsApp (sans compte). */
+export async function confirmOrderByToken(token: string): Promise<boolean> {
+  if (!/^[a-f0-9]{20,64}$/.test(token)) return false;
+  const { data } = await (await supabaseServer()).rpc("confirm_order_by_token", { p_token: token });
+  return !!data;
+}
+
+/** Le livreur marque la commande livrée (argent encaissé) ou refusée par le client, depuis son lien. */
+export async function courierReport(token: string, outcome: "delivered" | "refused"): Promise<boolean> {
+  if (!/^[a-f0-9]{20,64}$/.test(token) || !["delivered", "refused"].includes(outcome)) return false;
+  const { data } = await (await supabaseServer()).rpc("courier_report", { p_token: token, p_outcome: outcome });
+  return !!data;
+}
+
+export const addCourier = action(
+  z.object({ name: z.string().trim().min(2, "Nom du livreur trop court").max(60), phone: PHONE }),
+  async ({ name, phone }, { user, sb }) => {
+    const { data: shop } = await sb.from("shops").select("id").eq("owner_id", user.id).neq("status", "closed").maybeSingle();
+    if (!shop) return fail("Aucune boutique active");
+    const { error } = await sb.from("shop_couriers").insert({ shop_id: shop.id, name, phone });
+    if (error) return dbError(error);
+    revalidatePath("/vendeur");
+    return { ok: true };
+  },
+);
+
+export const deleteCourier = action(z.object({ id: z.string().uuid() }), async ({ id }, { sb }) => {
+  const { error } = await sb.from("shop_couriers").delete().eq("id", id);
+  if (error) return dbError(error);
+  revalidatePath("/vendeur");
+  return { ok: true };
+});
+
+/** Attribue une commande à un livreur ; renvoie le jeton du lien personnel du livreur. */
+export const assignCourier = action<{ orderId: string; courierId: string | null }, string | null>(
+  z.object({ orderId: z.string().uuid(), courierId: z.string().uuid().nullable() }),
+  async ({ orderId, courierId }, { sb }) => {
+    const { data, error } = await sb.rpc("assign_courier", { p_order: orderId, p_courier: courierId });
+    if (error) return dbError(error);
+    revalidatePath("/vendeur");
+    return { ok: true, data: data ?? null };
+  },
+);
+
+/** Le livreur a remis au vendeur l'argent encaissé. */
+export const settleCash = action(z.object({ orderId: z.string().uuid() }), async ({ orderId }, { sb }) => {
+  const { error } = await sb.rpc("settle_cash", { p_order: orderId });
+  if (error) return dbError(error);
+  revalidatePath("/vendeur");
+  return { ok: true };
+});
