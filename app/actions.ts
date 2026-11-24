@@ -1032,7 +1032,7 @@ export const addManualSale = action(
     amount: z.number().int().min(0).max(1_000_000_000),
     channel: SALE_CHANNEL,
     customerName: z.string().trim().max(80),
-    customerPhone: z.string().trim().max(30).refine((v) => !v || /^[+0-9 ]{6,30}$/.test(v), "Numéro du client invalide"),
+    customerPhone: z.string().trim().regex(/^$|^[+0-9 ]{6,30}$/, "Numéro du client invalide"),
     soldOn: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   }),
   async (f, { user, sb }) => {

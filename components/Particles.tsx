@@ -16,7 +16,8 @@ export function Particles() {
 
   useEffect(() => {
     const canvas = ref.current;
-    if (!canvas || matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    // Mode léger (petit téléphone, connexion lente, économiseur de données) ou mouvement réduit : rien n'est dessiné.
+    if (!canvas || document.documentElement.hasAttribute("data-lite") || matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { LiteModeToggle } from "@/components/LiteModeToggle";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { CartPanel, PaymentPreference } from "@/components/SettingsPanels";
@@ -36,6 +37,8 @@ export default async function Reglages() {
             Connecté : <span className="font-mono text-bone">{u.user.email || u.user.phone}</span>
           </p>
         </header>
+
+        <LiteModeToggle />
 
         <section className="reglages-card" aria-labelledby="pref-paiement">
           <h2 id="pref-paiement" className="text-lg font-medium text-white">Moyen de paiement préféré</h2>

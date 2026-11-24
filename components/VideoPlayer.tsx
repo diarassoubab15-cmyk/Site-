@@ -18,7 +18,7 @@ export function VideoPlayer({ src, poster, label, className = "" }: { src: strin
     const v = ref.current;
     if (!v) return;
     const n = navigator as NavigatorExtra;
-    const frugal = !!n.connection?.saveData || /(^|-)2g|3g/.test(n.connection?.effectiveType ?? "") || matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const frugal = document.documentElement.hasAttribute("data-lite") || !!n.connection?.saveData || /(^|-)2g|3g/.test(n.connection?.effectiveType ?? "") || matchMedia("(prefers-reduced-motion: reduce)").matches;
     if (frugal) {
       setManual(true);
       return;
