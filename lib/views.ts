@@ -88,7 +88,8 @@ export type LiveSeller = {
 
 export type ManualSaleView = { id: string; label: string; qty: number; amount: number; channel: "whatsapp" | "telephone" | "boutique" | "autre"; customer: string; phone: string; soldOn: string };
 
-export type LiveAdmin = { sellers: DemoSeller[]; tickets: (Ticket & { shopId?: string })[]; payments: DemoSubPayment[]; rewards: import("./rewards").RewardView[]; videos: VideoView[]; edits: EditRequestView[] };
+export type AdminRevenue = { thisMonth: number; lastMonth: number; paymentsThisMonth: number; byPlan: Record<string, number>; paying: number; free: number; renewals: { shop: string; plan: string; until: string }[] };
+export type LiveAdmin = { revenue?: AdminRevenue; sellers: DemoSeller[]; tickets: (Ticket & { shopId?: string })[]; payments: DemoSubPayment[]; rewards: import("./rewards").RewardView[]; videos: VideoView[]; edits: EditRequestView[] };
 
 /** Fiche telle qu'elle peut être modifiée par une demande écrite. */
 export type EditableFields = { name: string; short: string | null; description: string | null; price: number; compareAt: number | null; specs: [string, string][] };

@@ -22,7 +22,7 @@ type ShopRow = {
   slug: string; name: string; city: string; country: string; description: string | null; created_at: string; accepts_cod: boolean; response_time: string; payments: string[];
   district?: string | null; is_physical?: boolean; maps_url?: string | null; lat?: number | null; lng?: number | null;
   whatsapp?: string | null; call_phone?: string | null; sample_prices?: unknown; category?: string;
-  brand_color?: string | null; signature?: string | null; display_font?: string | null;
+  brand_color?: string | null; signature?: string | null; display_font?: string | null; verified_at?: string | null;
 };
 type ProductRow = {
   id: string; slug: string; name: string; short: string | null; description: string | null; category: string; price: number;
@@ -38,7 +38,8 @@ const toShop = (s: ShopRow): Shop => ({
   country: s.country,
   description: s.description ?? "",
   since: s.created_at.slice(0, 10),
-  verified: true, // seules les boutiques autorisées sont lisibles (RLS)
+  // Badge « vérifié » : donné par l'admin après contrôle de la pièce d'identité (pas seulement l'autorisation).
+  verified: !!s.verified_at,
   responseTime: s.response_time,
   acceptsCashOnDelivery: s.accepts_cod,
   payments: [...(s.payments as PaymentMethodId[]), ...(s.accepts_cod ? (["cash_on_delivery"] as PaymentMethodId[]) : [])],
@@ -82,7 +83,7 @@ const media = (p: ProductRow, kind: string) =>
 /** Adresse publique d'un fichier du stockage « product-media ». */
 export const mediaUrl = (path: string) => `${(process.env.NEXT_PUBLIC_SUPABASE_URL ?? "").replace(/\/$/, "")}/storage/v1/object/public/product-media/${path}`;
 
-const PRODUCT_COLS = "id, slug, name, short, description, category, subcategory, price, compare_at, stock, wholesale_min, wholesale_price, specs, glyph, tone, price_unit, product_media(path, kind, position, label, status), shops!inner(slug, name, city, country, description, created_at, accepts_cod, response_time, payments, whatsapp)";
+const PRODUCT_COLS = "id, slug, name, short, description, category, subcategory, price, compare_at, stock, wholesale_min, wholesale_price, specs, glyph, tone, price_unit, product_media(path, kind, position, label, status), shops!inner(slug, name, city, country, description, created_at, accepts_cod, response_time, payments, whatsapp, verified_at)";
 
 async function ratingsFor(ids: string[]) {
   if (!ids.length) return new Map<string, Rating>();
@@ -159,7 +160,7 @@ export async function getShopPage(slug: string) {
     return { shop, cards: demo.productsByShop(slug).map(demoCard), rating: demo.shopRating(slug), awards: [] as string[], video: null as { src: string; poster: string } | null };
   }
   const sb = supabasePublic();
-  const { data: s } = await sb.from("shops").select("id, slug, name, city, country, description, created_at, accepts_cod, response_time, payments, category, district, is_physical, maps_url, lat, lng, whatsapp, call_phone, sample_prices, brand_color, signature, display_font").eq("slug", slug).eq("status", "approved").maybeSingle();
+  const { data: s } = await sb.from("shops").select("id, slug, name, city, country, description, created_at, accepts_cod, response_time, payments, category, district, is_physical, maps_url, lat, lng, whatsapp, call_phone, sample_prices, brand_color, signature, display_font, verified_at").eq("slug", slug).eq("status", "approved").maybeSingle();
   if (!s) return null;
   const { data } = await sb.from("products").select(PRODUCT_COLS).eq("shop_id", s.id).eq("published", true);
   const cards = await toCards((data ?? []) as unknown as ProductRow[]);
@@ -266,8 +267,8 @@ export async function listShopsByType(type: string): Promise<TypeShop[]> {
   if (!supabaseEnabled) {
     rows = demo.shops.filter((s) => demoShopType(s.slug) === type);
   } else {
-    const { data } = await supabasePublic().from("shops").select("slug, name, city, country").eq("status", "approved").eq("category", type);
-    rows = (data ?? []).map((s) => ({ ...s, verified: true }));
+    const { data } = await supabasePublic().from("shops").select("slug, name, city, country, verified_at").eq("status", "approved").eq("category", type);
+    rows = (data ?? []).map(({ verified_at, ...s }) => ({ ...s, verified: !!verified_at }));
   }
   return rows
     .map((s) => {

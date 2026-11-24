@@ -1095,3 +1095,12 @@ export async function myDeliveryZones(): Promise<{ id: string; name: string; fee
   const { data } = await u.sb.from("shop_delivery_zones").select("id, name, fee, delay").eq("shop_id", shop.id).order("position").order("created_at");
   return data ?? [];
 }
+
+/** Badge « Vendeur vérifié » : l'admin le donne après contrôle de la pièce d'identité, ou le retire. */
+export const adminSetVerified = action(z.object({ shopId: z.string().uuid(), verified: z.boolean() }), async ({ shopId, verified }, { sb }) => {
+  const { error } = await sb.rpc("admin_set_verified", { p_shop: shopId, p_verified: verified });
+  if (error) return dbError(error);
+  revalidatePath("/admin");
+  revalidatePath("/", "layout");
+  return { ok: true };
+});

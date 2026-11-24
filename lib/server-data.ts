@@ -149,8 +149,9 @@ export async function loadAdmin(): Promise<LiveAdmin | null> {
   const u = await currentUser();
   if (!u || u.profile?.role !== "admin") return null;
   const { sb } = u;
-  const [{ data: shopRows }, { data: contacts }, { data: tickets }, { data: pays }, { data: rw }, { data: vids }, { data: edits }, { data: subs }] = await Promise.all([
-    sb.from("shops").select("id, name, city, country, category, status, status_reason, created_at").order("created_at", { ascending: false }),
+  const since = new Date(Date.UTC(new Date().getUTCFullYear(), new Date().getUTCMonth() - 1, 1)).toISOString();
+  const [{ data: shopRows }, { data: contacts }, { data: tickets }, { data: pays }, { data: rw }, { data: vids }, { data: edits }, { data: subs }, { data: paid }] = await Promise.all([
+    sb.from("shops").select("id, name, city, country, category, status, status_reason, verified_at, created_at").order("created_at", { ascending: false }),
     // Coordonnées du responsable : jamais lisibles directement, seulement par cette fonction réservée à l'admin.
     sb.rpc("admin_shop_contacts"),
     sb.from("tickets").select("*").order("created_at", { ascending: false }).limit(200),
@@ -159,6 +160,8 @@ export async function loadAdmin(): Promise<LiveAdmin | null> {
     sb.from("shop_videos").select("*").in("status", ["queued", "rendering", "review", "approved"]).order("created_at", { ascending: false }).limit(100),
     sb.from("product_edit_requests").select(EDIT_COLS).eq("status", "review").order("created_at").limit(100),
     sb.from("subscriptions").select("shop_id, plan, active, current_period_end"),
+    // Revenus : paiements de forfait confirmés depuis le début du mois dernier.
+    sb.from("subscription_payments").select("amount, plan, decided_at").eq("status", "confirmed").gte("decided_at", since).limit(5000),
   ]);
   const subByShop = new Map((subs ?? []).map((x) => [x.shop_id, x]));
   const contactById = new Map((contacts ?? []).map((c) => [c.id, c]));
@@ -176,12 +179,42 @@ export async function loadAdmin(): Promise<LiveAdmin | null> {
       id: s.id, shopName: s.name, owner: s.owner_name ?? "", email: s.contact_email ?? "", phone: s.contact_phone ?? "",
       city: s.city, country: s.country, category: s.category, status: shopStatusFr[s.status], createdAt: s.created_at.slice(0, 10),
       reason: s.status_reason ?? null,
+      verified: !!s.verified_at,
       plan: subByShop.get(s.id)?.plan ?? null,
       // Actif = coché ET pas encore expiré (même règle que la base pour afficher la boutique).
       planActive: !!subByShop.get(s.id)?.active && (!subByShop.get(s.id)?.current_period_end || subByShop.get(s.id)!.current_period_end! > new Date().toISOString()),
       planUntil: subByShop.get(s.id)?.current_period_end?.slice(0, 10) ?? null,
     })),
     tickets: (tickets ?? []).map(ticketView),
+    revenue: revenueOf(paid ?? [], subs ?? [], new Map(shops.map((x) => [x.id, x.name]))),
+  };
+}
+
+/** Tableau des revenus de l'admin : encaissé ce mois et le mois dernier, par forfait, vendeurs payants et renouvellements proches. */
+function revenueOf(
+  paid: { amount: number; plan: string; decided_at: string | null }[],
+  subs: { shop_id: string; plan: string; active: boolean; current_period_end: string | null }[],
+  names: Map<string, string>,
+) {
+  const now = new Date();
+  const thisMonth = now.toISOString().slice(0, 7);
+  const lastMonth = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 1, 1)).toISOString().slice(0, 7);
+  const month = (m: string) => paid.filter((p) => p.decided_at?.slice(0, 7) === m);
+  const byPlan: Record<string, number> = {};
+  for (const p of month(thisMonth)) byPlan[p.plan] = (byPlan[p.plan] ?? 0) + p.amount;
+  const live = subs.filter((x) => x.active && (!x.current_period_end || x.current_period_end > now.toISOString()));
+  const in7 = new Date(now.getTime() + 7 * 864e5).toISOString();
+  return {
+    thisMonth: month(thisMonth).reduce((n, p) => n + p.amount, 0),
+    lastMonth: month(lastMonth).reduce((n, p) => n + p.amount, 0),
+    paymentsThisMonth: month(thisMonth).length,
+    byPlan,
+    paying: live.filter((x) => x.plan !== "decouverte").length,
+    free: live.filter((x) => x.plan === "decouverte").length,
+    renewals: live
+      .filter((x) => x.plan !== "decouverte" && x.current_period_end && x.current_period_end <= in7)
+      .map((x) => ({ shop: names.get(x.shop_id) ?? "—", plan: x.plan, until: x.current_period_end!.slice(0, 10) }))
+      .sort((a, b) => a.until.localeCompare(b.until)),
   };
 }
 
