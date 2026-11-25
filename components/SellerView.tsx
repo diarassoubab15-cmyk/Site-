@@ -1,4 +1,5 @@
 "use client";
+import { etaLabel, isLate } from "@/lib/eta";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
@@ -140,6 +141,11 @@ export function SellerView({ live }: { live?: LiveSeller | null }) {
                   <div>
                     <p className="text-sm text-white">{o.productName} <span className="text-ash">× {o.qty}</span> · <span className="font-mono">{formatPrice(o.total)}</span></p>
                     <p className="mt-1 font-mono text-xs text-ash">{o.id} · {paymentMethods[o.method].label} · {o.status}</p>
+                    {etaLabel(o.etaMin, o.etaMax) && ["confirmée", "expédiée"].includes(o.status) && (
+                      <p className={`mt-1 text-xs ${isLate(o.status, o.etaMax) ? "font-medium text-alarm" : "text-ash"}`}>
+                        {isLate(o.status, o.etaMax) ? "⚠ En retard : " : "À livrer "}{etaLabel(o.etaMin, o.etaMax)}
+                      </p>
+                    )}
                     <p className="mt-1 text-xs text-iron">{o.buyer} · {o.city} · {o.phone}</p>
                     <OrderCodActions order={o} couriers={live?.couriers ?? []} shopName={shop.shopName} />
                   </div>

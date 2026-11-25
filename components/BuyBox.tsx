@@ -1,4 +1,6 @@
 "use client";
+import { etaPreview } from "@/lib/eta";
+import { RETURN_LABELS } from "@/lib/returns";
 import { PhoneInput } from "./PhoneInput";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -159,6 +161,12 @@ export function BuyBox({ product, shop, zones = [] }: { product: Product; shop: 
         <p className="text-sm text-ash">Connectez-vous (ou créez votre compte en 1 minute) pour commander.</p>
       )}
 
+      {!out && (
+        <div className="space-y-1 text-sm">
+          <p className="text-bone">🚚 Livraison prévue <strong className="text-white">{etaPreview(shop.shipDays ?? 2, zone?.daysMin, zone?.daysMax)}</strong></p>
+          <p className="text-ash">↩ {shop.returnPolicy ? RETURN_LABELS[shop.returnPolicy] : "Retour : à convenir avec le vendeur"} · produit non conforme : remboursé (protection NEXORA)</p>
+        </div>
+      )}
       <div className="flex items-center justify-between border-t border-line pt-5">
         <span className="text-sm text-ash">Total{zone?.fee ? <span className="block text-xs text-iron">dont livraison {formatPrice(zone.fee)}</span> : null}</span>
         <span className="font-mono text-lg text-white">{formatPrice(total)}</span>

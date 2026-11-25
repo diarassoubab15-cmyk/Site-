@@ -23,8 +23,8 @@ const faq = [
   { q: "Comment contacter directement l'administrateur ?", a: "Choisissez « Signaler un vendeur » ou « Produit non reçu » : ces demandes vont directement à l'administrateur, sans passer par un robot." },
 ];
 
-export default async function Support({ searchParams }: { searchParams: Promise<{ boutique?: string }> }) {
-  const { boutique } = await searchParams;
+export default async function Support({ searchParams }: { searchParams: Promise<{ boutique?: string; commande?: string }> }) {
+  const { boutique, commande } = await searchParams;
   const known = supabaseEnabled ? await loadKnownUser() : null;
   const wa = `https://wa.me/${site.support.whatsapp.replace(/\D/g, "")}`;
   return (
@@ -73,7 +73,7 @@ export default async function Support({ searchParams }: { searchParams: Promise<
         </div>
         <div id="contact" className="scroll-mt-24">
           <span id="signaler" className="block scroll-mt-24" />
-          <SupportForm shop={boutique} known={known} />
+          <SupportForm shop={boutique} order={commande} known={known} />
         </div>
       </div>
       <JsonLd data={{ "@context": "https://schema.org", "@type": "FAQPage", mainEntity: faq.map((f) => ({ "@type": "Question", name: f.q, acceptedAnswer: { "@type": "Answer", text: f.a } })) }} />

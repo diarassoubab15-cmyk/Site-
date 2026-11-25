@@ -22,7 +22,7 @@ type ShopRow = {
   slug: string; name: string; city: string; country: string; description: string | null; created_at: string; accepts_cod: boolean; response_time: string; payments: string[];
   district?: string | null; is_physical?: boolean; maps_url?: string | null; lat?: number | null; lng?: number | null;
   whatsapp?: string | null; call_phone?: string | null; sample_prices?: unknown; category?: string;
-  brand_color?: string | null; signature?: string | null; display_font?: string | null; verified_at?: string | null; fb_pixel_id?: string | null; tiktok_pixel_id?: string | null;
+  brand_color?: string | null; signature?: string | null; display_font?: string | null; verified_at?: string | null; ship_days?: number; return_policy?: string | null; fb_pixel_id?: string | null; tiktok_pixel_id?: string | null;
 };
 type ProductRow = {
   id: string; slug: string; name: string; short: string | null; description: string | null; category: string; price: number;
@@ -40,6 +40,8 @@ const toShop = (s: ShopRow): Shop => ({
   since: s.created_at.slice(0, 10),
   // Badge « vérifié » : donné par l'admin après contrôle de la pièce d'identité (pas seulement l'autorisation).
   verified: !!s.verified_at,
+  shipDays: s.ship_days ?? 2,
+  returnPolicy: (s.return_policy as Shop["returnPolicy"]) ?? null,
   pixels: s.fb_pixel_id || s.tiktok_pixel_id ? { fb: s.fb_pixel_id ?? null, tiktok: s.tiktok_pixel_id ?? null } : undefined,
   responseTime: s.response_time,
   acceptsCashOnDelivery: s.accepts_cod,
@@ -84,7 +86,7 @@ const media = (p: ProductRow, kind: string) =>
 /** Adresse publique d'un fichier du stockage « product-media ». */
 export const mediaUrl = (path: string) => `${(process.env.NEXT_PUBLIC_SUPABASE_URL ?? "").replace(/\/$/, "")}/storage/v1/object/public/product-media/${path}`;
 
-const PRODUCT_COLS = "id, slug, name, short, description, category, subcategory, price, compare_at, stock, wholesale_min, wholesale_price, specs, glyph, tone, price_unit, product_media(path, kind, position, label, status), shops!inner(slug, name, city, country, description, created_at, accepts_cod, response_time, payments, whatsapp, verified_at, fb_pixel_id, tiktok_pixel_id)";
+const PRODUCT_COLS = "id, slug, name, short, description, category, subcategory, price, compare_at, stock, wholesale_min, wholesale_price, specs, glyph, tone, price_unit, product_media(path, kind, position, label, status), shops!inner(slug, name, city, country, description, created_at, accepts_cod, response_time, payments, whatsapp, verified_at, ship_days, return_policy, fb_pixel_id, tiktok_pixel_id)";
 
 async function ratingsFor(ids: string[]) {
   if (!ids.length) return new Map<string, Rating>();
@@ -162,7 +164,7 @@ export async function getShopPage(slug: string) {
     return { shop, cards: demo.productsByShop(slug).map(demoCard), rating: demo.shopRating(slug), awards: [] as string[], video: null as { src: string; poster: string } | null };
   }
   const sb = supabasePublic();
-  const { data: s } = await sb.from("shops").select("id, slug, name, city, country, description, created_at, accepts_cod, response_time, payments, category, district, is_physical, maps_url, lat, lng, whatsapp, call_phone, sample_prices, brand_color, signature, display_font, verified_at, fb_pixel_id, tiktok_pixel_id").eq("slug", slug).eq("status", "approved").maybeSingle();
+  const { data: s } = await sb.from("shops").select("id, slug, name, city, country, description, created_at, accepts_cod, response_time, payments, category, district, is_physical, maps_url, lat, lng, whatsapp, call_phone, sample_prices, brand_color, signature, display_font, verified_at, ship_days, return_policy, fb_pixel_id, tiktok_pixel_id").eq("slug", slug).eq("status", "approved").maybeSingle();
   if (!s) return null;
   const { data } = await sb.from("products").select(PRODUCT_COLS).eq("shop_id", s.id).eq("published", true).gt("stock", 0);
   const cards = await toCards((data ?? []) as unknown as ProductRow[]);
@@ -324,11 +326,11 @@ export async function resolveShopSlug(slug: string): Promise<string | null> {
   return (data as string | null) ?? null;
 }
 
-export type DeliveryZone = { id: string; name: string; fee: number; delay: string | null };
+export type DeliveryZone = { id: string; name: string; fee: number; delay: string | null; daysMin: number | null; daysMax: number | null };
 
 /** Zones et frais de livraison d'une boutique (choisis par le vendeur), dans son ordre. */
 export async function getDeliveryZones(shopSlug: string): Promise<DeliveryZone[]> {
   if (!supabaseEnabled) return [];
-  const { data } = await supabasePublic().from("shop_delivery_zones").select("id, name, fee, delay, position, shops!inner(slug)").eq("shops.slug", shopSlug).order("position").order("created_at");
-  return (data ?? []).map((z) => ({ id: z.id, name: z.name, fee: z.fee, delay: z.delay }));
+  const { data } = await supabasePublic().from("shop_delivery_zones").select("id, name, fee, delay, days_min, days_max, position, shops!inner(slug)").eq("shops.slug", shopSlug).order("position").order("created_at");
+  return (data ?? []).map((z) => ({ id: z.id, name: z.name, fee: z.fee, delay: z.delay, daysMin: z.days_min, daysMax: z.days_max }));
 }

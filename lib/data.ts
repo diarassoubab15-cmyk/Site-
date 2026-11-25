@@ -28,6 +28,9 @@ export type Shop = {
   lat?: number;
   lng?: number;
   whatsapp?: string;
+  /** Expédition sous N jours et règle de retour choisies par le vendeur. */
+  shipDays?: number;
+  returnPolicy?: "7j" | "14j" | "echange" | "aucun" | null;
   /** Pixels publicitaires (forfaits Pro et Ultra seulement : vérifié à l'affichage). */
   pixels?: { fb: string | null; tiktok: string | null };
   callPhone?: string;

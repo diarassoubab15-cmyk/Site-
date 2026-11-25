@@ -1071,12 +1071,15 @@ export async function logWhatsAppLead(shopSlug: string, productSlug?: string): P
 
 // ------------------------------------------------------------------ zones et frais de livraison du vendeur
 export const addDeliveryZone = action(
-  z.object({ name: z.string().trim().min(2, "Nom de la zone trop court").max(60), fee: z.number().int().min(0).max(1_000_000), delay: z.string().trim().max(40) }),
-  async ({ name, fee, delay }, { user, sb }) => {
+  z.object({ name: z.string().trim().min(2, "Nom de la zone trop court").max(60), fee: z.number().int().min(0).max(1_000_000), delay: z.string().trim().max(40),
+    daysMin: z.number().int().min(0).max(60).nullable().default(null), daysMax: z.number().int().min(0).max(60).nullable().default(null) }),
+  async ({ name, fee, delay, daysMin, daysMax }, { user, sb }) => {
     const { data: shop } = await sb.from("shops").select("id, slug").eq("owner_id", user.id).neq("status", "closed").maybeSingle();
     if (!shop) return fail("Aucune boutique active");
     const { count } = await sb.from("shop_delivery_zones").select("id", { count: "exact", head: true }).eq("shop_id", shop.id);
-    const { error } = await sb.from("shop_delivery_zones").insert({ shop_id: shop.id, name, fee, delay: delay || null, position: count ?? 0 });
+    const lo = daysMin ?? null;
+    const hi = daysMax == null ? null : lo === null ? daysMax : Math.max(daysMax, lo);
+    const { error } = await sb.from("shop_delivery_zones").insert({ shop_id: shop.id, name, fee, delay: delay || null, position: count ?? 0, days_min: lo, days_max: hi });
     if (error) return dbError(error);
     revalidatePath("/vendeur");
     revalidatePath(`/boutiques/${shop.slug}`);
@@ -1094,12 +1097,12 @@ export const deleteDeliveryZone = action(z.object({ id: z.string().uuid() }), as
 });
 
 /** Zones de la boutique du vendeur connecté (espace vendeur). */
-export async function myDeliveryZones(): Promise<{ id: string; name: string; fee: number; delay: string | null }[]> {
+export async function myDeliveryZones(): Promise<{ id: string; name: string; fee: number; delay: string | null; days_min: number | null; days_max: number | null }[]> {
   const u = await currentUser();
   if (!u) return [];
   const { data: shop } = await u.sb.from("shops").select("id").eq("owner_id", u.user.id).neq("status", "closed").maybeSingle();
   if (!shop) return [];
-  const { data } = await u.sb.from("shop_delivery_zones").select("id, name, fee, delay").eq("shop_id", shop.id).order("position").order("created_at");
+  const { data } = await u.sb.from("shop_delivery_zones").select("id, name, fee, delay, days_min, days_max").eq("shop_id", shop.id).order("position").order("created_at");
   return data ?? [];
 }
 
@@ -1180,6 +1183,19 @@ export const setShopPixels = action(
     if (error) return dbError(error);
     revalidatePath("/vendeur");
     revalidatePath(`/boutiques/${shop.slug}`);
+    revalidatePath("/produits/[slug]", "page");
+    return { ok: true };
+  },
+);
+
+/** Délai d'expédition (jours) et règle de retour de la boutique, affichés sur chaque fiche produit. */
+export const setShopPolicies = action(
+  z.object({ shipDays: z.number().int().min(0).max(30), returnPolicy: z.enum(["7j", "14j", "echange", "aucun"]).nullable() }),
+  async ({ shipDays, returnPolicy }, { user, sb }) => {
+    const { data, error } = await sb.from("shops").update({ ship_days: shipDays, return_policy: returnPolicy }).eq("owner_id", user.id).neq("status", "closed").select("slug").maybeSingle();
+    if (error) return dbError(error);
+    revalidatePath("/vendeur");
+    if (data) revalidatePath(`/boutiques/${data.slug}`);
     revalidatePath("/produits/[slug]", "page");
     return { ok: true };
   },

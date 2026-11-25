@@ -19,6 +19,9 @@ export type DemoOrder = {
   method: PaymentMethodId;
   status: OrderStatus;
   createdAt: string;
+  /** Livraison prévue entre ces deux dates (fixées par la base à la commande). */
+  etaMin?: string | null;
+  etaMax?: string | null;
 };
 export type DemoReview = { id: string; product: string; author: string; rating: number; title: string; body: string; date: string };
 export type SellerStatus = "en attente" | "autorisé" | "suspendu" | "refusé" | "fermé";

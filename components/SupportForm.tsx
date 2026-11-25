@@ -14,7 +14,7 @@ const kinds: { id: Ticket["kind"]; label: string; anchor: string }[] = [
   { id: "remboursement", label: "Produit non reçu / remboursement", anchor: "remboursement" },
 ];
 
-export function SupportForm({ shop, known: liveKnown }: { shop?: string; known?: KnownUser | null }) {
+export function SupportForm({ shop, order, known: liveKnown }: { shop?: string; order?: string; known?: KnownUser | null }) {
   const demo = useDemo();
   const router = useRouter();
   const [pending, start] = useTransition();
@@ -31,7 +31,8 @@ export function SupportForm({ shop, known: liveKnown }: { shop?: string; known?:
     return () => window.removeEventListener("hashchange", sync);
   }, []);
   const [contact, setContact] = useState({ name: "", email: "" });
-  const [orderId, setOrderId] = useState("");
+  // Commande déjà choisie depuis « Signaler le retard » / « Pas reçu ».
+  const [orderId, setOrderId] = useState(order && /^[0-9a-fA-F-]{6,40}$/.test(order) ? order : "");
   const [shopName, setShopName] = useState(shop ?? "");
   const [message, setMessage] = useState("");
   const [sent, setSent] = useState<string | null>(null);

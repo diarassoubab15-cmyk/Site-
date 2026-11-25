@@ -76,6 +76,7 @@ export async function loadAccount(): Promise<LiveAccount | null> {
     orders: (orders ?? []).map((o) => ({
       id: o.ref, uuid: o.id, product: o.product_slug ?? "", productName: o.product_name ?? "Produit retiré", shop: o.shop_name ?? "",
       qty: o.qty, total: o.total, method: o.method as PaymentMethodId, status: orderStatusFr[o.status], createdAt: o.created_at.slice(0, 10),
+      etaMin: o.eta_min, etaMax: o.eta_max,
     })),
     tickets: (tickets ?? []).map(ticketView),
     prefs,
@@ -133,6 +134,7 @@ export async function loadSeller(): Promise<LiveSeller | null> {
     orders: (orders ?? []).map((o) => ({
       id: o.ref, uuid: o.id, product: o.product_slug ?? "", productName: o.product_name ?? "", shop: o.shop_name ?? "", qty: o.qty, total: o.total,
       method: o.method as PaymentMethodId, status: orderStatusFr[o.status], createdAt: o.created_at.slice(0, 10),
+      etaMin: o.eta_min, etaMax: o.eta_max,
       buyer: o.shipping_name, phone: o.shipping_phone,
       // Adresse à la malienne pour le livreur : quartier, ville, point de repère, zone choisie.
       city: [o.shipping_district, o.shipping_city].filter(Boolean).join(", ") + (o.shipping_landmark ? ` · repère : ${o.shipping_landmark}` : "") + (o.delivery_zone ? ` · livraison ${o.delivery_zone}${o.delivery_fee ? ` (${o.delivery_fee.toLocaleString("fr-FR")} F)` : ""}` : ""),
@@ -315,7 +317,7 @@ export type ShopProfile = {
   slug: string; name: string; category: string; city: string; country: string; district: string; isPhysical: boolean; mapsUrl: string;
   whatsapp: string; callPhone: string; samples: { name: string; price: number }[];
   brandColor: string | null; signature: string | null; displayFont: string | null; tier: "essentiel" | "pro" | "business" | null;
-  fbPixel: string; tiktokPixel: string;
+  fbPixel: string; tiktokPixel: string; shipDays: number; returnPolicy: string | null;
   /** Boutique autorisée (en ligne) : son lien fonctionne pour les clients. */
   approved: boolean;
 };
@@ -324,14 +326,14 @@ export async function loadShopProfile(): Promise<ShopProfile | null> {
   if (!u) return null;
   const { data: s } = await u.sb
     .from("shops")
-    .select("id, slug, name, status, category, city, country, district, is_physical, maps_url, whatsapp, call_phone, sample_prices, brand_color, signature, display_font, fb_pixel_id, tiktok_pixel_id")
+    .select("id, slug, name, status, category, city, country, district, is_physical, maps_url, whatsapp, call_phone, sample_prices, brand_color, signature, display_font, fb_pixel_id, tiktok_pixel_id, ship_days, return_policy")
     .eq("owner_id", u.user.id)
     .neq("status", "closed")
     .maybeSingle();
   if (!s) return null;
   const { data: sub } = await u.sb.from("subscriptions").select("plan").eq("shop_id", s.id).maybeSingle();
   return {
-    fbPixel: s.fb_pixel_id ?? "", tiktokPixel: s.tiktok_pixel_id ?? "",
+    fbPixel: s.fb_pixel_id ?? "", tiktokPixel: s.tiktok_pixel_id ?? "", shipDays: s.ship_days ?? 2, returnPolicy: s.return_policy ?? null,
     brandColor: s.brand_color, signature: s.signature, displayFont: s.display_font, tier: sub?.plan === "decouverte" ? "essentiel" : (sub?.plan as ShopProfile["tier"]) ?? null,
     approved: s.status === "approved",
     slug: s.slug, name: s.name, category: s.category, city: s.city, country: s.country, district: s.district ?? "", isPhysical: s.is_physical, mapsUrl: s.maps_url ?? "",
