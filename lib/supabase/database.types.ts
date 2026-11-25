@@ -89,14 +89,14 @@ isOneToOne: true
                   ]
                 },"orders": {
                   Row: {
-                    "buyer_id": string | null,"created_at": string,"buyer_confirmed_at": string | null,"cash_collected_at": string | null,"cash_settled_at": string | null,"confirm_token": string | null,"courier_id": string | null,"courier_token": string | null,"refused_at": string | null,"delivery_fee": number,"delivery_zone": string | null,"delivery_zone_id": string | null,"shipping_district": string | null,"shipping_landmark": string | null,"id": string,"method": Database["public"]['Enums']["payment_method"],"product_id": string | null,"product_name": string | null,"product_slug": string | null,"qty": number,"ref": string,"shipping_city": string,"shipping_name": string,"shipping_phone": string,"shop_id": string | null,"shop_name": string | null,"status": Database["public"]['Enums']["order_status"],"total": number,"updated_at": string
+                    "card_tx_id": string | null,"shipped_at": string | null,"delivered_at": string | null,"buyer_id": string | null,"created_at": string,"buyer_confirmed_at": string | null,"cash_collected_at": string | null,"cash_settled_at": string | null,"confirm_token": string | null,"courier_id": string | null,"courier_token": string | null,"refused_at": string | null,"delivery_fee": number,"delivery_zone": string | null,"delivery_zone_id": string | null,"shipping_district": string | null,"shipping_landmark": string | null,"id": string,"method": Database["public"]['Enums']["payment_method"],"product_id": string | null,"product_name": string | null,"product_slug": string | null,"qty": number,"ref": string,"shipping_city": string,"shipping_name": string,"shipping_phone": string,"shop_id": string | null,"shop_name": string | null,"status": Database["public"]['Enums']["order_status"],"total": number,"updated_at": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "buyer_id"?: string | null,"created_at"?: string,"buyer_confirmed_at"?: string | null,"cash_collected_at"?: string | null,"cash_settled_at"?: string | null,"confirm_token"?: string | null,"courier_id"?: string | null,"courier_token"?: string | null,"refused_at"?: string | null,"delivery_fee"?: number,"delivery_zone"?: string | null,"delivery_zone_id"?: string | null,"shipping_district"?: string | null,"shipping_landmark"?: string | null,"id"?: string,"method": Database["public"]['Enums']["payment_method"],"product_id"?: string | null,"product_name"?: string | null,"product_slug"?: string | null,"qty": number,"ref"?: string,"shipping_city": string,"shipping_name": string,"shipping_phone": string,"shop_id"?: string | null,"shop_name"?: string | null,"status"?: Database["public"]['Enums']["order_status"],"total": number,"updated_at"?: string
+                    "card_tx_id"?: string | null,"shipped_at"?: string | null,"delivered_at"?: string | null,"buyer_id"?: string | null,"created_at"?: string,"buyer_confirmed_at"?: string | null,"cash_collected_at"?: string | null,"cash_settled_at"?: string | null,"confirm_token"?: string | null,"courier_id"?: string | null,"courier_token"?: string | null,"refused_at"?: string | null,"delivery_fee"?: number,"delivery_zone"?: string | null,"delivery_zone_id"?: string | null,"shipping_district"?: string | null,"shipping_landmark"?: string | null,"id"?: string,"method": Database["public"]['Enums']["payment_method"],"product_id"?: string | null,"product_name"?: string | null,"product_slug"?: string | null,"qty": number,"ref"?: string,"shipping_city": string,"shipping_name": string,"shipping_phone": string,"shop_id"?: string | null,"shop_name"?: string | null,"status"?: Database["public"]['Enums']["order_status"],"total": number,"updated_at"?: string
                   }
                   Update: {
-                    "buyer_id"?: string | null,"created_at"?: string,"buyer_confirmed_at"?: string | null,"cash_collected_at"?: string | null,"cash_settled_at"?: string | null,"confirm_token"?: string | null,"courier_id"?: string | null,"courier_token"?: string | null,"refused_at"?: string | null,"delivery_fee"?: number,"delivery_zone"?: string | null,"delivery_zone_id"?: string | null,"shipping_district"?: string | null,"shipping_landmark"?: string | null,"id"?: string,"method"?: Database["public"]['Enums']["payment_method"],"product_id"?: string | null,"product_name"?: string | null,"product_slug"?: string | null,"qty"?: number,"ref"?: string,"shipping_city"?: string,"shipping_name"?: string,"shipping_phone"?: string,"shop_id"?: string | null,"shop_name"?: string | null,"status"?: Database["public"]['Enums']["order_status"],"total"?: number,"updated_at"?: string
+                    "card_tx_id"?: string | null,"shipped_at"?: string | null,"delivered_at"?: string | null,"buyer_id"?: string | null,"created_at"?: string,"buyer_confirmed_at"?: string | null,"cash_collected_at"?: string | null,"cash_settled_at"?: string | null,"confirm_token"?: string | null,"courier_id"?: string | null,"courier_token"?: string | null,"refused_at"?: string | null,"delivery_fee"?: number,"delivery_zone"?: string | null,"delivery_zone_id"?: string | null,"shipping_district"?: string | null,"shipping_landmark"?: string | null,"id"?: string,"method"?: Database["public"]['Enums']["payment_method"],"product_id"?: string | null,"product_name"?: string | null,"product_slug"?: string | null,"qty"?: number,"ref"?: string,"shipping_city"?: string,"shipping_name"?: string,"shipping_phone"?: string,"shop_id"?: string | null,"shop_name"?: string | null,"status"?: Database["public"]['Enums']["order_status"],"total"?: number,"updated_at"?: string
                   }
                   Relationships: [
                     {
@@ -199,14 +199,14 @@ isOneToOne: false
                   ]
                 },"products": {
                   Row: {
-                    "category": string,"compare_at": number | null,"created_at": string,"description": string | null,"glyph": string,"id": string,"images": (string)[],"name": string,"price": number,"price_unit": string | null,"published": boolean,"shop_id": string,"short": string | null,"slug": string,"specs": NonNullable<Json>,"stock": number,"subcategory": string | null,"tone": string,"updated_at": string,"wholesale_min": number | null,"wholesale_price": number | null
+                    "made_in_mali": boolean,"handmade": boolean,"category": string,"compare_at": number | null,"created_at": string,"description": string | null,"glyph": string,"id": string,"images": (string)[],"name": string,"price": number,"price_unit": string | null,"published": boolean,"shop_id": string,"short": string | null,"slug": string,"specs": NonNullable<Json>,"stock": number,"subcategory": string | null,"tone": string,"updated_at": string,"wholesale_min": number | null,"wholesale_price": number | null
                   }
                   ComputedFields: never
                   Insert: {
-                    "category": string,"compare_at"?: number | null,"created_at"?: string,"description"?: string | null,"glyph"?: string,"id"?: string,"images"?: (string)[],"name": string,"price": number,"price_unit"?: string | null,"published"?: boolean,"shop_id": string,"short"?: string | null,"slug": string,"specs"?: NonNullable<Json>,"stock"?: number,"subcategory"?: string | null,"tone"?: string,"updated_at"?: string,"wholesale_min"?: number | null,"wholesale_price"?: number | null
+                    "made_in_mali"?: boolean,"handmade"?: boolean,"category": string,"compare_at"?: number | null,"created_at"?: string,"description"?: string | null,"glyph"?: string,"id"?: string,"images"?: (string)[],"name": string,"price": number,"price_unit"?: string | null,"published"?: boolean,"shop_id": string,"short"?: string | null,"slug": string,"specs"?: NonNullable<Json>,"stock"?: number,"subcategory"?: string | null,"tone"?: string,"updated_at"?: string,"wholesale_min"?: number | null,"wholesale_price"?: number | null
                   }
                   Update: {
-                    "category"?: string,"compare_at"?: number | null,"created_at"?: string,"description"?: string | null,"glyph"?: string,"id"?: string,"images"?: (string)[],"name"?: string,"price"?: number,"price_unit"?: string | null,"published"?: boolean,"shop_id"?: string,"short"?: string | null,"slug"?: string,"specs"?: NonNullable<Json>,"stock"?: number,"subcategory"?: string | null,"tone"?: string,"updated_at"?: string,"wholesale_min"?: number | null,"wholesale_price"?: number | null
+                    "made_in_mali"?: boolean,"handmade"?: boolean,"category"?: string,"compare_at"?: number | null,"created_at"?: string,"description"?: string | null,"glyph"?: string,"id"?: string,"images"?: (string)[],"name"?: string,"price"?: number,"price_unit"?: string | null,"published"?: boolean,"shop_id"?: string,"short"?: string | null,"slug"?: string,"specs"?: NonNullable<Json>,"stock"?: number,"subcategory"?: string | null,"tone"?: string,"updated_at"?: string,"wholesale_min"?: number | null,"wholesale_price"?: number | null
                   }
                   Relationships: [
                     {
@@ -233,14 +233,14 @@ isOneToOne: false
                   ]
                 },"reviews": {
                   Row: {
-                    "author_city": string | null,"author_id": string,"author_name": string | null,"body": string,"created_at": string,"id": string,"order_id": string,"product_id": string,"rating": number,"seller_reply": string | null,"title": string
+                    "photos": string[],"author_city": string | null,"author_id": string,"author_name": string | null,"body": string,"created_at": string,"id": string,"order_id": string,"product_id": string,"rating": number,"seller_reply": string | null,"title": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "author_city"?: string | null,"author_id": string,"author_name"?: string | null,"body": string,"created_at"?: string,"id"?: string,"order_id": string,"product_id": string,"rating": number,"seller_reply"?: string | null,"title": string
+                    "photos"?: string[],"author_city"?: string | null,"author_id": string,"author_name"?: string | null,"body": string,"created_at"?: string,"id"?: string,"order_id": string,"product_id": string,"rating": number,"seller_reply"?: string | null,"title": string
                   }
                   Update: {
-                    "author_city"?: string | null,"author_id"?: string,"author_name"?: string | null,"body"?: string,"created_at"?: string,"id"?: string,"order_id"?: string,"product_id"?: string,"rating"?: number,"seller_reply"?: string | null,"title"?: string
+                    "photos"?: string[],"author_city"?: string | null,"author_id"?: string,"author_name"?: string | null,"body"?: string,"created_at"?: string,"id"?: string,"order_id"?: string,"product_id"?: string,"rating"?: number,"seller_reply"?: string | null,"title"?: string
                   }
                   Relationships: [
                     {
@@ -327,14 +327,14 @@ isOneToOne: false
                   Relationships: []
                 },"shop_delivery_zones": {
                   Row: {
-                    "created_at": string,"delay": string | null,"fee": number,"id": string,"name": string,"position": number,"shop_id": string
+                    "days_min": number | null,"days_max": number | null,"created_at": string,"delay": string | null,"fee": number,"id": string,"name": string,"position": number,"shop_id": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "created_at"?: string,"delay"?: string | null,"fee"?: number,"id"?: string,"name": string,"position"?: number,"shop_id": string
+                    "days_min"?: number | null,"days_max"?: number | null,"created_at"?: string,"delay"?: string | null,"fee"?: number,"id"?: string,"name": string,"position"?: number,"shop_id": string
                   }
                   Update: {
-                    "created_at"?: string,"delay"?: string | null,"fee"?: number,"id"?: string,"name"?: string,"position"?: number,"shop_id"?: string
+                    "days_min"?: number | null,"days_max"?: number | null,"created_at"?: string,"delay"?: string | null,"fee"?: number,"id"?: string,"name"?: string,"position"?: number,"shop_id"?: string
                   }
                   Relationships: []
                 },"shop_couriers": {
@@ -371,14 +371,14 @@ isOneToOne: false
                   ]
                 },"shops": {
                   Row: {
-                    "accepts_cod": boolean,"brand_color": string | null,"call_phone": string | null,"category": string,"city": string,"contact_email": string | null,"contact_phone": string | null,"country": string,"created_at": string,"description": string | null,"display_font": string | null,"district": string | null,"id": string,"is_physical": boolean,"lat": number | null,"lng": number | null,"maps_url": string | null,"name": string,"owner_id": string,"owner_name": string | null,"payments": (Database["public"]['Enums']["payment_method"])[],"response_time": string,"sample_prices": NonNullable<Json>,"signature": string | null,"slug": string,"status": Database["public"]['Enums']["shop_status"],"status_changed_at": string | null,"status_reason": string | null,"fb_pixel_id": string | null,"tiktok_pixel_id": string | null,"verified_at": string | null,"whatsapp": string | null
+                    "ship_days": number,"return_policy": string | null,"accepts_cod": boolean,"brand_color": string | null,"call_phone": string | null,"category": string,"city": string,"contact_email": string | null,"contact_phone": string | null,"country": string,"created_at": string,"description": string | null,"display_font": string | null,"district": string | null,"id": string,"is_physical": boolean,"lat": number | null,"lng": number | null,"maps_url": string | null,"name": string,"owner_id": string,"owner_name": string | null,"payments": (Database["public"]['Enums']["payment_method"])[],"response_time": string,"sample_prices": NonNullable<Json>,"signature": string | null,"slug": string,"status": Database["public"]['Enums']["shop_status"],"status_changed_at": string | null,"status_reason": string | null,"fb_pixel_id": string | null,"tiktok_pixel_id": string | null,"verified_at": string | null,"whatsapp": string | null
                   }
                   ComputedFields: never
                   Insert: {
-                    "accepts_cod"?: boolean,"brand_color"?: string | null,"call_phone"?: string | null,"category": string,"city": string,"contact_email"?: string | null,"contact_phone"?: string | null,"country": string,"created_at"?: string,"description"?: string | null,"display_font"?: string | null,"district"?: string | null,"id"?: string,"is_physical"?: boolean,"lat"?: number | null,"lng"?: number | null,"maps_url"?: string | null,"name": string,"owner_id": string,"owner_name"?: string | null,"payments"?: (Database["public"]['Enums']["payment_method"])[],"response_time"?: string,"sample_prices"?: NonNullable<Json>,"signature"?: string | null,"slug": string,"status"?: Database["public"]['Enums']["shop_status"],"status_changed_at"?: string | null,"status_reason"?: string | null,"fb_pixel_id"?: string | null,"tiktok_pixel_id"?: string | null,"verified_at"?: string | null,"whatsapp"?: string | null
+                    "ship_days"?: number,"return_policy"?: string | null,"accepts_cod"?: boolean,"brand_color"?: string | null,"call_phone"?: string | null,"category": string,"city": string,"contact_email"?: string | null,"contact_phone"?: string | null,"country": string,"created_at"?: string,"description"?: string | null,"display_font"?: string | null,"district"?: string | null,"id"?: string,"is_physical"?: boolean,"lat"?: number | null,"lng"?: number | null,"maps_url"?: string | null,"name": string,"owner_id": string,"owner_name"?: string | null,"payments"?: (Database["public"]['Enums']["payment_method"])[],"response_time"?: string,"sample_prices"?: NonNullable<Json>,"signature"?: string | null,"slug": string,"status"?: Database["public"]['Enums']["shop_status"],"status_changed_at"?: string | null,"status_reason"?: string | null,"fb_pixel_id"?: string | null,"tiktok_pixel_id"?: string | null,"verified_at"?: string | null,"whatsapp"?: string | null
                   }
                   Update: {
-                    "accepts_cod"?: boolean,"brand_color"?: string | null,"call_phone"?: string | null,"category"?: string,"city"?: string,"contact_email"?: string | null,"contact_phone"?: string | null,"country"?: string,"created_at"?: string,"description"?: string | null,"display_font"?: string | null,"district"?: string | null,"id"?: string,"is_physical"?: boolean,"lat"?: number | null,"lng"?: number | null,"maps_url"?: string | null,"name"?: string,"owner_id"?: string,"owner_name"?: string | null,"payments"?: (Database["public"]['Enums']["payment_method"])[],"response_time"?: string,"sample_prices"?: NonNullable<Json>,"signature"?: string | null,"slug"?: string,"status"?: Database["public"]['Enums']["shop_status"],"status_changed_at"?: string | null,"status_reason"?: string | null,"fb_pixel_id"?: string | null,"tiktok_pixel_id"?: string | null,"verified_at"?: string | null,"whatsapp"?: string | null
+                    "ship_days"?: number,"return_policy"?: string | null,"accepts_cod"?: boolean,"brand_color"?: string | null,"call_phone"?: string | null,"category"?: string,"city"?: string,"contact_email"?: string | null,"contact_phone"?: string | null,"country"?: string,"created_at"?: string,"description"?: string | null,"display_font"?: string | null,"district"?: string | null,"id"?: string,"is_physical"?: boolean,"lat"?: number | null,"lng"?: number | null,"maps_url"?: string | null,"name"?: string,"owner_id"?: string,"owner_name"?: string | null,"payments"?: (Database["public"]['Enums']["payment_method"])[],"response_time"?: string,"sample_prices"?: NonNullable<Json>,"signature"?: string | null,"slug"?: string,"status"?: Database["public"]['Enums']["shop_status"],"status_changed_at"?: string | null,"status_reason"?: string | null,"fb_pixel_id"?: string | null,"tiktok_pixel_id"?: string | null,"verified_at"?: string | null,"whatsapp"?: string | null
                   }
                   Relationships: [
                     {
@@ -431,14 +431,14 @@ isOneToOne: true
                   ]
                 },"tickets": {
                   Row: {
-                    "author_id": string | null,"created_at": string,"id": string,"kind": Database["public"]['Enums']["ticket_kind"],"message": string,"order_id": string | null,"order_ref": string | null,"seller_deadline": string | null,"shop_id": string | null,"shop_name": string | null,"status": Database["public"]['Enums']["ticket_status"]
+                    "photos": string[],"author_id": string | null,"created_at": string,"id": string,"kind": Database["public"]['Enums']["ticket_kind"],"message": string,"order_id": string | null,"order_ref": string | null,"seller_deadline": string | null,"shop_id": string | null,"shop_name": string | null,"status": Database["public"]['Enums']["ticket_status"]
                   }
                   ComputedFields: never
                   Insert: {
-                    "author_id"?: string | null,"created_at"?: string,"id"?: string,"kind": Database["public"]['Enums']["ticket_kind"],"message": string,"order_id"?: string | null,"order_ref"?: string | null,"seller_deadline"?: string | null,"shop_id"?: string | null,"shop_name"?: string | null,"status"?: Database["public"]['Enums']["ticket_status"]
+                    "photos"?: string[],"author_id"?: string | null,"created_at"?: string,"id"?: string,"kind": Database["public"]['Enums']["ticket_kind"],"message": string,"order_id"?: string | null,"order_ref"?: string | null,"seller_deadline"?: string | null,"shop_id"?: string | null,"shop_name"?: string | null,"status"?: Database["public"]['Enums']["ticket_status"]
                   }
                   Update: {
-                    "author_id"?: string | null,"created_at"?: string,"id"?: string,"kind"?: Database["public"]['Enums']["ticket_kind"],"message"?: string,"order_id"?: string | null,"order_ref"?: string | null,"seller_deadline"?: string | null,"shop_id"?: string | null,"shop_name"?: string | null,"status"?: Database["public"]['Enums']["ticket_status"]
+                    "photos"?: string[],"author_id"?: string | null,"created_at"?: string,"id"?: string,"kind"?: Database["public"]['Enums']["ticket_kind"],"message"?: string,"order_id"?: string | null,"order_ref"?: string | null,"seller_deadline"?: string | null,"shop_id"?: string | null,"shop_name"?: string | null,"status"?: Database["public"]['Enums']["ticket_status"]
                   }
                   Relationships: [
                     {
@@ -563,6 +563,9 @@ isOneToOne: false
                            },
 "seller_order_refusals":
 { Args: Record<PropertyKey, never>; Returns: { "order_id": string,"refusals": number }[]
+                           },
+"shop_reliability":
+{ Args: { "p_slug": string }; Returns: { "orders": number,"on_time_pct": number | null,"delivered_pct": number | null,"refused": number,"disputes": number,"reply_pct": number | null }[]
                            },
 "admin_shop_contacts":
 { Args: Record<PropertyKey, never>; Returns: {

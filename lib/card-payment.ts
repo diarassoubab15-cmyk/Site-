@@ -16,9 +16,31 @@ type FedaTx = { id: number; status: string; amount: number; merchant_reference?:
 // FedaPay renvoie l'objet sous la clé « v1/transaction ».
 const txOf = (json: Record<string, unknown>) => (json["v1/transaction"] ?? json.transaction) as FedaTx | undefined;
 
-export async function startCardPayment(o: { ref: string; amount: number; description: string; returnUrl: string }): Promise<{ ok: true; url: string } | { ok: false; error: string }> {
+/** Lien de paiement d'une transaction existante (nouveau jeton, même transaction : jamais de second débit). */
+async function linkFor(txId: number | string): Promise<string | null> {
+  const tok = await fetch(`${base()}/transactions/${txId}/token`, { method: "POST", headers: headers(), body: "{}", signal: AbortSignal.timeout(20_000) });
+  const t = (await tok.json().catch(() => ({}))) as { url?: string };
+  return tok.ok && t.url?.startsWith("https://") ? t.url : null;
+}
+
+/**
+ * Ouvre le paiement par carte d'une commande. Si une transaction existe déjà pour cette commande
+ * (client qui revient, page rechargée, double toucher), on la REPREND au lieu d'en créer une seconde :
+ * c'est ce qui évite le double débit reproché à d'autres plateformes.
+ */
+export async function startCardPayment(o: { ref: string; amount: number; description: string; returnUrl: string; existingTxId?: string | null }):
+  Promise<{ ok: true; url: string; txId: string } | { ok: false; error: string; alreadyPaid?: boolean }> {
   if (!cardPaymentReady()) return { ok: false, error: "Le paiement par carte sera bientôt disponible. Choisissez Orange Money, Wave ou le paiement à la livraison." };
   try {
+    if (o.existingTxId) {
+      const prev = await confirmCardPayment(o.existingTxId);
+      if (prev?.status === "completed") return { ok: false, error: "Cette commande est déjà payée.", alreadyPaid: true };
+      if (prev && ["pending", "created"].includes(prev.status)) {
+        const url = await linkFor(o.existingTxId);
+        if (url) return { ok: true, url, txId: o.existingTxId };
+      }
+      // Transaction annulée, refusée ou expirée : on en ouvre une nouvelle (rien n'a été débité).
+    }
     const res = await fetch(`${base()}/transactions`, {
       method: "POST",
       headers: headers(),
@@ -27,7 +49,8 @@ export async function startCardPayment(o: { ref: string; amount: number; descrip
         amount: o.amount,
         currency: { iso: "XOF" },
         callback_url: o.returnUrl,
-        merchant_reference: o.ref,
+        // Référence unique par tentative (la commande reste dans custom_metadata.ref).
+        merchant_reference: `${o.ref}-${Date.now().toString(36)}`,
         custom_metadata: { ref: o.ref },
       }),
       signal: AbortSignal.timeout(20_000),
@@ -37,10 +60,9 @@ export async function startCardPayment(o: { ref: string; amount: number; descrip
       console.error("FedaPay : création refusée", res.status);
       return { ok: false, error: "Paiement par carte indisponible pour le moment. Réessayez ou choisissez un autre moyen." };
     }
-    const tok = await fetch(`${base()}/transactions/${tx.id}/token`, { method: "POST", headers: headers(), body: "{}", signal: AbortSignal.timeout(20_000) });
-    const t = (await tok.json()) as { token?: string; url?: string };
-    if (tok.ok && t.url?.startsWith("https://")) return { ok: true, url: t.url };
-    console.error("FedaPay : lien de paiement refusé", tok.status);
+    const url = await linkFor(tx.id);
+    if (url) return { ok: true, url, txId: String(tx.id) };
+    console.error("FedaPay : lien de paiement refusé");
     return { ok: false, error: "Paiement par carte indisponible pour le moment. Réessayez dans un instant." };
   } catch (e) {
     console.error("FedaPay injoignable", (e as Error).message);
@@ -58,6 +80,6 @@ export async function confirmCardPayment(id: string): Promise<{ status: string; 
     if (!tx) return null;
     // « approved » = payé (FedaPay considère aussi « transferred » comme payé).
     const paid = ["approved", "transferred", "approved_partially_refunded", "transferred_partially_refunded"].includes(tx.status);
-    return { status: paid ? "completed" : tx.status, ref: tx.merchant_reference ?? tx.custom_metadata?.ref ?? null, amount: Number(tx.amount ?? 0) };
+    return { status: paid ? "completed" : tx.status, ref: tx.custom_metadata?.ref ?? tx.merchant_reference?.replace(/-[a-z0-9]+$/, "") ?? null, amount: Number(tx.amount ?? 0) };
   } catch { return null; }
 }

@@ -998,7 +998,7 @@ export async function getOrderPayInfo(ref: string): Promise<OrderPayInfo | null>
 export async function payOrderByCard(ref: string): Promise<ActionResult<string>> {
   const u = await currentUser();
   if (!u) return fail("Connectez-vous pour payer.", true);
-  const { data: o } = await u.sb.from("orders").select("ref, total, method, status, product_name, shop_name")
+  const { data: o } = await u.sb.from("orders").select("id, ref, total, method, status, product_name, shop_name, card_tx_id")
     .eq("ref", ref).eq("buyer_id", u.user.id).maybeSingle();
   if (!o || o.method !== "card") return fail("Commande introuvable");
   if (o.status !== "pending_payment") return fail("Cette commande est déjà payée.");
@@ -1010,8 +1010,15 @@ export async function payOrderByCard(ref: string): Promise<ActionResult<string>>
     ref: o.ref, amount: o.total, description: `${o.product_name ?? "Commande"} - ${o.shop_name ?? "NEXORA"} (réf. ${o.ref})`,
     // FedaPay ajoute ?id=…&status=… à cette adresse au retour du client.
     returnUrl: `${base}/compte?paiement=${encodeURIComponent(o.ref)}`,
+    existingTxId: o.card_tx_id,
   });
-  return r.ok ? { ok: true, data: r.url } : fail(r.error);
+  if (!r.ok) {
+    if (r.alreadyPaid && o.card_tx_id) await (await import("@/lib/card-settle")).settleCardPayment(o.card_tx_id);
+    return fail(r.error);
+  }
+  // Transaction mémorisée (par le serveur seul) : un nouveau toucher reprendra la même.
+  if (r.txId !== o.card_tx_id) await supabaseService().from("orders").update({ card_tx_id: r.txId }).eq("id", o.id);
+  return { ok: true, data: r.url };
 }
 
 /** Le paiement par carte est-il branché ? (pour l'afficher comme disponible ou « bientôt »). */
