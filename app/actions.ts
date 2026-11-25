@@ -504,6 +504,8 @@ const productSchema = z.object({
   wholesaleMin: z.number().int().min(2).nullable(),
   wholesalePrice: z.number().int().positive().nullable(),
   published: z.boolean(),
+  madeInMali: z.boolean(),
+  handmade: z.boolean(),
 });
 
 async function myApprovedShop(sb: Awaited<ReturnType<typeof requireUser>>["sb"], userId: string) {
@@ -519,6 +521,7 @@ export const saveProduct = action<z.infer<typeof productSchema>, { id: string; s
   const row = {
     name: p.name, category: p.category, subcategory: p.category === "electronique" ? p.subcategory ?? null : null, price: p.price, price_unit: p.priceUnit, compare_at: p.compareAt, stock: p.stock,
     short: p.short || null, description: p.description || null, specs: p.specs, wholesale_min: p.wholesaleMin, wholesale_price: p.wholesalePrice, published: p.published,
+    made_in_mali: p.category !== "immobilier" && p.madeInMali, handmade: p.category !== "immobilier" && p.handmade,
   };
   if (p.id) {
     const { data, error } = await sb.from("products").update(row).eq("id", p.id).eq("shop_id", shop.id).select("id, slug").single();

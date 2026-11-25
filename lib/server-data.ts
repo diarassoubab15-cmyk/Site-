@@ -255,7 +255,7 @@ export type SellerProductMedia = { id: string; kind: "photo" | "pano" | "spin" |
 export type SellerProduct = {
   id: string; slug: string; name: string; category: string; subcategory: string | null; price: number; priceUnit: "mois" | "nuit" | "jour" | null; compareAt: number | null;
   stock: number; short: string; description: string; specs: [string, string][]; wholesaleMin: number | null; wholesalePrice: number | null;
-  published: boolean; media: SellerProductMedia[];
+  published: boolean; madeInMali: boolean; handmade: boolean; media: SellerProductMedia[];
 };
 
 const productMediaUrl = (path: string) => `${(process.env.NEXT_PUBLIC_SUPABASE_URL ?? "").replace(/\/$/, "")}/storage/v1/object/public/product-media/${path}`;
@@ -268,7 +268,7 @@ export async function loadSellerProducts(): Promise<{ shop: { id: string; status
   if (!shop) return { shop: null, products: [] };
   const { data } = await u.sb
     .from("products")
-    .select("id, slug, name, category, subcategory, price, price_unit, compare_at, stock, short, description, specs, wholesale_min, wholesale_price, published, product_media(id, kind, path, label, position, ai_generated, status)")
+    .select("id, slug, name, category, subcategory, price, price_unit, compare_at, stock, short, description, specs, wholesale_min, wholesale_price, published, made_in_mali, handmade, product_media(id, kind, path, label, position, ai_generated, status)")
     .eq("shop_id", shop.id)
     .order("created_at", { ascending: false });
   return {
@@ -276,7 +276,7 @@ export async function loadSellerProducts(): Promise<{ shop: { id: string; status
     products: (data ?? []).map((p) => ({
       id: p.id, slug: p.slug, name: p.name, category: p.category, subcategory: p.subcategory, price: p.price, priceUnit: p.price_unit as SellerProduct["priceUnit"], compareAt: p.compare_at,
       stock: p.stock, short: p.short ?? "", description: p.description ?? "", specs: Array.isArray(p.specs) ? (p.specs as [string, string][]) : [],
-      wholesaleMin: p.wholesale_min, wholesalePrice: p.wholesale_price, published: p.published,
+      wholesaleMin: p.wholesale_min, wholesalePrice: p.wholesale_price, published: p.published, madeInMali: p.made_in_mali, handmade: p.handmade,
       media: (p.product_media ?? [])
         .map((m) => ({ id: m.id, kind: m.kind, url: productMediaUrl(m.path), label: m.label, position: m.position, aiGenerated: m.ai_generated, status: m.status }))
         .sort((a, b) => a.position - b.position),

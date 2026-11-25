@@ -21,6 +21,7 @@ export function Footer() {
           ))}
           <Link href="/trouver" className="block text-ash hover:text-white">Assistant d&apos;achat</Link>
           <Link href="/amenager" className="block text-ash hover:text-white">Aménager ma maison</Link>
+          <Link href="/artisans" className="block text-ash hover:text-white">Artisans du Mali</Link>
         </nav>
         <nav aria-label="Vendeurs" className="space-y-2 text-sm">
           <p className="mb-3 font-mono text-xs uppercase tracking-widest text-iron">Vendre</p>

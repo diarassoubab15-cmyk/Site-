@@ -81,6 +81,12 @@ export default async function ProductPage({ params }: Props) {
         <div className="space-y-6 lg:col-start-2 lg:row-span-2 lg:row-start-1 lg:sticky lg:top-24 lg:self-start">
           <div>
             <h1 className="text-3xl font-medium tracking-tight text-white sm:text-4xl">{product.name}</h1>
+            {(product.madeInMali || product.handmade) && (
+              <p className="mt-2 flex flex-wrap gap-1.5 text-xs">
+                {product.madeInMali && <Link href="/artisans" className="rounded-full bg-[#e9f8ef] px-2.5 py-1 text-[#0f6b3f]">🇲🇱 Fabriqué au Mali</Link>}
+                {product.handmade && <Link href="/artisans" className="rounded-full bg-[#fff6e5] px-2.5 py-1 text-[#8a5a00]">✋ Fait main</Link>}
+              </p>
+            )}
             <p className="mt-3 text-ash">{product.short}</p>
             {rating.count > 0 && (
               <a href="#avis" className="mt-3 flex items-center gap-2 text-sm text-ash hover:text-white">

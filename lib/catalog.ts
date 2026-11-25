@@ -27,7 +27,7 @@ type ShopRow = {
 type ProductRow = {
   id: string; slug: string; name: string; short: string | null; description: string | null; category: string; price: number;
   compare_at: number | null; stock: number; wholesale_min: number | null; wholesale_price: number | null; specs: unknown; glyph: string; tone: string;
-  price_unit: string | null; subcategory?: string | null; product_media?: { path: string; kind: string; position: number; label: string | null; status: string }[];
+  price_unit: string | null; subcategory?: string | null; made_in_mali?: boolean; handmade?: boolean; product_media?: { path: string; kind: string; position: number; label: string | null; status: string }[];
   shops: ShopRow;
 };
 
@@ -66,6 +66,8 @@ const toProduct = (p: ProductRow): Product => ({
   shop: p.shops.slug,
   category: p.category,
   subcategory: p.subcategory ?? undefined,
+  madeInMali: p.made_in_mali || undefined,
+  handmade: p.handmade || undefined,
   price: p.price,
   compareAt: p.compare_at ?? undefined,
   stock: p.stock,
@@ -86,7 +88,7 @@ const media = (p: ProductRow, kind: string) =>
 /** Adresse publique d'un fichier du stockage « product-media ». */
 export const mediaUrl = (path: string) => `${(process.env.NEXT_PUBLIC_SUPABASE_URL ?? "").replace(/\/$/, "")}/storage/v1/object/public/product-media/${path}`;
 
-const PRODUCT_COLS = "id, slug, name, short, description, category, subcategory, price, compare_at, stock, wholesale_min, wholesale_price, specs, glyph, tone, price_unit, product_media(path, kind, position, label, status), shops!inner(slug, name, city, country, description, created_at, accepts_cod, response_time, payments, whatsapp, verified_at, ship_days, return_policy, fb_pixel_id, tiktok_pixel_id)";
+const PRODUCT_COLS = "id, slug, name, short, description, category, subcategory, made_in_mali, handmade, price, compare_at, stock, wholesale_min, wholesale_price, specs, glyph, tone, price_unit, product_media(path, kind, position, label, status), shops!inner(slug, name, city, country, description, created_at, accepts_cod, response_time, payments, whatsapp, verified_at, ship_days, return_policy, fb_pixel_id, tiktok_pixel_id)";
 
 async function ratingsFor(ids: string[]) {
   if (!ids.length) return new Map<string, Rating>();

@@ -38,6 +38,8 @@ export function ProductEditor({ product }: { product?: SellerProduct }) {
       wholesaleMin: immobilier ? null : num(s("wholesaleMin")),
       wholesalePrice: immobilier ? null : num(s("wholesalePrice")),
       published: f.get("published") === "on",
+      madeInMali: f.get("madeInMali") === "on",
+      handmade: f.get("handmade") === "on",
     };
     start(async () => {
       const r = await saveProduct(payload);
@@ -119,6 +121,14 @@ export function ProductEditor({ product }: { product?: SellerProduct }) {
           <div><label className="label" htmlFor="wholesaleMin">Prix de gros : à partir de (unités)</label><input id="wholesaleMin" name="wholesaleMin" inputMode="numeric" pattern="[0-9]*" defaultValue={product?.wholesaleMin ?? ""} className="input font-mono" /></div>
           <div><label className="label" htmlFor="wholesalePrice">Prix de gros unitaire (FCFA)</label><input id="wholesalePrice" name="wholesalePrice" inputMode="numeric" pattern="[0-9 ]*" defaultValue={product?.wholesalePrice ?? ""} className="input font-mono" /></div>
         </div>
+      )}
+
+      {!immobilier && (
+        <fieldset className="flex flex-wrap gap-4 text-sm text-bone">
+          <legend className="label">Origine (badges visibles par les clients)</legend>
+          <label className="flex items-center gap-2"><input type="checkbox" name="madeInMali" defaultChecked={product?.madeInMali ?? false} className="accent-[#5433eb]" />🇲🇱 Fabriqué au Mali</label>
+          <label className="flex items-center gap-2"><input type="checkbox" name="handmade" defaultChecked={product?.handmade ?? false} className="accent-[#5433eb]" />✋ Fait main</label>
+        </fieldset>
       )}
 
       <label className="flex items-center gap-3 text-sm text-bone">

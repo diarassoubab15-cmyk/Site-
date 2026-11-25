@@ -48,6 +48,9 @@ export type Product = {
   category: string; // slug de la catégorie
   /** Sous-partie (Technologie : ordinateurs, téléviseurs…), choisie par le vendeur. */
   subcategory?: string;
+  /** Badges d'origine choisis par le vendeur. */
+  madeInMali?: boolean;
+  handmade?: boolean;
   price: number;
   compareAt?: number;
   stock: number;

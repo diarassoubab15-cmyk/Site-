@@ -19,6 +19,12 @@ export function ProductCard({ item }: { item: CardItem }) {
           {shop?.name}
           {shop?.verified && <span className="ml-1.5 text-pulse" title="Vendeur vérifié par NEXORA">✓</span>}
         </p>
+        {(product.madeInMali || product.handmade) && (
+          <p className="flex flex-wrap gap-1 text-[11px]">
+            {product.madeInMali && <span className="rounded-full bg-[#e9f8ef] px-2 py-0.5 text-[#0f6b3f]">🇲🇱 Fait au Mali</span>}
+            {product.handmade && <span className="rounded-full bg-[#fff6e5] px-2 py-0.5 text-[#8a5a00]">✋ Fait main</span>}
+          </p>
+        )}
         {rating.count > 0 && (
           <p className="flex items-center gap-2 text-xs text-ash">
             <Stars value={rating.average} size="text-xs" /> {rating.average} ({rating.count})
