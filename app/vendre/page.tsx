@@ -14,7 +14,7 @@ export const metadata: Metadata = {
 const how = [
   ["Vous remplissez", "5 petites questions, environ 3 minutes. Rien n'est perdu si vous fermez la page."],
   ["Nous vérifions", "L'équipe NEXORA vérifie votre boutique sous 24 à 48 h."],
-  ["Vous payez le forfait", "Seulement une fois autorisé, par Orange Money ou Wave, après un appel ou un message."],
+  ["Vous payez le forfait", "Seulement une fois autorisé (rien pour la formule gratuite), par Wave, après un appel ou un message."],
   ["Vous vendez", "Vos clients vous paient directement. 0 % de commission."],
 ];
 
