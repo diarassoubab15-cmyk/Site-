@@ -81,6 +81,8 @@ export type Review = {
   date: string;
   verified: boolean;
   sellerReply?: string;
+  /** Photos du produit reçu, ajoutées par l'acheteur. */
+  photos?: string[];
 };
 
 export const categories: Category[] = [

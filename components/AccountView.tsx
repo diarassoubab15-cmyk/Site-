@@ -147,9 +147,20 @@ export function AccountView({ live }: { live?: LiveAccount | null }) {
           {tickets.length === 0 ? <p className="text-sm text-ash">Aucune demande. <Link href="/support" className="link">Contacter le SAV</Link></p> : (
             <ul className="space-y-3">
               {tickets.map((t) => (
-                <li key={t.id} className="flex items-center justify-between gap-4 rounded-[6px] border border-line px-4 py-3 text-sm">
-                  <span><span className="font-mono text-xs text-iris">{t.id}</span> <span className="text-white">{t.subject}</span>{t.shop && <span className="text-ash"> · {t.shop}</span>}</span>
-                  <span className="badge">{t.status}</span>
+                <li key={t.id} className="rounded-[14px] border border-line px-4 py-3 text-sm">
+                  <div className="flex items-center justify-between gap-4">
+                    <span><span className="font-mono text-xs text-iris">{t.id}</span> <span className="text-white">{t.subject}</span>{t.shop && <span className="text-ash"> · {t.shop}</span>}</span>
+                    <span className="badge">{t.status}</span>
+                  </div>
+                  {/* Suivi clair : où en est la réclamation, et qui doit agir avant quand. */}
+                  {t.status !== "résolu" && t.deadline && (
+                    <p className="mt-2 text-xs text-ash">
+                      {new Date(t.deadline).getTime() > Date.now()
+                        ? <>Le vendeur doit vous rembourser ou prouver la livraison avant le <strong className="text-white">{new Date(t.deadline).toLocaleString("fr-FR", { day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" })}</strong> ({Math.max(1, Math.ceil((new Date(t.deadline).getTime() - Date.now()) / 3600000))} h restantes).</>
+                        : <span className="text-amber">Délai du vendeur dépassé : NEXORA examine votre réclamation et tranche.</span>}
+                    </p>
+                  )}
+                  {(t.photoCount ?? 0) > 0 && <p className="mt-1 text-xs text-iron">📷 {t.photoCount} photo{(t.photoCount ?? 0) > 1 ? "s" : ""} jointe{(t.photoCount ?? 0) > 1 ? "s" : ""}</p>}
                 </li>
               ))}
             </ul>

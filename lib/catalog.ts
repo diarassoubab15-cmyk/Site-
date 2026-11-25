@@ -150,10 +150,11 @@ export async function getProductPage(slug: string) {
   const { data } = await sb.from("products").select(PRODUCT_COLS).eq("slug", slug).eq("published", true).maybeSingle();
   if (!data) return null;
   const row = data as unknown as ProductRow;
-  const { data: rv } = await sb.from("reviews").select("id, rating, title, body, created_at, seller_reply, author_name, author_city").eq("product_id", row.id).order("created_at", { ascending: false });
+  const { data: rv } = await sb.from("reviews").select("id, rating, title, body, created_at, seller_reply, author_name, author_city, photos").eq("product_id", row.id).order("created_at", { ascending: false });
   const reviews: Review[] = (rv ?? []).map((r) => ({
     id: r.id, product: slug, author: r.author_name ?? "Client", city: r.author_city ?? "", rating: r.rating as Review["rating"],
     title: r.title, body: r.body, date: r.created_at.slice(0, 10), verified: true, sellerReply: r.seller_reply ?? undefined,
+    photos: (r.photos ?? []).map((p: string) => `${(process.env.NEXT_PUBLIC_SUPABASE_URL ?? "").replace(/\/$/, "")}/storage/v1/object/public/review-photos/${p}`),
   }));
   const related = (await listCards({ category: row.category, limit: 5 })).filter((c) => c.product.slug !== slug).slice(0, 4);
   return { product: toProduct(row), shop: toShop(row.shops), reviews, rating: rate(reviews), related };
@@ -335,4 +336,14 @@ export async function getDeliveryZones(shopSlug: string): Promise<DeliveryZone[]
   if (!supabaseEnabled) return [];
   const { data } = await supabasePublic().from("shop_delivery_zones").select("id, name, fee, delay, days_min, days_max, position, shops!inner(slug)").eq("shops.slug", shopSlug).order("position").order("created_at");
   return (data ?? []).map((z) => ({ id: z.id, name: z.name, fee: z.fee, delay: z.delay, daysMin: z.days_min, daysMax: z.days_max }));
+}
+
+export type Reliability = { orders: number; onTimePct: number | null; deliveredPct: number | null; refused: number; disputes: number; replyPct: number | null };
+
+/** Fiabilité du vendeur sur 6 mois, calculée par la base (personne ne peut la modifier). */
+export async function getShopReliability(slug: string): Promise<Reliability | null> {
+  if (!supabaseEnabled) return null;
+  const { data } = await supabasePublic().rpc("shop_reliability", { p_slug: slug });
+  const r = data?.[0];
+  return r ? { orders: r.orders, onTimePct: r.on_time_pct, deliveredPct: r.delivered_pct, refused: r.refused, disputes: r.disputes, replyPct: r.reply_pct } : null;
 }

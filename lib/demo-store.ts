@@ -37,6 +37,11 @@ export type Ticket = {
   shop?: string;
   status: "ouvert" | "en cours" | "résolu";
   createdAt: string;
+  /** Fin du délai laissé au vendeur (remboursement) ; après, l'admin tranche. */
+  deadline?: string | null;
+  /** Photos jointes (adresses temporaires, visibles de l'admin). */
+  photos?: string[];
+  photoCount?: number;
 };
 /** Paiement d'abonnement : contact de l'admin obligatoire avant de payer. */
 export type SubPaymentStatus = "contact" | "paiement" | "déclaré" | "confirmé" | "refusé";

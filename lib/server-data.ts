@@ -1,6 +1,6 @@
 import "server-only";
 /** Chargement des données réelles des pages privées (mode Supabase). */
-import { currentUser } from "./supabase/server";
+import { currentUser, supabaseService } from "./supabase/server";
 import type { NotificationPrefs, Ticket } from "./demo-store";
 import type { PaymentMethodId } from "./payments";
 import { paymentMethods } from "./payments";
@@ -47,7 +47,7 @@ async function prefsOf(sb: Sb, userId: string): Promise<NotificationPrefs> {
   };
 }
 
-const ticketView = (t: { id: string; kind: string; message: string; status: string; created_at: string; order_ref: string | null; order_id: string | null; shop_name: string | null; shop_id: string | null }): Ticket & { shopId?: string } => ({
+const ticketView = (t: { id: string; kind: string; message: string; status: string; created_at: string; order_ref: string | null; order_id: string | null; shop_name: string | null; shop_id: string | null; seller_deadline?: string | null; photos?: string[] }): Ticket & { shopId?: string } => ({
   id: t.id.slice(0, 8).toUpperCase(),
   kind: ticketKindFr[t.kind],
   subject: { contact: "Question", signalement: "Signalement d'un vendeur", remboursement: "Produit non reçu" }[ticketKindFr[t.kind]],
@@ -58,6 +58,8 @@ const ticketView = (t: { id: string; kind: string; message: string; status: stri
   shopId: t.shop_id ?? undefined,
   status: ticketStatusFr[t.status],
   createdAt: t.created_at.slice(0, 10),
+  deadline: t.seller_deadline ?? null,
+  photoCount: t.photos?.length ?? 0,
   // l'identifiant complet sert aux actions de l'administrateur
   ...({ uuid: t.id } as object),
 });
@@ -199,9 +201,19 @@ export async function loadAdmin(): Promise<LiveAdmin | null> {
       planActive: !!subByShop.get(s.id)?.active && (!subByShop.get(s.id)?.current_period_end || subByShop.get(s.id)!.current_period_end! > new Date().toISOString()),
       planUntil: subByShop.get(s.id)?.current_period_end?.slice(0, 10) ?? null,
     })),
-    tickets: (tickets ?? []).map(ticketView),
+    tickets: await withTicketPhotos(tickets ?? []),
     revenue: revenueOf(paid ?? [], subs ?? [], new Map(shops.map((x) => [x.id, x.name]))),
   };
+}
+
+/** Photos de réclamation pour l'admin : liens temporaires (1 h), le dossier reste privé. */
+async function withTicketPhotos(rows: Parameters<typeof ticketView>[0][]) {
+  const views = rows.map(ticketView);
+  const paths = rows.flatMap((t) => t.photos ?? []);
+  if (!paths.length) return views;
+  const { data } = await supabaseService().storage.from("ticket-photos").createSignedUrls(paths, 3600);
+  const url = new Map((data ?? []).map((d) => [d.path, d.signedUrl]));
+  return views.map((v, i) => ({ ...v, photos: (rows[i].photos ?? []).map((p) => url.get(p)).filter(Boolean) as string[] }));
 }
 
 /** Tableau des revenus de l'admin : encaissé ce mois et le mois dernier, par forfait, vendeurs payants et renouvellements proches. */

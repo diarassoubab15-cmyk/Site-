@@ -96,11 +96,11 @@ export const sellerUpdateOrder = action(z.object({ id: z.string().uuid(), status
 
 // ------------------------------------------------------------------ avis
 export const addReview = action(
-  z.object({ orderId: z.string().uuid(), rating: z.number().int().min(1).max(5), title: z.string().trim().min(2).max(80), body: z.string().trim().min(5).max(1000) }),
+  z.object({ orderId: z.string().uuid(), rating: z.number().int().min(1).max(5), title: z.string().trim().min(2).max(80), body: z.string().trim().min(5).max(1000), photos: z.array(z.string().regex(/^[0-9a-f-]{36}\/[a-z0-9-]{8,64}\.(jpg|jpeg|webp|png)$/)).max(4).default([]) }),
   async (input, { user, sb }) => {
     const { data: order } = await sb.from("orders").select("product_id, product_slug").eq("id", input.orderId).single();
     if (!order?.product_id) return fail("Commande introuvable");
-    const { error } = await sb.from("reviews").insert({ order_id: input.orderId, product_id: order.product_id, author_id: user.id, rating: input.rating, title: input.title, body: input.body });
+    const { error } = await sb.from("reviews").insert({ order_id: input.orderId, product_id: order.product_id, author_id: user.id, rating: input.rating, title: input.title, body: input.body, photos: input.photos });
     if (error) return fail(error.code === "23505" ? "Vous avez déjà laissé un avis pour cette commande." : "Seuls les acheteurs ayant reçu ce produit peuvent laisser un avis.");
     revalidatePath(`/produits/${order.product_slug}`);
     return { ok: true };
@@ -114,6 +114,7 @@ const ticketSchema = z.object({
   orderId: z.string().uuid().optional(),
   shopSlug: z.string().max(80).optional(),
   contact: z.object({ name: z.string().trim().min(2).max(80), email: z.string().trim().email() }).optional(),
+  photos: z.array(z.string().regex(/^[0-9a-f-]{36}\/[a-z0-9-]{8,64}\.(jpg|jpeg|webp|png)$/)).max(4).default([]),
 });
 
 export async function createTicket(raw: unknown): Promise<ActionResult<string>> {
@@ -137,7 +138,7 @@ export async function createTicket(raw: unknown): Promise<ActionResult<string>> 
   if (!shopId && t.orderId) shopId = (await u.sb.from("orders").select("shop_id").eq("id", t.orderId).maybeSingle()).data?.shop_id ?? null;
   const { data, error } = await u.sb
     .from("tickets")
-    .insert({ author_id: u.user.id, kind: ticketKindDb[t.kind], message: t.message, order_id: t.orderId ?? null, shop_id: shopId })
+    .insert({ author_id: u.user.id, kind: ticketKindDb[t.kind], message: t.message, order_id: t.orderId ?? null, shop_id: shopId, photos: t.photos })
     .select("id")
     .single();
   if (error) return dbError(error);

@@ -161,6 +161,18 @@ export default async function ProductPage({ params }: Props) {
                 {r.verified && <span className="badge text-pulse">achat vérifié</span>}
               </div>
               <p className="mt-3 text-bone">{r.body}</p>
+              {(r.photos?.length ?? 0) > 0 && (
+                <ul className="mt-3 flex flex-wrap gap-2" aria-label="Photos de l'acheteur">
+                  {r.photos!.map((src) => (
+                    <li key={src}>
+                      <a href={src} target="_blank" rel="noopener noreferrer" className="block h-20 w-20 overflow-hidden rounded-[12px] bg-lift">
+                        {/* eslint-disable-next-line @next/next/no-img-element -- photos d'acheteurs, déjà réduites */}
+                        <img src={src} alt="Photo du produit reçu" loading="lazy" decoding="async" className="h-full w-full object-cover" />
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              )}
               <p className="mt-3 text-xs text-iron">{r.author}, {r.city} · {formatDate(r.date)}</p>
               {r.sellerReply && (
                 <p className="mt-4 border-l border-iris pl-4 text-sm text-ash"><span className="text-bone">Réponse du vendeur :</span> {r.sellerReply}</p>
