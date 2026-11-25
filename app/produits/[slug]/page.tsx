@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { ShopPixels } from "@/components/ShopPixels";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
@@ -14,10 +15,11 @@ import { getShopType } from "@/lib/shop-types";
 import { ReviewSection } from "@/components/ReviewSection";
 import { Stars } from "@/components/Stars";
 import { getCategory } from "@/lib/data";
-import { allSlugs, getProductPage, getShopTier, listCards } from "@/lib/catalog";
+import { allSlugs, getDeliveryZones, getProductPage, getShopTier, listCards } from "@/lib/catalog";
 import { ProductShowcase } from "@/components/ProductShowcase";
 import { formatDate, formatPrice, formatPriceUnit } from "@/lib/format";
 import { absoluteUrl, site } from "@/lib/site";
+import { WhatsAppOrder } from "@/components/WhatsAppOrder";
 
 type Props = { params: Promise<{ slug: string }> };
 
@@ -46,8 +48,12 @@ export default async function ProductPage({ params }: Props) {
   const { product, shop, rating, reviews: list, related } = page;
   const cat = getCategory(product.category) ?? { slug: product.category, name: product.category };
   // Présentation animée en motion design : boutiques Ultra, produits avec au moins une vraie photo.
-  const tier = product.images?.length ? await getShopTier(shop.slug) : null;
+  // Forfait de la boutique : présentation animée (Ultra) et pixels publicitaires (Pro et Ultra).
+  const tier = product.images?.length || shop.pixels ? await getShopTier(shop.slug) : null;
   const typeColor = getShopType(product.category)?.color ?? "#5433eb";
+  const zones = await getDeliveryZones(shop.slug);
+  // Message WhatsApp déjà rédigé : le vendeur sait tout de suite quel produit et d'où vient le client.
+  const waText = `Bonjour ${shop.name}, je suis intéressé(e) par « ${product.name} » (${formatPriceUnit(product.price, product.priceUnit)}) vu sur NEXORA : ${absoluteUrl(`/produits/${product.slug}`)}`;
   // Essayage virtuel : vêtements de la même boutique qui ont une vraie photo.
   const tryItems: TryOnItem[] =
     product.category === "mode" && product.images?.length
@@ -100,6 +106,7 @@ export default async function ProductPage({ params }: Props) {
                   : "Intéressé ? Demandez une visite ou posez vos questions : votre message est transmis au vendeur par NEXORA."}
               </p>
               <Link href={`/support?boutique=${shop.slug}#contact`} className="btn-solid w-full" data-haptic>{product.category === "automobile" ? "Demander un essai" : "Demander une visite"}</Link>
+              {shop.whatsapp && <WhatsAppOrder phone={shop.whatsapp} shopSlug={shop.slug} productSlug={product.slug} label="Écrire au vendeur sur WhatsApp" text={waText} />}
               {product.category === "immobilier" && (product.images?.length ?? 0) > 0 && (
                 <Link href={`/amenager?bien=${product.slug}`} className="btn w-full">Meubler ce logement (essai virtuel)</Link>
               )}
@@ -109,7 +116,13 @@ export default async function ProductPage({ params }: Props) {
               {tryItems.length > 0 && (
                 <TryOn shopSlug={shop.slug} shopName={shop.name} color={getShopType("mode")!.color} items={tryItems} initial={product.slug} />
               )}
-              <BuyBox product={product} shop={shop} />
+              <BuyBox product={product} shop={shop} zones={zones} />
+              {shop.whatsapp && (
+                <div className="space-y-2 text-center">
+                  <WhatsAppOrder phone={shop.whatsapp} shopSlug={shop.slug} productSlug={product.slug} text={waText} />
+                  <p className="text-xs text-iron">Pour une question ou une commande directe avec le vendeur.</p>
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -158,6 +171,7 @@ export default async function ProductPage({ params }: Props) {
         </section>
       )}
 
+      {shop.pixels && (tier === "pro" || tier === "business") && <ShopPixels fb={shop.pixels.fb} tiktok={shop.pixels.tiktok} product={{ id: product.slug, name: product.name, price: product.price }} />}
       <JsonLd
         data={{
           "@context": "https://schema.org",

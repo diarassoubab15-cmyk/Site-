@@ -1,55 +1,63 @@
 import "server-only";
 /**
- * Paiement par carte (Visa, Mastercard…) via la page sécurisée de CinetPay, prestataire agréé en Afrique de l'Ouest.
- * Le client ne saisit jamais sa carte sur NEXORA : il est envoyé sur la page de CinetPay puis revient.
- * Actif seulement si CINETPAY_APIKEY et CINETPAY_SITE_ID sont définis (variables secrètes du serveur, sur Vercel).
+ * Paiement par carte (Visa, Mastercard) via la page sécurisée de FedaPay, prestataire qui couvre le Mali.
+ * Le client ne saisit jamais sa carte sur NEXORA : il est envoyé sur la page de FedaPay puis revient.
+ *
+ * Variables secrètes du serveur (Vercel → Settings → Environment Variables, cochées « Sensitive ») :
+ *   FEDAPAY_SECRET_KEY   clé secrète du compte marchand (sk_live_… ou sk_sandbox_…)
+ *   FEDAPAY_MODE = "test" pour essayer sans argent réel avec la clé sk_sandbox_… (par défaut : réel)
  */
-const API = "https://api-checkout.cinetpay.com/v2";
+const base = () => (process.env.FEDAPAY_MODE === "test" ? "https://sandbox-api.fedapay.com/v1" : "https://api.fedapay.com/v1");
+const headers = () => ({ "content-type": "application/json", authorization: `Bearer ${process.env.FEDAPAY_SECRET_KEY ?? ""}` });
 
-export const cardPaymentReady = () => !!(process.env.CINETPAY_APIKEY && process.env.CINETPAY_SITE_ID);
+export const cardPaymentReady = () => !!process.env.FEDAPAY_SECRET_KEY;
 
-export async function startCardPayment(o: {
-  ref: string; amount: number; description: string; returnUrl: string; notifyUrl: string;
-  customer: { name: string; phone: string; city: string; email?: string; country?: string };
-}): Promise<{ ok: true; url: string } | { ok: false; error: string }> {
+type FedaTx = { id: number; status: string; amount: number; merchant_reference?: string | null; custom_metadata?: { ref?: string } | null };
+// FedaPay renvoie l'objet sous la clé « v1/transaction ».
+const txOf = (json: Record<string, unknown>) => (json["v1/transaction"] ?? json.transaction) as FedaTx | undefined;
+
+export async function startCardPayment(o: { ref: string; amount: number; description: string; returnUrl: string }): Promise<{ ok: true; url: string } | { ok: false; error: string }> {
   if (!cardPaymentReady()) return { ok: false, error: "Le paiement par carte sera bientôt disponible. Choisissez Orange Money, Wave ou le paiement à la livraison." };
-  const [first, ...rest] = o.customer.name.trim().split(/\s+/);
   try {
-    const res = await fetch(`${API}/payment`, {
+    const res = await fetch(`${base()}/transactions`, {
       method: "POST",
-      headers: { "content-type": "application/json" },
+      headers: headers(),
       body: JSON.stringify({
-        apikey: process.env.CINETPAY_APIKEY, site_id: process.env.CINETPAY_SITE_ID,
-        transaction_id: o.ref, amount: Math.ceil(o.amount / 5) * 5, currency: "XOF", description: o.description.replace(/[^\p{L}\p{N} .,'-]/gu, " ").slice(0, 120),
-        notify_url: o.notifyUrl, return_url: o.returnUrl, channels: "CREDIT_CARD", lang: "fr",
-        customer_name: rest.join(" ") || first, customer_surname: first, customer_email: o.customer.email || "client@nexora.africa",
-        customer_phone_number: o.customer.phone.replace(/\s/g, ""), customer_address: o.customer.city, customer_city: o.customer.city,
-        customer_country: o.customer.country ?? "ML", customer_state: o.customer.country ?? "ML", customer_zip_code: "00000",
+        description: o.description.slice(0, 200),
+        amount: o.amount,
+        currency: { iso: "XOF" },
+        callback_url: o.returnUrl,
+        merchant_reference: o.ref,
+        custom_metadata: { ref: o.ref },
       }),
       signal: AbortSignal.timeout(20_000),
     });
-    const json = (await res.json()) as { code?: string; message?: string; data?: { payment_url?: string } };
-    if (json.code === "201" && json.data?.payment_url) return { ok: true, url: json.data.payment_url };
-    console.error("CinetPay : création refusée", json.code, json.message);
-    return { ok: false, error: "Paiement par carte indisponible pour le moment. Réessayez ou choisissez un autre moyen." };
+    const tx = txOf(await res.json());
+    if (!res.ok || !tx?.id) {
+      console.error("FedaPay : création refusée", res.status);
+      return { ok: false, error: "Paiement par carte indisponible pour le moment. Réessayez ou choisissez un autre moyen." };
+    }
+    const tok = await fetch(`${base()}/transactions/${tx.id}/token`, { method: "POST", headers: headers(), body: "{}", signal: AbortSignal.timeout(20_000) });
+    const t = (await tok.json()) as { token?: string; url?: string };
+    if (tok.ok && t.url?.startsWith("https://")) return { ok: true, url: t.url };
+    console.error("FedaPay : lien de paiement refusé", tok.status);
+    return { ok: false, error: "Paiement par carte indisponible pour le moment. Réessayez dans un instant." };
   } catch (e) {
-    console.error("CinetPay injoignable", (e as Error).message);
+    console.error("FedaPay injoignable", (e as Error).message);
     return { ok: false, error: "Paiement par carte indisponible pour le moment. Réessayez dans un instant." };
   }
 }
 
-/** Statut réel d'un paiement, demandé à CinetPay (on ne croit jamais le navigateur). */
-export async function checkCardPayment(ref: string): Promise<"ACCEPTED" | "REFUSED" | "PENDING" | null> {
-  if (!cardPaymentReady()) return null;
+/** Statut réel d'une transaction, redemandé à FedaPay avec son numéro (on ne croit jamais le navigateur). */
+export async function confirmCardPayment(id: string): Promise<{ status: string; ref: string | null; amount: number } | null> {
+  if (!cardPaymentReady() || !/^[0-9]{1,15}$/.test(id)) return null;
   try {
-    const res = await fetch(`${API}/payment/check`, {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ apikey: process.env.CINETPAY_APIKEY, site_id: process.env.CINETPAY_SITE_ID, transaction_id: ref }),
-      signal: AbortSignal.timeout(15_000),
-    });
-    const json = (await res.json()) as { data?: { status?: string } };
-    const st = json.data?.status;
-    return st === "ACCEPTED" || st === "REFUSED" ? st : "PENDING";
+    const res = await fetch(`${base()}/transactions/${id}`, { headers: headers(), signal: AbortSignal.timeout(15_000) });
+    if (!res.ok) return null;
+    const tx = txOf(await res.json());
+    if (!tx) return null;
+    // « approved » = payé (FedaPay considère aussi « transferred » comme payé).
+    const paid = ["approved", "transferred", "approved_partially_refunded", "transferred_partially_refunded"].includes(tx.status);
+    return { status: paid ? "completed" : tx.status, ref: tx.merchant_reference ?? tx.custom_metadata?.ref ?? null, amount: Number(tx.amount ?? 0) };
   } catch { return null; }
 }

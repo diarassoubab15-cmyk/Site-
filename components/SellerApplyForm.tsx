@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
 import { categories } from "@/lib/data";
-import { plans } from "@/lib/plans";
+import { allPlans } from "@/lib/plans";
 import { paymentMethods, type PaymentMethodId } from "@/lib/payments";
 import { getShopType, SHOP_TYPES } from "@/lib/shop-types";
 import { coordsFromMapsUrl, isMapsUrl, mapsLinkFromCoords } from "@/lib/maps";
@@ -13,6 +13,7 @@ import { supabaseEnabled } from "@/lib/supabase/env";
 import { applySeller } from "@/app/actions";
 import type { KnownUser } from "@/lib/server-data";
 import { SuccessCheck } from "./SuccessCheck";
+import { LoginForm } from "./LoginForm";
 import { ShopTypeIcon } from "./ShopTypeIcon";
 
 const steps = ["Boutique", "Adresse", "Contact", "Argent reçu", "Forfait"] as const;
@@ -61,13 +62,14 @@ export function SellerApplyForm({ initialPlan, known }: { initialPlan: string; k
   const myShop = supabaseEnabled ? (known?.shopStatus ? { status: known.shopStatus } : null) : demo.sellers.find((x) => x.id === demo.myShopId);
   if (supabaseEnabled && !known) {
     return (
-      <div className="card space-y-4">
-        <p className="text-lg font-medium text-white">D&apos;abord, votre compte NEXORA</p>
-        <p className="text-sm text-ash">Il faut un compte pour gérer votre boutique. Pas encore de compte ? Inscrivez-vous en 1 minute avec votre e-mail, puis revenez ici automatiquement.</p>
-        <div className="flex flex-wrap gap-2">
-          <a href="/connexion?mode=inscription&next=/vendre" className="btn-solid">Créer mon compte</a>
-          <a href="/connexion?next=/vendre" className="btn">J&apos;ai déjà un compte</a>
+      // Le compte se crée ici même, sans quitter la page : la création de boutique s'enchaîne aussitôt.
+      <div className="mx-auto max-w-lg space-y-4">
+        <div>
+          <p className="font-mono text-xs text-iron">Étape 0 sur 5</p>
+          <p className="mt-1 text-2xl font-medium text-white">Votre compte NEXORA</p>
+          <p className="mt-1 text-sm text-ash">Nom, e-mail et mot de passe : 30 secondes. Ensuite, vous créez votre boutique sur cette même page.</p>
         </div>
+        <LoginForm next="/vendre" initialMode="inscription" />
       </div>
     );
   }
@@ -273,7 +275,7 @@ export function SellerApplyForm({ initialPlan, known }: { initialPlan: string; k
 
         {step === 4 && (
           <div className="space-y-3">
-            {plans.map((pl) => (
+            {allPlans.map((pl) => (
               <label key={pl.id} className={`flex cursor-pointer items-start justify-between gap-4 rounded-[18px] border px-4 py-3 ${val("plan") === pl.id ? "" : "border-line"}`}
                 style={val("plan") === pl.id ? { borderColor: pl.color, background: `color-mix(in srgb, ${pl.color} 6%, transparent)` } : undefined}>
                 <span className="flex items-start gap-3">
@@ -284,11 +286,15 @@ export function SellerApplyForm({ initialPlan, known }: { initialPlan: string; k
                     <span className="mt-0.5 block text-xs text-iron">{pl.products}</span>
                   </span>
                 </span>
-                <span className="shrink-0 text-right font-mono text-sm text-white">{pl.monthly.toLocaleString("fr-FR")}<span className="block text-[11px] text-iron">FCFA / mois</span></span>
+                <span className="shrink-0 text-right font-mono text-sm text-white">{pl.monthly ? pl.monthly.toLocaleString("fr-FR") : "Gratuit"}<span className="block text-[11px] text-iron">{pl.monthly ? "FCFA / mois" : "pour toujours"}</span></span>
               </label>
             ))}
             <p className="text-sm"><a href="/tarifs" target="_blank" rel="noopener" className="link">Comparer les forfaits en détail</a></p>
-            <p className="text-xs text-iron">Rien à payer maintenant. Après l&apos;autorisation, vous contacterez l&apos;administrateur puis paierez votre forfait.</p>
+            <p className="text-xs text-iron">
+              {val("plan") === "decouverte"
+                ? "Rien à payer, ni maintenant ni plus tard : votre boutique sera en ligne dès que NEXORA l'aura autorisée."
+                : "Rien à payer maintenant. Après l'autorisation, vous contacterez l'administrateur puis paierez votre forfait."}
+            </p>
           </div>
         )}
 

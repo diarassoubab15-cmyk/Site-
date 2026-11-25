@@ -47,7 +47,11 @@ const placeOrderSchema = z.object({
   slug: z.string().min(1),
   qty: z.number().int().min(1).max(10000),
   method: PAYMENT,
-  shipping: z.object({ name: z.string().trim().min(2).max(80), phone: PHONE, city: z.string().trim().min(2).max(120) }).optional(),
+  shipping: z.object({
+    name: z.string().trim().min(2).max(80), phone: PHONE, city: z.string().trim().min(2).max(120),
+    district: z.string().trim().min(2, "Indiquez votre quartier").max(80), landmark: z.string().trim().max(160),
+  }).optional(),
+  zoneId: z.string().uuid().nullable().optional(),
 });
 
 export const placeOrder = action<z.infer<typeof placeOrderSchema>, string>(placeOrderSchema, async (input, { user, profile, sb }) => {
@@ -55,15 +59,17 @@ export const placeOrder = action<z.infer<typeof placeOrderSchema>, string>(place
   if (!product) return fail("Produit indisponible");
   // Les coordonnées ne sont demandées qu'une fois : enregistrées sur le profil.
   if (input.shipping) {
-    await sb.from("profiles").update({ full_name: input.shipping.name, phone: input.shipping.phone, city: input.shipping.city }).eq("id", user.id);
+    await sb.from("profiles").update({ full_name: input.shipping.name, phone: input.shipping.phone, city: input.shipping.city, district: input.shipping.district, landmark: input.shipping.landmark || null }).eq("id", user.id);
   }
   const name = input.shipping?.name ?? profile?.full_name;
   const phone = input.shipping?.phone ?? profile?.phone;
   const city = input.shipping?.city ?? profile?.city;
+  const district = input.shipping?.district ?? profile?.district ?? null;
+  const landmark = input.shipping ? input.shipping.landmark || null : profile?.landmark ?? null;
   if (!name || !phone || !city) return fail("Adresse de livraison incomplète");
   const { data, error } = await sb
     .from("orders")
-    .insert({ buyer_id: user.id, shop_id: product.shop_id, product_id: product.id, qty: input.qty, total: 1, method: input.method, shipping_name: name, shipping_phone: phone, shipping_city: city })
+    .insert({ buyer_id: user.id, shop_id: product.shop_id, product_id: product.id, qty: input.qty, total: 1, method: input.method, shipping_name: name, shipping_phone: phone, shipping_city: city, shipping_district: district, shipping_landmark: landmark, delivery_zone_id: input.zoneId ?? null })
     .select("ref")
     .single();
   if (error) return dbError(error);
@@ -142,9 +148,9 @@ export async function createTicket(raw: unknown): Promise<ActionResult<string>> 
 
 // ------------------------------------------------------------------ profil, préférences, compte
 export const updateProfile = action(
-  z.object({ name: z.string().trim().max(80), phone: z.string().trim().max(20), city: z.string().trim().max(120), country: z.string().trim().max(60) }),
+  z.object({ name: z.string().trim().max(80), phone: z.string().trim().max(30), city: z.string().trim().max(120), country: z.string().trim().max(60), district: z.string().trim().max(80).default(""), landmark: z.string().trim().max(160).default("") }),
   async (p, { user, sb }) => {
-    const { error } = await sb.from("profiles").update({ full_name: p.name, phone: p.phone, city: p.city, country: p.country }).eq("id", user.id);
+    const { error } = await sb.from("profiles").update({ full_name: p.name, phone: p.phone, city: p.city, country: p.country, district: p.district || null, landmark: p.landmark || null }).eq("id", user.id);
     if (error) return dbError(error);
     revalidatePath("/compte");
     return { ok: true };
@@ -202,7 +208,7 @@ const applySchema = z
     payoutMethod: PAYOUT,
     payoutAccount: z.string().trim().min(6).max(40),
     cod: z.boolean(),
-    plan: z.enum(["essentiel", "pro", "business"]),
+    plan: z.enum(["decouverte", "essentiel", "pro", "business"]),
   })
   .refine((f) => !f.isPhysical || f.mapsUrl || f.lat !== null, { message: "Boutique physique : collez le lien Google Maps ou utilisez votre position" });
 
@@ -277,7 +283,7 @@ export const adminSetShopStatus = action(z.object({ shopId: z.string().uuid(), s
 
 /** Forfait d'un vendeur choisi par l'administrateur : activer (1 à 24 mois), changer ou désactiver. */
 export const adminSetSubscription = action(
-  z.object({ shopId: z.string().uuid(), plan: z.enum(["essentiel", "pro", "business"]), active: z.boolean(), months: z.number().int().min(1).max(24).default(1) }),
+  z.object({ shopId: z.string().uuid(), plan: z.enum(["decouverte", "essentiel", "pro", "business"]), active: z.boolean(), months: z.number().int().min(1).max(24).default(1) }),
   async ({ shopId, plan, active, months }, { sb }) => {
     const { error } = await sb.rpc("admin_set_subscription", { p_shop: shopId, p_plan: plan, p_active: active, p_months: months });
     if (error) return dbError(error);
@@ -304,11 +310,12 @@ export const adminResolveTicket = action(z.object({ ticketId: z.string().uuid(),
  * Ce que la fiche produit doit savoir de l'utilisateur, sans embarquer le client Supabase
  * dans le navigateur (≈ 75 Ko de moins sur la page la plus visitée).
  */
-export async function getBuyerContext(slug: string): Promise<{ loggedIn: boolean; known: { name: string; city: string } | null; reviewableOrderId: string | null; preferredPayment?: string | null }> {
+export async function getBuyerContext(slug: string): Promise<{ loggedIn: boolean; known: { name: string; city: string; district?: string | null; landmark?: string | null } | null; reviewableOrderId: string | null; preferredPayment?: string | null }> {
   const u = await currentUser();
   if (!u) return { loggedIn: false, known: null, reviewableOrderId: null };
   const p = u.profile;
-  const known = p?.full_name && p?.phone && p?.city ? { name: p.full_name, city: p.city } : null;
+  // Ancien profil sans quartier : on redemande l'adresse une fois, au nouveau format malien.
+  const known = p?.full_name && p?.phone && p?.city && p?.district ? { name: p.full_name, city: p.city, district: p.district, landmark: p.landmark } : null;
   const { data: orders } = await u.sb.from("orders").select("id").eq("buyer_id", u.user.id).eq("product_slug", String(slug).slice(0, 100)).eq("status", "delivered");
   let reviewableOrderId: string | null = null;
   if (orders?.length) {
@@ -987,11 +994,11 @@ export async function getOrderPayInfo(ref: string): Promise<OrderPayInfo | null>
   return r ? { shopName: r.shop_name, method: r.method, total: r.total, payNumber: r.pay_number, payType: r.pay_type, whatsapp: r.whatsapp } : null;
 }
 
-/** Carte bancaire : ouvre la page de paiement sécurisée du prestataire, pour le montant exact calculé par la base. */
+/** Carte bancaire : ouvre la page de paiement sécurisée de FedaPay, pour le montant exact calculé par la base. */
 export async function payOrderByCard(ref: string): Promise<ActionResult<string>> {
   const u = await currentUser();
   if (!u) return fail("Connectez-vous pour payer.", true);
-  const { data: o } = await u.sb.from("orders").select("ref, total, method, status, product_name, shop_name, shipping_name, shipping_phone, shipping_city")
+  const { data: o } = await u.sb.from("orders").select("ref, total, method, status, product_name, shop_name")
     .eq("ref", ref).eq("buyer_id", u.user.id).maybeSingle();
   if (!o || o.method !== "card") return fail("Commande introuvable");
   if (o.status !== "pending_payment") return fail("Cette commande est déjà payée.");
@@ -1000,9 +1007,9 @@ export async function payOrderByCard(ref: string): Promise<ActionResult<string>>
   const base = process.env.NEXT_PUBLIC_SITE_URL ?? `${h.get("x-forwarded-proto") ?? "https"}://${h.get("host")}`;
   const { startCardPayment } = await import("@/lib/card-payment");
   const r = await startCardPayment({
-    ref: o.ref, amount: o.total, description: `${o.product_name ?? "Commande"} - ${o.shop_name ?? "NEXORA"}`,
-    returnUrl: `${base}/compte?paiement=${encodeURIComponent(o.ref)}`, notifyUrl: `${base}/api/paiement/carte`,
-    customer: { name: o.shipping_name ?? "Client NEXORA", phone: o.shipping_phone ?? "", city: o.shipping_city ?? "Bamako", email: u.user.email ?? undefined },
+    ref: o.ref, amount: o.total, description: `${o.product_name ?? "Commande"} - ${o.shop_name ?? "NEXORA"} (réf. ${o.ref})`,
+    // FedaPay ajoute ?id=…&status=… à cette adresse au retour du client.
+    returnUrl: `${base}/compte?paiement=${encodeURIComponent(o.ref)}`,
   });
   return r.ok ? { ok: true, data: r.url } : fail(r.error);
 }
@@ -1012,3 +1019,161 @@ export async function cardPaymentStatus(): Promise<boolean> {
   const { cardPaymentReady } = await import("@/lib/card-payment");
   return cardPaymentReady();
 }
+
+// ------------------------------------------------------------------ ventes hors site et demandes WhatsApp
+const SALE_CHANNEL = z.enum(["whatsapp", "telephone", "boutique", "autre"]);
+
+/** Le vendeur note une vente faite par WhatsApp, au téléphone ou en boutique : elle compte dans son tableau de bord. */
+export const addManualSale = action(
+  z.object({
+    productId: z.string().uuid().nullable(),
+    label: z.string().trim().min(2, "Indiquez ce qui a été vendu").max(120),
+    qty: z.number().int().min(1).max(100000),
+    amount: z.number().int().min(0).max(1_000_000_000),
+    channel: SALE_CHANNEL,
+    customerName: z.string().trim().max(80),
+    customerPhone: z.string().trim().regex(/^$|^[+0-9 ]{6,30}$/, "Numéro du client invalide"),
+    soldOn: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  }),
+  async (f, { user, sb }) => {
+    const { data: shop } = await sb.from("shops").select("id").eq("owner_id", user.id).neq("status", "closed").maybeSingle();
+    if (!shop) return fail("Aucune boutique active");
+    if (f.soldOn > new Date().toISOString().slice(0, 10)) return fail("La date de vente ne peut pas être dans le futur.");
+    const { error } = await sb.from("manual_sales").insert({
+      shop_id: shop.id, product_id: f.productId, label: f.label, qty: f.qty, amount: f.amount, channel: f.channel,
+      customer_name: f.customerName || null, customer_phone: f.customerPhone || null, sold_on: f.soldOn,
+    });
+    if (error) return dbError(error);
+    revalidatePath("/vendeur");
+    return { ok: true };
+  },
+);
+
+export const deleteManualSale = action(z.object({ id: z.string().uuid() }), async ({ id }, { sb }) => {
+  const { error } = await sb.from("manual_sales").delete().eq("id", id);
+  if (error) return dbError(error);
+  revalidatePath("/vendeur");
+  return { ok: true };
+});
+
+/** Un client touche « Commander sur WhatsApp » : la demande est comptée pour le vendeur (aucune donnée du client). */
+export async function logWhatsAppLead(shopSlug: string, productSlug?: string): Promise<void> {
+  if (!/^[a-z0-9-]{2,90}$/.test(shopSlug) || (productSlug && !/^[a-z0-9-]{2,90}$/.test(productSlug))) return;
+  try { await supabaseService().rpc("log_whatsapp_lead", { p_shop_slug: shopSlug, p_product_slug: productSlug }); } catch { /* compteur seulement */ }
+}
+
+// ------------------------------------------------------------------ zones et frais de livraison du vendeur
+export const addDeliveryZone = action(
+  z.object({ name: z.string().trim().min(2, "Nom de la zone trop court").max(60), fee: z.number().int().min(0).max(1_000_000), delay: z.string().trim().max(40) }),
+  async ({ name, fee, delay }, { user, sb }) => {
+    const { data: shop } = await sb.from("shops").select("id, slug").eq("owner_id", user.id).neq("status", "closed").maybeSingle();
+    if (!shop) return fail("Aucune boutique active");
+    const { count } = await sb.from("shop_delivery_zones").select("id", { count: "exact", head: true }).eq("shop_id", shop.id);
+    const { error } = await sb.from("shop_delivery_zones").insert({ shop_id: shop.id, name, fee, delay: delay || null, position: count ?? 0 });
+    if (error) return dbError(error);
+    revalidatePath("/vendeur");
+    revalidatePath(`/boutiques/${shop.slug}`);
+    revalidatePath("/produits/[slug]", "page");
+    return { ok: true };
+  },
+);
+
+export const deleteDeliveryZone = action(z.object({ id: z.string().uuid() }), async ({ id }, { sb }) => {
+  const { error } = await sb.from("shop_delivery_zones").delete().eq("id", id);
+  if (error) return dbError(error);
+  revalidatePath("/vendeur");
+  revalidatePath("/produits/[slug]", "page");
+  return { ok: true };
+});
+
+/** Zones de la boutique du vendeur connecté (espace vendeur). */
+export async function myDeliveryZones(): Promise<{ id: string; name: string; fee: number; delay: string | null }[]> {
+  const u = await currentUser();
+  if (!u) return [];
+  const { data: shop } = await u.sb.from("shops").select("id").eq("owner_id", u.user.id).neq("status", "closed").maybeSingle();
+  if (!shop) return [];
+  const { data } = await u.sb.from("shop_delivery_zones").select("id, name, fee, delay").eq("shop_id", shop.id).order("position").order("created_at");
+  return data ?? [];
+}
+
+/** Badge « Vendeur vérifié » : l'admin le donne après contrôle de la pièce d'identité, ou le retire. */
+export const adminSetVerified = action(z.object({ shopId: z.string().uuid(), verified: z.boolean() }), async ({ shopId, verified }, { sb }) => {
+  const { error } = await sb.rpc("admin_set_verified", { p_shop: shopId, p_verified: verified });
+  if (error) return dbError(error);
+  revalidatePath("/admin");
+  revalidatePath("/", "layout");
+  return { ok: true };
+});
+
+// ------------------------------------------------------------------ paiement à la livraison : confirmation, livreurs, argent
+/** Le client confirme sa commande depuis le lien reçu sur WhatsApp (sans compte). */
+export async function confirmOrderByToken(token: string): Promise<boolean> {
+  if (!/^[a-f0-9]{20,64}$/.test(token)) return false;
+  const { data } = await (await supabaseServer()).rpc("confirm_order_by_token", { p_token: token });
+  return !!data;
+}
+
+/** Le livreur marque la commande livrée (argent encaissé) ou refusée par le client, depuis son lien. */
+export async function courierReport(token: string, outcome: "delivered" | "refused"): Promise<boolean> {
+  if (!/^[a-f0-9]{20,64}$/.test(token) || !["delivered", "refused"].includes(outcome)) return false;
+  const { data } = await (await supabaseServer()).rpc("courier_report", { p_token: token, p_outcome: outcome });
+  return !!data;
+}
+
+export const addCourier = action(
+  z.object({ name: z.string().trim().min(2, "Nom du livreur trop court").max(60), phone: PHONE }),
+  async ({ name, phone }, { user, sb }) => {
+    const { data: shop } = await sb.from("shops").select("id").eq("owner_id", user.id).neq("status", "closed").maybeSingle();
+    if (!shop) return fail("Aucune boutique active");
+    const { error } = await sb.from("shop_couriers").insert({ shop_id: shop.id, name, phone });
+    if (error) return dbError(error);
+    revalidatePath("/vendeur");
+    return { ok: true };
+  },
+);
+
+export const deleteCourier = action(z.object({ id: z.string().uuid() }), async ({ id }, { sb }) => {
+  const { error } = await sb.from("shop_couriers").delete().eq("id", id);
+  if (error) return dbError(error);
+  revalidatePath("/vendeur");
+  return { ok: true };
+});
+
+/** Attribue une commande à un livreur ; renvoie le jeton du lien personnel du livreur. */
+export const assignCourier = action<{ orderId: string; courierId: string | null }, string | null>(
+  z.object({ orderId: z.string().uuid(), courierId: z.string().uuid().nullable() }),
+  async ({ orderId, courierId }, { sb }) => {
+    const { data, error } = await sb.rpc("assign_courier", { p_order: orderId, p_courier: courierId });
+    if (error) return dbError(error);
+    revalidatePath("/vendeur");
+    return { ok: true, data: data ?? null };
+  },
+);
+
+/** Le livreur a remis au vendeur l'argent encaissé. */
+export const settleCash = action(z.object({ orderId: z.string().uuid() }), async ({ orderId }, { sb }) => {
+  const { error } = await sb.rpc("settle_cash", { p_order: orderId });
+  if (error) return dbError(error);
+  revalidatePath("/vendeur");
+  return { ok: true };
+});
+
+// ------------------------------------------------------------------ pixels publicitaires (Pro et Ultra)
+export const setShopPixels = action(
+  z.object({
+    fb: z.string().trim().regex(/^$|^[0-9]{6,20}$/, "Identifiant du pixel Facebook : chiffres seulement (6 à 20)"),
+    tiktok: z.string().trim().toUpperCase().regex(/^$|^[A-Z0-9]{10,30}$/, "Identifiant du pixel TikTok : lettres majuscules et chiffres (10 à 30)"),
+  }),
+  async ({ fb, tiktok }, { user, sb }) => {
+    const { data: shop } = await sb.from("shops").select("id, slug").eq("owner_id", user.id).neq("status", "closed").maybeSingle();
+    if (!shop) return fail("Aucune boutique active");
+    const { data: sub } = await sb.from("subscriptions").select("plan").eq("shop_id", shop.id).maybeSingle();
+    if ((fb || tiktok) && sub?.plan !== "pro" && sub?.plan !== "business") return fail("Les pixels publicitaires sont inclus dans les forfaits Pro et Ultra.");
+    const { error } = await sb.from("shops").update({ fb_pixel_id: fb || null, tiktok_pixel_id: tiktok || null }).eq("id", shop.id);
+    if (error) return dbError(error);
+    revalidatePath("/vendeur");
+    revalidatePath(`/boutiques/${shop.slug}`);
+    revalidatePath("/produits/[slug]", "page");
+    return { ok: true };
+  },
+);

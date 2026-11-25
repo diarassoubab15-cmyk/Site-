@@ -14,6 +14,8 @@ export default function Confidentialite() {
       <p>Numéros de carte complets, codes secrets Mobile Money, mots de passe. Ils sont traités uniquement par les opérateurs de paiement.</p>
       <h2>Utilisation</h2>
       <p>Traiter les commandes, vérifier les vendeurs, répondre au SAV et envoyer les e-mails que vous avez choisi de recevoir. Aucune revente de données.</p>
+      <h2>Pixels publicitaires des vendeurs</h2>
+      <p>Certaines boutiques Pro et Ultra mesurent leurs publicités avec un pixel Facebook ou TikTok. Il n&apos;est chargé que sur les pages de ces boutiques (jamais ailleurs sur NEXORA) et transmet à ces services la page vue et, sur une fiche produit, le produit consulté. Il est désactivé en mode « économie de données ».</p>
       <h2>Vos droits</h2>
       <p>Accès, export, rectification et suppression depuis votre compte, ou par e-mail à {site.support.email}.</p>
     </article>

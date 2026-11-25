@@ -22,7 +22,7 @@ export type DemoOrder = {
 };
 export type DemoReview = { id: string; product: string; author: string; rating: number; title: string; body: string; date: string };
 export type SellerStatus = "en attente" | "autorisé" | "suspendu" | "refusé" | "fermé";
-export type DemoSeller = { id: string; shopName: string; owner: string; email: string; phone: string; city: string; country: string; category: string; status: SellerStatus; createdAt: string; reason?: string | null; plan?: "essentiel" | "pro" | "business" | null; planActive?: boolean; planUntil?: string | null };
+export type DemoSeller = { id: string; shopName: string; owner: string; email: string; phone: string; city: string; country: string; category: string; status: SellerStatus; createdAt: string; reason?: string | null; verified?: boolean; plan?: import("./plans").PlanId | null; planActive?: boolean; planUntil?: string | null };
 export type PayoutAccount = { id: string; type: PaymentMethodId | "bank"; label: string; masked: string };
 export type Ticket = {
   id: string;
@@ -55,7 +55,7 @@ export type DemoSubPayment = {
   adminNote?: string;
   createdAt: string;
 };
-export type Profile = { name: string; email: string; phone: string; city: string; country: string };
+export type Profile = { name: string; email: string; phone: string; city: string; country: string; district?: string; landmark?: string };
 export type NotificationPrefs = {
   orderUpdates: boolean;
   deliveryUpdates: boolean;

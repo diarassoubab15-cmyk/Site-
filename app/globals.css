@@ -713,3 +713,11 @@ a.float-card:focus-visible { outline: 2px solid #5433eb; outline-offset: 3px; }
 .sub-tile:active { transform: scale(0.96); }
 .sub-tile.is-on { border-color: var(--c); background: color-mix(in srgb, var(--c) 9%, #fff); font-weight: 500; }
 .sub-icon { font-size: 26px; line-height: 1; }
+
+/* ---- Mode léger : petit téléphone, connexion lente ou économiseur de données (voir lib/motion-script.ts) ---- */
+html[data-lite] *, html[data-lite] *::before, html[data-lite] *::after { animation: none !important; transition: none !important; }
+html[data-lite] .ambient, html[data-lite] .hub-glow { display: none !important; }
+html[data-lite] .marquee-set[aria-hidden="true"] { display: none; }
+html[data-lite] .marquee-row { overflow-x: auto; scrollbar-width: none; }
+html[data-lite] [class*="backdrop-blur"] { backdrop-filter: none !important; -webkit-backdrop-filter: none !important; }
+html[data-lite] .nx-js [data-reveal] > *, html[data-lite] [data-reveal] > * { opacity: 1 !important; transform: none !important; }

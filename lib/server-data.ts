@@ -9,9 +9,9 @@ import type { DemoSubPayment } from "./demo-store";
 import { adminPaymentInfo, subscriptionMethods } from "./payment-info";
 import { periodOf, type RewardView } from "./rewards";
 import { storageUrl } from "./site-videos";
-import type { VideoView } from "./views";
+import type { ManualSaleView, VideoView } from "./views";
 
-const VIDEO_QUOTA: Record<string, number> = { essentiel: 1, pro: 3, business: 10 };
+const VIDEO_QUOTA: Record<string, number> = { decouverte: 0, essentiel: 1, pro: 3, business: 10 };
 type VideoRow = { id: string; ref: string; shop_id: string; description: string; status: string; video_path: string | null; poster_path: string | null; is_active: boolean; script: unknown; admin_note: string | null; error: string | null; created_at: string };
 const videoView = (v: VideoRow, shopName?: string): VideoView => ({
   id: v.id, ref: v.ref, shopId: v.shop_id, shopName, description: v.description, status: v.status as VideoView["status"],
@@ -72,7 +72,7 @@ export async function loadAccount(): Promise<LiveAccount | null> {
     prefsOf(sb, user.id),
   ]);
   return {
-    profile: { name: profile?.full_name ?? "", email: user.email ?? "", phone: profile?.phone ?? user.phone ?? "", city: profile?.city ?? "", country: profile?.country ?? "" },
+    profile: { name: profile?.full_name ?? "", email: user.email ?? "", phone: profile?.phone ?? user.phone ?? "", city: profile?.city ?? "", country: profile?.country ?? "", district: profile?.district ?? "", landmark: profile?.landmark ?? "" },
     orders: (orders ?? []).map((o) => ({
       id: o.ref, uuid: o.id, product: o.product_slug ?? "", productName: o.product_name ?? "Produit retiré", shop: o.shop_name ?? "",
       qty: o.qty, total: o.total, method: o.method as PaymentMethodId, status: orderStatusFr[o.status], createdAt: o.created_at.slice(0, 10),
@@ -99,13 +99,20 @@ export async function loadSeller(): Promise<LiveSeller | null> {
   ]);
   const now = new Date();
   const month = periodOf("month", `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, "0")}`)!;
-  const [{ data: covered }, { data: rw }, { data: st }, { data: vids }] = await Promise.all([
+  const [{ data: covered }, { data: rw }, { data: st }, { data: vids }, { data: sales }, { count: leads }, { data: prods }, { data: couriers }, { data: refusals }] = await Promise.all([
     sb.rpc("shop_covered_until", { p_shop: shop.id }),
     sb.from("rewards").select("*").eq("shop_id", shop.id).is("revoked_at", null).order("created_at", { ascending: false }),
     sb.rpc("seller_my_stats", { p_from: month.from, p_to: month.to }),
     sb.from("shop_videos").select("*").eq("shop_id", shop.id).order("created_at", { ascending: false }).limit(20),
+    sb.from("manual_sales").select("id, label, qty, amount, channel, customer_name, customer_phone, sold_on").eq("shop_id", shop.id).order("sold_on", { ascending: false }).order("created_at", { ascending: false }).limit(60),
+    sb.from("whatsapp_leads").select("id", { count: "exact", head: true }).eq("shop_id", shop.id).gte("created_at", month.from),
+    sb.from("products").select("id, name, price, stock, category, published").eq("shop_id", shop.id).order("name").limit(500),
+    sb.from("shop_couriers").select("id, name, phone").eq("shop_id", shop.id).order("created_at"),
+    sb.rpc("seller_order_refusals"),
   ]);
+  const refusalsByOrder = new Map((refusals ?? []).map((x) => [x.order_id, x.refusals]));
   const monthStart = month.from.slice(0, 10);
+  const monthSales = (sales ?? []).filter((x) => x.sold_on >= monthStart);
   const videosUsed = (vids ?? []).filter((v) => v.status !== "failed" && v.created_at.slice(0, 10) >= monthStart).length;
   const s0 = st?.[0];
   const payment = pays?.[0] ? paymentView(pays[0]) : null;
@@ -113,7 +120,7 @@ export async function loadSeller(): Promise<LiveSeller | null> {
     owner,
     coveredUntil: covered && covered !== "infinity" ? String(covered) : null,
     videos: (vids ?? []).map((v) => videoView(v)),
-    videoQuota: { used: videosUsed, limit: VIDEO_QUOTA[sub?.plan ?? "essentiel"] ?? 1 },
+    videoQuota: { used: videosUsed, limit: VIDEO_QUOTA[sub?.plan ?? "decouverte"] ?? 0 },
     rewards: (rw ?? []).map((r) => rewardView(r, shop.name)),
     stats: s0 ? { delivered: s0.delivered, revenue: Number(s0.revenue), openOrders: s0.open_orders, rating: s0.rating === null ? null : Number(s0.rating), reviews: s0.reviews, rank: shop.status === "approved" ? s0.rank : null, competitors: s0.competitors } : null,
     subscription: sub ? { plan: sub.plan, annual: sub.annual, active: sub.active, until: sub.current_period_end } : null,
@@ -126,9 +133,27 @@ export async function loadSeller(): Promise<LiveSeller | null> {
     orders: (orders ?? []).map((o) => ({
       id: o.ref, uuid: o.id, product: o.product_slug ?? "", productName: o.product_name ?? "", shop: o.shop_name ?? "", qty: o.qty, total: o.total,
       method: o.method as PaymentMethodId, status: orderStatusFr[o.status], createdAt: o.created_at.slice(0, 10),
-      buyer: o.shipping_name, city: o.shipping_city, phone: o.shipping_phone,
+      buyer: o.shipping_name, phone: o.shipping_phone,
+      // Adresse à la malienne pour le livreur : quartier, ville, point de repère, zone choisie.
+      city: [o.shipping_district, o.shipping_city].filter(Boolean).join(", ") + (o.shipping_landmark ? ` · repère : ${o.shipping_landmark}` : "") + (o.delivery_zone ? ` · livraison ${o.delivery_zone}${o.delivery_fee ? ` (${o.delivery_fee.toLocaleString("fr-FR")} F)` : ""}` : ""),
+      cod: {
+        confirmToken: o.confirm_token, buyerConfirmed: !!o.buyer_confirmed_at, courierId: o.courier_id, courierToken: o.courier_token,
+        refused: !!o.refused_at, cashCollected: !!o.cash_collected_at, cashSettled: !!o.cash_settled_at, deliveryFee: o.delivery_fee ?? 0,
+        // Refus passés de ce client sur tout NEXORA (cette commande comprise si elle a été refusée).
+        buyerRefusals: refusalsByOrder.get(o.id) ?? 0,
+      },
     })),
+    couriers: couriers ?? [],
+    // Alerte de stock : produits en ligne à 3 unités ou moins (hors immobilier, où « stock » = biens disponibles).
+    lowStock: (prods ?? []).filter((p) => p.published && p.category !== "immobilier" && p.stock <= 3).map((p) => ({ id: p.id, name: p.name, stock: p.stock })),
     prefs,
+    offline: {
+      sales: (sales ?? []).map((x) => ({ id: x.id, label: x.label, qty: x.qty, amount: x.amount, channel: x.channel as ManualSaleView["channel"], customer: x.customer_name ?? "", phone: x.customer_phone ?? "", soldOn: x.sold_on })),
+      monthCount: monthSales.length,
+      monthAmount: monthSales.reduce((n, x) => n + x.amount, 0),
+      leads: leads ?? 0,
+      products: (prods ?? []).map((p) => ({ id: p.id, name: p.name, price: p.price })),
+    },
   };
 }
 
@@ -136,8 +161,9 @@ export async function loadAdmin(): Promise<LiveAdmin | null> {
   const u = await currentUser();
   if (!u || u.profile?.role !== "admin") return null;
   const { sb } = u;
-  const [{ data: shopRows }, { data: contacts }, { data: tickets }, { data: pays }, { data: rw }, { data: vids }, { data: edits }, { data: subs }] = await Promise.all([
-    sb.from("shops").select("id, name, city, country, category, status, status_reason, created_at").order("created_at", { ascending: false }),
+  const since = new Date(Date.UTC(new Date().getUTCFullYear(), new Date().getUTCMonth() - 1, 1)).toISOString();
+  const [{ data: shopRows }, { data: contacts }, { data: tickets }, { data: pays }, { data: rw }, { data: vids }, { data: edits }, { data: subs }, { data: paid }] = await Promise.all([
+    sb.from("shops").select("id, name, city, country, category, status, status_reason, verified_at, created_at").order("created_at", { ascending: false }),
     // Coordonnées du responsable : jamais lisibles directement, seulement par cette fonction réservée à l'admin.
     sb.rpc("admin_shop_contacts"),
     sb.from("tickets").select("*").order("created_at", { ascending: false }).limit(200),
@@ -146,6 +172,8 @@ export async function loadAdmin(): Promise<LiveAdmin | null> {
     sb.from("shop_videos").select("*").in("status", ["queued", "rendering", "review", "approved"]).order("created_at", { ascending: false }).limit(100),
     sb.from("product_edit_requests").select(EDIT_COLS).eq("status", "review").order("created_at").limit(100),
     sb.from("subscriptions").select("shop_id, plan, active, current_period_end"),
+    // Revenus : paiements de forfait confirmés depuis le début du mois dernier.
+    sb.from("subscription_payments").select("amount, plan, decided_at").eq("status", "confirmed").gte("decided_at", since).limit(5000),
   ]);
   const subByShop = new Map((subs ?? []).map((x) => [x.shop_id, x]));
   const contactById = new Map((contacts ?? []).map((c) => [c.id, c]));
@@ -163,12 +191,42 @@ export async function loadAdmin(): Promise<LiveAdmin | null> {
       id: s.id, shopName: s.name, owner: s.owner_name ?? "", email: s.contact_email ?? "", phone: s.contact_phone ?? "",
       city: s.city, country: s.country, category: s.category, status: shopStatusFr[s.status], createdAt: s.created_at.slice(0, 10),
       reason: s.status_reason ?? null,
+      verified: !!s.verified_at,
       plan: subByShop.get(s.id)?.plan ?? null,
       // Actif = coché ET pas encore expiré (même règle que la base pour afficher la boutique).
       planActive: !!subByShop.get(s.id)?.active && (!subByShop.get(s.id)?.current_period_end || subByShop.get(s.id)!.current_period_end! > new Date().toISOString()),
       planUntil: subByShop.get(s.id)?.current_period_end?.slice(0, 10) ?? null,
     })),
     tickets: (tickets ?? []).map(ticketView),
+    revenue: revenueOf(paid ?? [], subs ?? [], new Map(shops.map((x) => [x.id, x.name]))),
+  };
+}
+
+/** Tableau des revenus de l'admin : encaissé ce mois et le mois dernier, par forfait, vendeurs payants et renouvellements proches. */
+function revenueOf(
+  paid: { amount: number; plan: string; decided_at: string | null }[],
+  subs: { shop_id: string; plan: string; active: boolean; current_period_end: string | null }[],
+  names: Map<string, string>,
+) {
+  const now = new Date();
+  const thisMonth = now.toISOString().slice(0, 7);
+  const lastMonth = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 1, 1)).toISOString().slice(0, 7);
+  const month = (m: string) => paid.filter((p) => p.decided_at?.slice(0, 7) === m);
+  const byPlan: Record<string, number> = {};
+  for (const p of month(thisMonth)) byPlan[p.plan] = (byPlan[p.plan] ?? 0) + p.amount;
+  const live = subs.filter((x) => x.active && (!x.current_period_end || x.current_period_end > now.toISOString()));
+  const in7 = new Date(now.getTime() + 7 * 864e5).toISOString();
+  return {
+    thisMonth: month(thisMonth).reduce((n, p) => n + p.amount, 0),
+    lastMonth: month(lastMonth).reduce((n, p) => n + p.amount, 0),
+    paymentsThisMonth: month(thisMonth).length,
+    byPlan,
+    paying: live.filter((x) => x.plan !== "decouverte").length,
+    free: live.filter((x) => x.plan === "decouverte").length,
+    renewals: live
+      .filter((x) => x.plan !== "decouverte" && x.current_period_end && x.current_period_end <= in7)
+      .map((x) => ({ shop: names.get(x.shop_id) ?? "—", plan: x.plan, until: x.current_period_end!.slice(0, 10) }))
+      .sort((a, b) => a.until.localeCompare(b.until)),
   };
 }
 
@@ -257,6 +315,7 @@ export type ShopProfile = {
   slug: string; name: string; category: string; city: string; country: string; district: string; isPhysical: boolean; mapsUrl: string;
   whatsapp: string; callPhone: string; samples: { name: string; price: number }[];
   brandColor: string | null; signature: string | null; displayFont: string | null; tier: "essentiel" | "pro" | "business" | null;
+  fbPixel: string; tiktokPixel: string;
   /** Boutique autorisée (en ligne) : son lien fonctionne pour les clients. */
   approved: boolean;
 };
@@ -265,14 +324,15 @@ export async function loadShopProfile(): Promise<ShopProfile | null> {
   if (!u) return null;
   const { data: s } = await u.sb
     .from("shops")
-    .select("id, slug, name, status, category, city, country, district, is_physical, maps_url, whatsapp, call_phone, sample_prices, brand_color, signature, display_font")
+    .select("id, slug, name, status, category, city, country, district, is_physical, maps_url, whatsapp, call_phone, sample_prices, brand_color, signature, display_font, fb_pixel_id, tiktok_pixel_id")
     .eq("owner_id", u.user.id)
     .neq("status", "closed")
     .maybeSingle();
   if (!s) return null;
   const { data: sub } = await u.sb.from("subscriptions").select("plan").eq("shop_id", s.id).maybeSingle();
   return {
-    brandColor: s.brand_color, signature: s.signature, displayFont: s.display_font, tier: (sub?.plan as ShopProfile["tier"]) ?? null,
+    fbPixel: s.fb_pixel_id ?? "", tiktokPixel: s.tiktok_pixel_id ?? "",
+    brandColor: s.brand_color, signature: s.signature, displayFont: s.display_font, tier: sub?.plan === "decouverte" ? "essentiel" : (sub?.plan as ShopProfile["tier"]) ?? null,
     approved: s.status === "approved",
     slug: s.slug, name: s.name, category: s.category, city: s.city, country: s.country, district: s.district ?? "", isPhysical: s.is_physical, mapsUrl: s.maps_url ?? "",
     whatsapp: s.whatsapp ?? "", callPhone: s.call_phone ?? "", samples: Array.isArray(s.sample_prices) ? (s.sample_prices as ShopProfile["samples"]) : [],

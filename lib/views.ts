@@ -57,7 +57,7 @@ export type ActionResult<T = undefined> = { ok: true; data?: T } | { ok: false; 
 
 /** Données réelles passées par le serveur aux composants (mode Supabase). */
 export type LiveAccount = {
-  profile: { name: string; email: string; phone: string; city: string; country: string };
+  profile: { name: string; email: string; phone: string; city: string; country: string; district?: string; landmark?: string };
   orders: DemoOrder[];
   tickets: Ticket[];
   prefs: import("./demo-store").NotificationPrefs;
@@ -66,7 +66,10 @@ export type LiveAccount = {
 export type LiveSeller = {
   shop: { id: string; shopName: string; status: SellerStatus; plan: string | null } | null;
   payouts: { id: string; type: string; label: string; masked: string }[];
-  orders: (DemoOrder & { buyer: string; city: string; phone: string })[];
+  orders: (DemoOrder & { buyer: string; city: string; phone: string; cod?: SellerOrderCod })[];
+  /** Livreurs du vendeur et produits presque épuisés. */
+  couriers?: { id: string; name: string; phone: string }[];
+  lowStock?: { id: string; name: string; stock: number }[];
   prefs: import("./demo-store").NotificationPrefs;
   subscription: { plan: string; annual: boolean; active: boolean; until: string | null } | null;
   /** Dernière demande de paiement (en cours, ou la plus récente). */
@@ -82,9 +85,20 @@ export type LiveSeller = {
   stats: { delivered: number; revenue: number; openOrders: number; rating: number | null; reviews: number; rank: number | null; competitors: number } | null;
   videos: VideoView[];
   videoQuota: { used: number; limit: number };
+  /** Ventes notées par le vendeur (WhatsApp, téléphone, boutique) et demandes WhatsApp du mois. */
+  offline?: { sales: ManualSaleView[]; monthCount: number; monthAmount: number; leads: number; products: { id: string; name: string; price: number }[] };
 };
 
-export type LiveAdmin = { sellers: DemoSeller[]; tickets: (Ticket & { shopId?: string })[]; payments: DemoSubPayment[]; rewards: import("./rewards").RewardView[]; videos: VideoView[]; edits: EditRequestView[] };
+/** Suivi d'une commande payée à la livraison : confirmation du client, livreur, argent, refus passés du client. */
+export type SellerOrderCod = {
+  confirmToken: string | null; buyerConfirmed: boolean; courierId: string | null; courierToken: string | null;
+  refused: boolean; cashCollected: boolean; cashSettled: boolean; deliveryFee: number; buyerRefusals: number;
+};
+
+export type ManualSaleView ={ id: string; label: string; qty: number; amount: number; channel: "whatsapp" | "telephone" | "boutique" | "autre"; customer: string; phone: string; soldOn: string };
+
+export type AdminRevenue = { thisMonth: number; lastMonth: number; paymentsThisMonth: number; byPlan: Record<string, number>; paying: number; free: number; renewals: { shop: string; plan: string; until: string }[] };
+export type LiveAdmin = { revenue?: AdminRevenue; sellers: DemoSeller[]; tickets: (Ticket & { shopId?: string })[]; payments: DemoSubPayment[]; rewards: import("./rewards").RewardView[]; videos: VideoView[]; edits: EditRequestView[] };
 
 /** Fiche telle qu'elle peut être modifiée par une demande écrite. */
 export type EditableFields = { name: string; short: string | null; description: string | null; price: number; compareAt: number | null; specs: [string, string][] };

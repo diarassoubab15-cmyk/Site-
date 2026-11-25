@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { ShopPixels } from "@/components/ShopPixels";
 import { ShopComments } from "@/components/ShopComments";
 import Link from "next/link";
 import { notFound, permanentRedirect } from "next/navigation";
@@ -10,7 +11,8 @@ import { Stars } from "@/components/Stars";
 import { VideoPlayer } from "@/components/VideoPlayer";
 import { ShopMap } from "@/components/ShopMap";
 import { getShopType } from "@/lib/shop-types";
-import { mapsEmbedUrl, telLink, waLink } from "@/lib/maps";
+import { mapsEmbedUrl, telLink } from "@/lib/maps";
+import { WhatsAppOrder } from "@/components/WhatsAppOrder";
 import { allSlugs, getShopCreations, getShopPage, getShopTier, resolveShopSlug } from "@/lib/catalog";
 import { ShopHero } from "@/components/ShopHero";
 import type { Signature } from "@/lib/shop-theme";
@@ -73,7 +75,7 @@ export default async function ShopPage({ params }: Props) {
           {/* Sur téléphone, les boutons de contact viennent tout de suite (sur ordinateur : colonne de droite) */}
           {(shop.whatsapp || shop.callPhone) && (
             <div className="mt-4 grid grid-cols-2 gap-2 md:hidden">
-              {shop.whatsapp && <a href={waLink(shop.whatsapp)} target="_blank" rel="noopener noreferrer" className="btn-solid" data-haptic>WhatsApp</a>}
+              {shop.whatsapp && <WhatsAppOrder phone={shop.whatsapp} shopSlug={shop.slug} label="WhatsApp" className="btn-solid" text={`Bonjour ${shop.name}, je vous contacte depuis votre boutique NEXORA.`} />}
               {shop.callPhone && <a href={telLink(shop.callPhone)} className="btn" data-haptic>Appeler</a>}
             </div>
           )}
@@ -95,7 +97,7 @@ export default async function ShopPage({ params }: Props) {
           )}
         </div>
         <div className="flex flex-col gap-2 md:w-56">
-          {shop.whatsapp && <a href={waLink(shop.whatsapp)} target="_blank" rel="noopener noreferrer" className="btn-solid max-md:hidden" data-haptic>WhatsApp</a>}
+          {shop.whatsapp && <WhatsAppOrder phone={shop.whatsapp} shopSlug={shop.slug} label="WhatsApp" className="btn-solid max-md:hidden" text={`Bonjour ${shop.name}, je vous contacte depuis votre boutique NEXORA.`} />}
           {shop.callPhone && <a href={telLink(shop.callPhone)} className="btn max-md:hidden" data-haptic>Appeler · <span className="font-mono">{shop.callPhone}</span></a>}
           <Link href={`/support?boutique=${shop.slug}#contact`} className="btn">Écrire via NEXORA</Link>
           <Link href={`/support?boutique=${shop.slug}#signaler`} className="btn-danger">Signaler cette boutique</Link>
@@ -126,6 +128,7 @@ export default async function ShopPage({ params }: Props) {
         {items.map((c) => <ProductCard key={c.product.slug} item={c} />)}
       </div>
       <ShopComments slug={shop.slug} shopName={shop.name} />
+      {shop.pixels && (tier === "pro" || tier === "business") && <ShopPixels fb={shop.pixels.fb} tiktok={shop.pixels.tiktok} />}
       <JsonLd
         data={{
           "@context": "https://schema.org",

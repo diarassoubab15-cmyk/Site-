@@ -6,8 +6,9 @@ import { update, useDemo, type SellerStatus } from "@/lib/demo-store";
 import { supabaseEnabled } from "@/lib/supabase/env";
 import { toast } from "@/lib/toast";
 import type { LiveAdmin } from "@/lib/views";
-import { adminResolveTicket, adminSetShopStatus, adminSetSubscription } from "@/app/actions";
-import { plans } from "@/lib/plans";
+import { adminResolveTicket, adminSetShopStatus, adminSetSubscription, adminSetVerified } from "@/app/actions";
+import { AdminRevenue } from "./AdminRevenue";
+import { allPlans, type PlanId } from "@/lib/plans";
 import { CountUp } from "./CountUp";
 import { AdminPayments } from "./AdminPayments";
 import { AdminRewards } from "./AdminRewards";
@@ -21,9 +22,8 @@ const tabs: { id: SellerStatus | "tous"; label: string }[] = [
   { id: "suspendu", label: "Suspendus" },
   { id: "refusé", label: "Refusés" },
 ];
-type PlanId = "essentiel" | "pro" | "business";
-const planName = (id?: string | null) => plans.find((p) => p.id === id)?.name ?? "Aucun";
-const planColor = (id?: string | null) => plans.find((p) => p.id === id)?.color ?? "#8a8f98";
+const planName = (id?: string | null) => allPlans.find((p) => p.id === id)?.name ?? "Aucun";
+const planColor = (id?: string | null) => allPlans.find((p) => p.id === id)?.color ?? "#8a8f98";
 const frDate = (d: string) => new Date(d).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" });
 
 const dot: Record<SellerStatus, string> = { "en attente": "bg-amber", autorisé: "bg-pulse", suspendu: "bg-alarm", refusé: "bg-iron", fermé: "bg-charcoal" };
@@ -72,6 +72,8 @@ export function AdminView({ live }: { live?: LiveAdmin | null }) {
       () => update((s) => ({ ...s, sellers: s.sellers.map((x) => (x.id === id ? { ...x, plan, planActive: active, planUntil: active ? new Date(Date.now() + months * 30.5 * 864e5).toISOString().slice(0, 10) : null } : x)) })),
       active ? `Forfait ${planName(plan)} activé` : "Forfait désactivé",
     );
+  const setVerified = (id: string, verified: boolean) =>
+    run(() => adminSetVerified({ shopId: id, verified }), () => update((s) => ({ ...s, sellers: s.sellers.map((x) => (x.id === id ? { ...x, verified } : x)) })), verified ? "Badge « vérifié » attribué" : "Badge retiré");
   const suspendFromTicket = (t: AdminTicket) =>
     run(
       () => (t.shopId ? adminSetShopStatus({ shopId: t.shopId, status: "suspendu" }) : Promise.resolve({ ok: false, error: "Boutique inconnue" })),
@@ -102,6 +104,8 @@ export function AdminView({ live }: { live?: LiveAdmin | null }) {
         ))}
       </div>
 
+      {live?.revenue && <AdminRevenue revenue={live.revenue} />}
+
       <section className="card" aria-labelledby="vendeurs">
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
@@ -129,7 +133,7 @@ export function AdminView({ live }: { live?: LiveAdmin | null }) {
             <li key={s.id} className="py-5">
               <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                 <div className="min-w-0">
-                  <p className="flex flex-wrap items-center gap-2 text-white"><span className={`h-2 w-2 rounded-full ${dot[s.status]}`} />{s.shopName} <span className="badge">{s.status}</span></p>
+                  <p className="flex flex-wrap items-center gap-2 text-white"><span className={`h-2 w-2 rounded-full ${dot[s.status]}`} />{s.shopName} <span className="badge">{s.status}</span>{s.verified && <span className="badge text-pulse">✓ vérifié</span>}</p>
                   {s.status === "suspendu" && s.reason && <p className="mt-1 rounded-full bg-[#fdecec] px-2.5 py-0.5 text-xs text-alarm">{s.reason}</p>}
                   <p className="mt-1 text-sm text-ash">{s.owner} · {s.city}, {s.country} · {categories.find((c) => c.slug === s.category)?.name ?? s.category}</p>
                   <p className="mt-1 font-mono text-xs text-iris">{s.email} <span className="text-ash">· {s.phone}</span></p>
@@ -149,6 +153,11 @@ export function AdminView({ live }: { live?: LiveAdmin | null }) {
                   {(s.status === "suspendu" || s.status === "refusé") && <button className="btn-solid px-3 py-1.5 text-xs" disabled={pending} onClick={() => setStatus(s.id, "autorisé")}>{s.status === "suspendu" ? "Autoriser à reprendre" : "Autoriser"}</button>}
                   {s.status === "fermé" && <span className="text-xs text-iron">Fermée par le vendeur</span>}
                   {s.status !== "fermé" && (
+                    <button className="btn px-3 py-1.5 text-xs" disabled={pending} title="Après contrôle de la pièce d'identité du responsable" onClick={() => setVerified(s.id, !s.verified)}>
+                      {s.verified ? "Retirer le badge vérifié" : "Marquer vérifié (pièce contrôlée)"}
+                    </button>
+                  )}
+                  {s.status !== "fermé" && (
                     <button className="btn px-3 py-1.5 text-xs" aria-expanded={openPlan === s.id} onClick={() => { setOpenPlan(openPlan === s.id ? null : s.id); setPlanDraft({ plan: (s.plan as PlanId) ?? "pro", months: 1 }); }}>
                       Gérer le forfait
                     </button>
@@ -161,10 +170,10 @@ export function AdminView({ live }: { live?: LiveAdmin | null }) {
                   <fieldset>
                     <legend className="label">Forfait</legend>
                     <div className="flex flex-wrap gap-2">
-                      {plans.map((pl) => (
+                      {allPlans.map((pl) => (
                         <label key={pl.id} className={`flex cursor-pointer items-center gap-2 rounded-full border px-3 py-1.5 text-sm ${planDraft.plan === pl.id ? "border-white text-white" : "border-line text-bone"}`}>
                           <input type="radio" name={`plan-${s.id}`} className="accent-[#5433eb]" checked={planDraft.plan === pl.id} onChange={() => setPlanDraft({ ...planDraft, plan: pl.id })} />
-                          {pl.name} <span className="font-mono text-xs text-iron">{pl.monthly.toLocaleString("fr-FR")} F</span>
+                          {pl.name} <span className="font-mono text-xs text-iron">{pl.monthly ? `${pl.monthly.toLocaleString("fr-FR")} F` : "gratuit"}</span>
                         </label>
                       ))}
                     </div>

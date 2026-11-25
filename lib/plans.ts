@@ -1,8 +1,12 @@
-export type PlanFeature = { text: string; /** pas encore disponible : affiché « bientôt », jamais promis comme acquis */ soon?: boolean };
+export type PlanId = "decouverte" | "essentiel" | "pro" | "business";
+/** Forfaits payants : seuls ceux-ci se paient (Orange Money, Wave…). */
+export type PaidPlanId = Exclude<PlanId, "decouverte">;
+
+export type PlanFeature ={ text: string; /** pas encore disponible : affiché « bientôt », jamais promis comme acquis */ soon?: boolean };
 
 export type Plan = {
-  /** Identifiant interne (inchangé pour les abonnements en cours) : essentiel = Base, business = Ultra. */
-  id: "essentiel" | "pro" | "business";
+  /** Identifiant interne (inchangé pour les abonnements en cours) : decouverte = gratuit, essentiel = Base, business = Ultra. */
+  id: PlanId;
   name: string;
   pitch: string;
   monthly: number; // FCFA / mois, facturation mensuelle (le même tarif est appliqué par la base)
@@ -73,7 +77,27 @@ export const plans: Plan[] = [
   },
 ];
 
-export const planName = (id: string) => plans.find((p) => p.id === id)?.name ?? id;
+/** Formule gratuite : pour démarrer sans rien payer (même limite que la base : 10 produits en ligne). */
+export const freePlan: Plan = {
+  id: "decouverte",
+  name: "Découverte",
+  pitch: "Gratuit pour toujours : ouvrez votre boutique et faites vos premières ventes.",
+  monthly: 0,
+  products: "Jusqu'à 10 produits",
+  color: "#0e7490",
+  features: [
+    { text: "Boutique en ligne avec lien à partager et QR code" },
+    { text: "Boutons WhatsApp et Appeler, paiement Orange Money, Wave ou à la livraison" },
+    { text: "0 % de commission" },
+    { text: "Avis clients vérifiés et commentaires" },
+    { text: "Passez à Base, Pro ou Ultra quand vous voulez" },
+  ],
+};
+
+/** Tous les forfaits, gratuit compris (affichage, choix à la création). `plans` = forfaits payants seulement. */
+export const allPlans: Plan[] = [freePlan, ...plans];
+
+export const planName = (id: string) => allPlans.find((p) => p.id === id)?.name ?? id;
 
 /** Essais virtuels par client et par boutique, selon le forfait de la boutique (Ultra : illimité). */
-export const TRYON_QUOTA: Record<Plan["id"], number> = { essentiel: 5, pro: 15, business: Number.POSITIVE_INFINITY };
+export const TRYON_QUOTA: Record<Plan["id"], number> = { decouverte: 5, essentiel: 5, pro: 15, business: Number.POSITIVE_INFINITY };

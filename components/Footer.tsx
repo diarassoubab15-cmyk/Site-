@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { LiteModeLink } from "./LiteModeToggle";
 import { Logo } from "./Logo";
 import { site } from "@/lib/site";
 import { categories } from "@/lib/data";
@@ -40,6 +41,7 @@ export function Footer() {
       <div className="container-x flex flex-wrap items-center justify-between gap-4 border-t border-line py-6 text-sm text-ash">
         <p>© {new Date().getFullYear()} NEXORA</p>
         <div className="flex gap-6">
+          <LiteModeLink />
           <Link href="/confidentialite" className="hover:text-white">Confidentialité</Link>
           <Link href="/conditions" className="hover:text-white">Conditions</Link>
         </div>

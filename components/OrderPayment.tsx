@@ -19,7 +19,7 @@ export function OrderPayment({ orderRef, method, total }: { orderRef: string; me
   if (method === "card") {
     return (
       <div className="space-y-3 rounded-[18px] bg-lift p-4">
-        <p className="text-sm text-bone">Payez <strong className="font-mono text-white">{formatPrice(total)}</strong> avec votre carte Visa ou Mastercard, sur la page sécurisée de notre partenaire de paiement. Aucun compte à créer.</p>
+        <p className="text-sm text-bone">Payez <strong className="font-mono text-white">{formatPrice(total)}</strong> avec votre carte Visa ou Mastercard, sur la page sécurisée de FedaPay, notre partenaire de paiement agréé. Aucun compte à créer.</p>
         <button type="button" className="btn-solid w-full" data-haptic disabled={pending}
           onClick={() => start(async () => { const r = await payOrderByCard(orderRef); if (r.ok && r.data) window.location.assign(r.data); else toast(r.ok ? "Erreur" : r.error, "error"); })}>
           {pending ? "Ouverture du paiement…" : `Payer ${formatPrice(total)} par carte`}
