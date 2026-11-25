@@ -5,7 +5,7 @@ import { useState, useTransition } from "react";
 import { update, useDemo } from "@/lib/demo-store";
 import { supabaseEnabled } from "@/lib/supabase/env";
 import { supabaseBrowser } from "@/lib/supabase/client";
-import { passwordLogin, signOut } from "@/app/actions";
+import { passwordLogin, signOut, signupAccount } from "@/app/actions";
 
 export type AuthMode = "connexion" | "inscription";
 type Step = "form" | "check-email" | "forgot" | "forgot-sent" | "link-sent";
@@ -56,7 +56,6 @@ export function LoginForm({ user, next = "/compte", initialMode = "connexion" }:
       return;
     }
     start(async () => {
-      const sb = supabaseBrowser();
       if (mode === "connexion") {
         const r = await passwordLogin({ email: mail, password });
         if (r.ok && r.mfa) return window.location.assign(`/connexion/verification?next=${encodeURIComponent(next)}`);
@@ -64,19 +63,11 @@ export function LoginForm({ user, next = "/compte", initialMode = "connexion" }:
         setPassword("");
         return fail(r.error);
       }
-      const { data, error } = await sb.auth.signUp({ email: mail, password, options: { data: { full_name: name.trim() }, emailRedirectTo: callback(next) } });
-      if (error) {
-        if (/registered|exists/i.test(error.message)) return fail("Un compte existe déjà avec cet e-mail : connectez-vous.");
-        if (error.status === 429) return fail("Trop de demandes. Patientez une minute.");
-        return fail(/password/i.test(error.message) ? "Mot de passe trop simple : mélangez lettres et chiffres." : "Inscription impossible. Vérifiez l'adresse e-mail.");
-      }
-      // Compte déjà existant : Supabase ne le dit pas (sécurité), mais ne renvoie aucune identité.
-      if (data.user && data.user.identities?.length === 0) return fail("Un compte existe déjà avec cet e-mail : connectez-vous.");
-      if (data.session) {
-        await sb.from("profiles").update({ full_name: name.trim() }).eq("id", data.session.user.id);
-        return go();
-      }
-      setStep("check-email");   // confirmation de l'adresse demandée par Supabase
+      // Compte créé par le serveur, adresse déjà confirmée : aucune attente d'e-mail.
+      const r = await signupAccount({ name, email: mail, password });
+      if (r.ok) return go();
+      if (r.exists) setMode("connexion");
+      return fail(r.error);
     });
   }
 

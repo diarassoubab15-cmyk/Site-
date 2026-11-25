@@ -52,3 +52,20 @@ export async function ipLocked() {
 export async function recordFailure() {
   await supabaseService().from("login_attempts").insert({ ip_hash: await ipHash() });
 }
+
+// ------------------------------------------------------------------ limite des inscriptions (anti-robots)
+const MAX_SIGNUPS_PER_HOUR = 5;
+async function signupHash() {
+  const h = await headers();
+  const ip = (h.get("x-forwarded-for") ?? "").split(",")[0].trim() || h.get("x-real-ip") || "inconnue";
+  return createHash("sha256").update(`nexora-inscription:${ip}`).digest("hex");
+}
+/** Plus de 5 comptes créés depuis cette connexion internet dans l'heure : on refuse (robots, faux comptes). */
+export async function signupLocked() {
+  const since = new Date(Date.now() - 3600_000).toISOString();
+  const { count } = await supabaseService().from("login_attempts").select("id", { count: "exact", head: true }).eq("ip_hash", await signupHash()).gte("created_at", since);
+  return (count ?? 0) >= MAX_SIGNUPS_PER_HOUR;
+}
+export async function recordSignup() {
+  await supabaseService().from("login_attempts").insert({ ip_hash: await signupHash() });
+}
