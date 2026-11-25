@@ -1,4 +1,5 @@
 "use client";
+import { etaLabel, isLate } from "@/lib/eta";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
@@ -117,12 +118,19 @@ export function AccountView({ live }: { live?: LiveAccount | null }) {
                     <span>{o.id}</span><span>·</span><span>{o.shop}</span><span>·</span><span>{formatPrice(o.total)}</span><span>·</span><span>{paymentMethods[o.method].label}</span>
                   </p>
                   <p className="mt-1.5 flex items-center gap-2 font-mono text-xs text-bone"><span className={`h-1.5 w-1.5 rounded-full ${statusColor[o.status]}`} />{o.status}</p>
+                  {etaLabel(o.etaMin, o.etaMax) && ["confirmée", "expédiée"].includes(o.status) && (
+                    <p className={`mt-1 text-xs ${isLate(o.status, o.etaMax) ? "text-alarm" : "text-ash"}`}>
+                      {isLate(o.status, o.etaMax) ? `En retard : livraison prévue ${etaLabel(o.etaMin, o.etaMax)}` : `Livraison prévue ${etaLabel(o.etaMin, o.etaMax)}`}
+                    </p>
+                  )}
+                  {o.uuid && <Link href={`/compte/recu/${encodeURIComponent(o.id)}`} className="mt-1 inline-block text-xs text-iris underline underline-offset-4">Reçu</Link>}
                 </div>
                 <div className="flex flex-wrap gap-2">
                   {(o.status === "confirmée" || o.status === "expédiée") && (
                     <>
                       <button className="btn px-3 py-1.5 text-xs" disabled={pending} onClick={() => received(o)}>J&apos;ai reçu</button>
                       <button className="btn-danger px-3 py-1.5 text-xs" disabled={pending} onClick={() => notReceived(o)}>Pas reçu</button>
+                      {isLate(o.status, o.etaMax) && <Link href={`/support?commande=${encodeURIComponent(o.uuid ?? o.id)}#remboursement`} className="btn px-3 py-1.5 text-xs">Signaler le retard</Link>}
                     </>
                   )}
                   {o.status === "livrée" && o.product && <Link href={`/produits/${o.product}#avis`} className="btn px-3 py-1.5 text-xs">Laisser un avis</Link>}
@@ -139,9 +147,20 @@ export function AccountView({ live }: { live?: LiveAccount | null }) {
           {tickets.length === 0 ? <p className="text-sm text-ash">Aucune demande. <Link href="/support" className="link">Contacter le SAV</Link></p> : (
             <ul className="space-y-3">
               {tickets.map((t) => (
-                <li key={t.id} className="flex items-center justify-between gap-4 rounded-[6px] border border-line px-4 py-3 text-sm">
-                  <span><span className="font-mono text-xs text-iris">{t.id}</span> <span className="text-white">{t.subject}</span>{t.shop && <span className="text-ash"> · {t.shop}</span>}</span>
-                  <span className="badge">{t.status}</span>
+                <li key={t.id} className="rounded-[14px] border border-line px-4 py-3 text-sm">
+                  <div className="flex items-center justify-between gap-4">
+                    <span><span className="font-mono text-xs text-iris">{t.id}</span> <span className="text-white">{t.subject}</span>{t.shop && <span className="text-ash"> · {t.shop}</span>}</span>
+                    <span className="badge">{t.status}</span>
+                  </div>
+                  {/* Suivi clair : où en est la réclamation, et qui doit agir avant quand. */}
+                  {t.status !== "résolu" && t.deadline && (
+                    <p className="mt-2 text-xs text-ash">
+                      {new Date(t.deadline).getTime() > Date.now()
+                        ? <>Le vendeur doit vous rembourser ou prouver la livraison avant le <strong className="text-white">{new Date(t.deadline).toLocaleString("fr-FR", { day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" })}</strong> ({Math.max(1, Math.ceil((new Date(t.deadline).getTime() - Date.now()) / 3600000))} h restantes).</>
+                        : <span className="text-amber">Délai du vendeur dépassé : NEXORA examine votre réclamation et tranche.</span>}
+                    </p>
+                  )}
+                  {(t.photoCount ?? 0) > 0 && <p className="mt-1 text-xs text-iron">📷 {t.photoCount} photo{(t.photoCount ?? 0) > 1 ? "s" : ""} jointe{(t.photoCount ?? 0) > 1 ? "s" : ""}</p>}
                 </li>
               ))}
             </ul>

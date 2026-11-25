@@ -19,6 +19,9 @@ export type DemoOrder = {
   method: PaymentMethodId;
   status: OrderStatus;
   createdAt: string;
+  /** Livraison prévue entre ces deux dates (fixées par la base à la commande). */
+  etaMin?: string | null;
+  etaMax?: string | null;
 };
 export type DemoReview = { id: string; product: string; author: string; rating: number; title: string; body: string; date: string };
 export type SellerStatus = "en attente" | "autorisé" | "suspendu" | "refusé" | "fermé";
@@ -34,6 +37,11 @@ export type Ticket = {
   shop?: string;
   status: "ouvert" | "en cours" | "résolu";
   createdAt: string;
+  /** Fin du délai laissé au vendeur (remboursement) ; après, l'admin tranche. */
+  deadline?: string | null;
+  /** Photos jointes (adresses temporaires, visibles de l'admin). */
+  photos?: string[];
+  photoCount?: number;
 };
 /** Paiement d'abonnement : contact de l'admin obligatoire avant de payer. */
 export type SubPaymentStatus = "contact" | "paiement" | "déclaré" | "confirmé" | "refusé";

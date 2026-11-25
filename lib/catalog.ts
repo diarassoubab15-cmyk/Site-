@@ -22,12 +22,12 @@ type ShopRow = {
   slug: string; name: string; city: string; country: string; description: string | null; created_at: string; accepts_cod: boolean; response_time: string; payments: string[];
   district?: string | null; is_physical?: boolean; maps_url?: string | null; lat?: number | null; lng?: number | null;
   whatsapp?: string | null; call_phone?: string | null; sample_prices?: unknown; category?: string;
-  brand_color?: string | null; signature?: string | null; display_font?: string | null; verified_at?: string | null; fb_pixel_id?: string | null; tiktok_pixel_id?: string | null;
+  brand_color?: string | null; signature?: string | null; display_font?: string | null; verified_at?: string | null; ship_days?: number; return_policy?: string | null; fb_pixel_id?: string | null; tiktok_pixel_id?: string | null;
 };
 type ProductRow = {
   id: string; slug: string; name: string; short: string | null; description: string | null; category: string; price: number;
   compare_at: number | null; stock: number; wholesale_min: number | null; wholesale_price: number | null; specs: unknown; glyph: string; tone: string;
-  price_unit: string | null; subcategory?: string | null; product_media?: { path: string; kind: string; position: number; label: string | null; status: string }[];
+  price_unit: string | null; subcategory?: string | null; made_in_mali?: boolean; handmade?: boolean; product_media?: { path: string; kind: string; position: number; label: string | null; status: string }[];
   shops: ShopRow;
 };
 
@@ -40,6 +40,8 @@ const toShop = (s: ShopRow): Shop => ({
   since: s.created_at.slice(0, 10),
   // Badge « vérifié » : donné par l'admin après contrôle de la pièce d'identité (pas seulement l'autorisation).
   verified: !!s.verified_at,
+  shipDays: s.ship_days ?? 2,
+  returnPolicy: (s.return_policy as Shop["returnPolicy"]) ?? null,
   pixels: s.fb_pixel_id || s.tiktok_pixel_id ? { fb: s.fb_pixel_id ?? null, tiktok: s.tiktok_pixel_id ?? null } : undefined,
   responseTime: s.response_time,
   acceptsCashOnDelivery: s.accepts_cod,
@@ -64,6 +66,8 @@ const toProduct = (p: ProductRow): Product => ({
   shop: p.shops.slug,
   category: p.category,
   subcategory: p.subcategory ?? undefined,
+  madeInMali: p.made_in_mali || undefined,
+  handmade: p.handmade || undefined,
   price: p.price,
   compareAt: p.compare_at ?? undefined,
   stock: p.stock,
@@ -84,7 +88,7 @@ const media = (p: ProductRow, kind: string) =>
 /** Adresse publique d'un fichier du stockage « product-media ». */
 export const mediaUrl = (path: string) => `${(process.env.NEXT_PUBLIC_SUPABASE_URL ?? "").replace(/\/$/, "")}/storage/v1/object/public/product-media/${path}`;
 
-const PRODUCT_COLS = "id, slug, name, short, description, category, subcategory, price, compare_at, stock, wholesale_min, wholesale_price, specs, glyph, tone, price_unit, product_media(path, kind, position, label, status), shops!inner(slug, name, city, country, description, created_at, accepts_cod, response_time, payments, whatsapp, verified_at, fb_pixel_id, tiktok_pixel_id)";
+const PRODUCT_COLS = "id, slug, name, short, description, category, subcategory, made_in_mali, handmade, price, compare_at, stock, wholesale_min, wholesale_price, specs, glyph, tone, price_unit, product_media(path, kind, position, label, status), shops!inner(slug, name, city, country, description, created_at, accepts_cod, response_time, payments, whatsapp, verified_at, ship_days, return_policy, fb_pixel_id, tiktok_pixel_id)";
 
 async function ratingsFor(ids: string[]) {
   if (!ids.length) return new Map<string, Rating>();
@@ -146,10 +150,11 @@ export async function getProductPage(slug: string) {
   const { data } = await sb.from("products").select(PRODUCT_COLS).eq("slug", slug).eq("published", true).maybeSingle();
   if (!data) return null;
   const row = data as unknown as ProductRow;
-  const { data: rv } = await sb.from("reviews").select("id, rating, title, body, created_at, seller_reply, author_name, author_city").eq("product_id", row.id).order("created_at", { ascending: false });
+  const { data: rv } = await sb.from("reviews").select("id, rating, title, body, created_at, seller_reply, author_name, author_city, photos").eq("product_id", row.id).order("created_at", { ascending: false });
   const reviews: Review[] = (rv ?? []).map((r) => ({
     id: r.id, product: slug, author: r.author_name ?? "Client", city: r.author_city ?? "", rating: r.rating as Review["rating"],
     title: r.title, body: r.body, date: r.created_at.slice(0, 10), verified: true, sellerReply: r.seller_reply ?? undefined,
+    photos: (r.photos ?? []).map((p: string) => `${(process.env.NEXT_PUBLIC_SUPABASE_URL ?? "").replace(/\/$/, "")}/storage/v1/object/public/review-photos/${p}`),
   }));
   const related = (await listCards({ category: row.category, limit: 5 })).filter((c) => c.product.slug !== slug).slice(0, 4);
   return { product: toProduct(row), shop: toShop(row.shops), reviews, rating: rate(reviews), related };
@@ -162,7 +167,7 @@ export async function getShopPage(slug: string) {
     return { shop, cards: demo.productsByShop(slug).map(demoCard), rating: demo.shopRating(slug), awards: [] as string[], video: null as { src: string; poster: string } | null };
   }
   const sb = supabasePublic();
-  const { data: s } = await sb.from("shops").select("id, slug, name, city, country, description, created_at, accepts_cod, response_time, payments, category, district, is_physical, maps_url, lat, lng, whatsapp, call_phone, sample_prices, brand_color, signature, display_font, verified_at, fb_pixel_id, tiktok_pixel_id").eq("slug", slug).eq("status", "approved").maybeSingle();
+  const { data: s } = await sb.from("shops").select("id, slug, name, city, country, description, created_at, accepts_cod, response_time, payments, category, district, is_physical, maps_url, lat, lng, whatsapp, call_phone, sample_prices, brand_color, signature, display_font, verified_at, ship_days, return_policy, fb_pixel_id, tiktok_pixel_id").eq("slug", slug).eq("status", "approved").maybeSingle();
   if (!s) return null;
   const { data } = await sb.from("products").select(PRODUCT_COLS).eq("shop_id", s.id).eq("published", true).gt("stock", 0);
   const cards = await toCards((data ?? []) as unknown as ProductRow[]);
@@ -324,11 +329,21 @@ export async function resolveShopSlug(slug: string): Promise<string | null> {
   return (data as string | null) ?? null;
 }
 
-export type DeliveryZone = { id: string; name: string; fee: number; delay: string | null };
+export type DeliveryZone = { id: string; name: string; fee: number; delay: string | null; daysMin: number | null; daysMax: number | null };
 
 /** Zones et frais de livraison d'une boutique (choisis par le vendeur), dans son ordre. */
 export async function getDeliveryZones(shopSlug: string): Promise<DeliveryZone[]> {
   if (!supabaseEnabled) return [];
-  const { data } = await supabasePublic().from("shop_delivery_zones").select("id, name, fee, delay, position, shops!inner(slug)").eq("shops.slug", shopSlug).order("position").order("created_at");
-  return (data ?? []).map((z) => ({ id: z.id, name: z.name, fee: z.fee, delay: z.delay }));
+  const { data } = await supabasePublic().from("shop_delivery_zones").select("id, name, fee, delay, days_min, days_max, position, shops!inner(slug)").eq("shops.slug", shopSlug).order("position").order("created_at");
+  return (data ?? []).map((z) => ({ id: z.id, name: z.name, fee: z.fee, delay: z.delay, daysMin: z.days_min, daysMax: z.days_max }));
+}
+
+export type Reliability = { orders: number; onTimePct: number | null; deliveredPct: number | null; refused: number; disputes: number; replyPct: number | null };
+
+/** Fiabilité du vendeur sur 6 mois, calculée par la base (personne ne peut la modifier). */
+export async function getShopReliability(slug: string): Promise<Reliability | null> {
+  if (!supabaseEnabled) return null;
+  const { data } = await supabasePublic().rpc("shop_reliability", { p_slug: slug });
+  const r = data?.[0];
+  return r ? { orders: r.orders, onTimePct: r.on_time_pct, deliveredPct: r.delivered_pct, refused: r.refused, disputes: r.disputes, replyPct: r.reply_pct } : null;
 }

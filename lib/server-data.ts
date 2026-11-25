@@ -1,6 +1,6 @@
 import "server-only";
 /** Chargement des données réelles des pages privées (mode Supabase). */
-import { currentUser } from "./supabase/server";
+import { currentUser, supabaseService } from "./supabase/server";
 import type { NotificationPrefs, Ticket } from "./demo-store";
 import type { PaymentMethodId } from "./payments";
 import { paymentMethods } from "./payments";
@@ -47,7 +47,7 @@ async function prefsOf(sb: Sb, userId: string): Promise<NotificationPrefs> {
   };
 }
 
-const ticketView = (t: { id: string; kind: string; message: string; status: string; created_at: string; order_ref: string | null; order_id: string | null; shop_name: string | null; shop_id: string | null }): Ticket & { shopId?: string } => ({
+const ticketView = (t: { id: string; kind: string; message: string; status: string; created_at: string; order_ref: string | null; order_id: string | null; shop_name: string | null; shop_id: string | null; seller_deadline?: string | null; photos?: string[] }): Ticket & { shopId?: string } => ({
   id: t.id.slice(0, 8).toUpperCase(),
   kind: ticketKindFr[t.kind],
   subject: { contact: "Question", signalement: "Signalement d'un vendeur", remboursement: "Produit non reçu" }[ticketKindFr[t.kind]],
@@ -58,6 +58,8 @@ const ticketView = (t: { id: string; kind: string; message: string; status: stri
   shopId: t.shop_id ?? undefined,
   status: ticketStatusFr[t.status],
   createdAt: t.created_at.slice(0, 10),
+  deadline: t.seller_deadline ?? null,
+  photoCount: t.photos?.length ?? 0,
   // l'identifiant complet sert aux actions de l'administrateur
   ...({ uuid: t.id } as object),
 });
@@ -76,6 +78,7 @@ export async function loadAccount(): Promise<LiveAccount | null> {
     orders: (orders ?? []).map((o) => ({
       id: o.ref, uuid: o.id, product: o.product_slug ?? "", productName: o.product_name ?? "Produit retiré", shop: o.shop_name ?? "",
       qty: o.qty, total: o.total, method: o.method as PaymentMethodId, status: orderStatusFr[o.status], createdAt: o.created_at.slice(0, 10),
+      etaMin: o.eta_min, etaMax: o.eta_max,
     })),
     tickets: (tickets ?? []).map(ticketView),
     prefs,
@@ -133,6 +136,7 @@ export async function loadSeller(): Promise<LiveSeller | null> {
     orders: (orders ?? []).map((o) => ({
       id: o.ref, uuid: o.id, product: o.product_slug ?? "", productName: o.product_name ?? "", shop: o.shop_name ?? "", qty: o.qty, total: o.total,
       method: o.method as PaymentMethodId, status: orderStatusFr[o.status], createdAt: o.created_at.slice(0, 10),
+      etaMin: o.eta_min, etaMax: o.eta_max,
       buyer: o.shipping_name, phone: o.shipping_phone,
       // Adresse à la malienne pour le livreur : quartier, ville, point de repère, zone choisie.
       city: [o.shipping_district, o.shipping_city].filter(Boolean).join(", ") + (o.shipping_landmark ? ` · repère : ${o.shipping_landmark}` : "") + (o.delivery_zone ? ` · livraison ${o.delivery_zone}${o.delivery_fee ? ` (${o.delivery_fee.toLocaleString("fr-FR")} F)` : ""}` : ""),
@@ -197,9 +201,19 @@ export async function loadAdmin(): Promise<LiveAdmin | null> {
       planActive: !!subByShop.get(s.id)?.active && (!subByShop.get(s.id)?.current_period_end || subByShop.get(s.id)!.current_period_end! > new Date().toISOString()),
       planUntil: subByShop.get(s.id)?.current_period_end?.slice(0, 10) ?? null,
     })),
-    tickets: (tickets ?? []).map(ticketView),
+    tickets: await withTicketPhotos(tickets ?? []),
     revenue: revenueOf(paid ?? [], subs ?? [], new Map(shops.map((x) => [x.id, x.name]))),
   };
+}
+
+/** Photos de réclamation pour l'admin : liens temporaires (1 h), le dossier reste privé. */
+async function withTicketPhotos(rows: Parameters<typeof ticketView>[0][]) {
+  const views = rows.map(ticketView);
+  const paths = rows.flatMap((t) => t.photos ?? []);
+  if (!paths.length) return views;
+  const { data } = await supabaseService().storage.from("ticket-photos").createSignedUrls(paths, 3600);
+  const url = new Map((data ?? []).map((d) => [d.path, d.signedUrl]));
+  return views.map((v, i) => ({ ...v, photos: (rows[i].photos ?? []).map((p) => url.get(p)).filter(Boolean) as string[] }));
 }
 
 /** Tableau des revenus de l'admin : encaissé ce mois et le mois dernier, par forfait, vendeurs payants et renouvellements proches. */
@@ -253,7 +267,7 @@ export type SellerProductMedia = { id: string; kind: "photo" | "pano" | "spin" |
 export type SellerProduct = {
   id: string; slug: string; name: string; category: string; subcategory: string | null; price: number; priceUnit: "mois" | "nuit" | "jour" | null; compareAt: number | null;
   stock: number; short: string; description: string; specs: [string, string][]; wholesaleMin: number | null; wholesalePrice: number | null;
-  published: boolean; media: SellerProductMedia[];
+  published: boolean; madeInMali: boolean; handmade: boolean; media: SellerProductMedia[];
 };
 
 const productMediaUrl = (path: string) => `${(process.env.NEXT_PUBLIC_SUPABASE_URL ?? "").replace(/\/$/, "")}/storage/v1/object/public/product-media/${path}`;
@@ -266,7 +280,7 @@ export async function loadSellerProducts(): Promise<{ shop: { id: string; status
   if (!shop) return { shop: null, products: [] };
   const { data } = await u.sb
     .from("products")
-    .select("id, slug, name, category, subcategory, price, price_unit, compare_at, stock, short, description, specs, wholesale_min, wholesale_price, published, product_media(id, kind, path, label, position, ai_generated, status)")
+    .select("id, slug, name, category, subcategory, price, price_unit, compare_at, stock, short, description, specs, wholesale_min, wholesale_price, published, made_in_mali, handmade, product_media(id, kind, path, label, position, ai_generated, status)")
     .eq("shop_id", shop.id)
     .order("created_at", { ascending: false });
   return {
@@ -274,7 +288,7 @@ export async function loadSellerProducts(): Promise<{ shop: { id: string; status
     products: (data ?? []).map((p) => ({
       id: p.id, slug: p.slug, name: p.name, category: p.category, subcategory: p.subcategory, price: p.price, priceUnit: p.price_unit as SellerProduct["priceUnit"], compareAt: p.compare_at,
       stock: p.stock, short: p.short ?? "", description: p.description ?? "", specs: Array.isArray(p.specs) ? (p.specs as [string, string][]) : [],
-      wholesaleMin: p.wholesale_min, wholesalePrice: p.wholesale_price, published: p.published,
+      wholesaleMin: p.wholesale_min, wholesalePrice: p.wholesale_price, published: p.published, madeInMali: p.made_in_mali, handmade: p.handmade,
       media: (p.product_media ?? [])
         .map((m) => ({ id: m.id, kind: m.kind, url: productMediaUrl(m.path), label: m.label, position: m.position, aiGenerated: m.ai_generated, status: m.status }))
         .sort((a, b) => a.position - b.position),
@@ -315,7 +329,7 @@ export type ShopProfile = {
   slug: string; name: string; category: string; city: string; country: string; district: string; isPhysical: boolean; mapsUrl: string;
   whatsapp: string; callPhone: string; samples: { name: string; price: number }[];
   brandColor: string | null; signature: string | null; displayFont: string | null; tier: "essentiel" | "pro" | "business" | null;
-  fbPixel: string; tiktokPixel: string;
+  fbPixel: string; tiktokPixel: string; shipDays: number; returnPolicy: string | null;
   /** Boutique autorisée (en ligne) : son lien fonctionne pour les clients. */
   approved: boolean;
 };
@@ -324,14 +338,14 @@ export async function loadShopProfile(): Promise<ShopProfile | null> {
   if (!u) return null;
   const { data: s } = await u.sb
     .from("shops")
-    .select("id, slug, name, status, category, city, country, district, is_physical, maps_url, whatsapp, call_phone, sample_prices, brand_color, signature, display_font, fb_pixel_id, tiktok_pixel_id")
+    .select("id, slug, name, status, category, city, country, district, is_physical, maps_url, whatsapp, call_phone, sample_prices, brand_color, signature, display_font, fb_pixel_id, tiktok_pixel_id, ship_days, return_policy")
     .eq("owner_id", u.user.id)
     .neq("status", "closed")
     .maybeSingle();
   if (!s) return null;
   const { data: sub } = await u.sb.from("subscriptions").select("plan").eq("shop_id", s.id).maybeSingle();
   return {
-    fbPixel: s.fb_pixel_id ?? "", tiktokPixel: s.tiktok_pixel_id ?? "",
+    fbPixel: s.fb_pixel_id ?? "", tiktokPixel: s.tiktok_pixel_id ?? "", shipDays: s.ship_days ?? 2, returnPolicy: s.return_policy ?? null,
     brandColor: s.brand_color, signature: s.signature, displayFont: s.display_font, tier: sub?.plan === "decouverte" ? "essentiel" : (sub?.plan as ShopProfile["tier"]) ?? null,
     approved: s.status === "approved",
     slug: s.slug, name: s.name, category: s.category, city: s.city, country: s.country, district: s.district ?? "", isPhysical: s.is_physical, mapsUrl: s.maps_url ?? "",

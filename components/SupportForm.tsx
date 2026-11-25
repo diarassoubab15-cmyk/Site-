@@ -1,4 +1,5 @@
 "use client";
+import { PhotoPicker } from "./PhotoPicker";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
 import { today, uid, update, useDemo, type Ticket } from "@/lib/demo-store";
@@ -14,7 +15,7 @@ const kinds: { id: Ticket["kind"]; label: string; anchor: string }[] = [
   { id: "remboursement", label: "Produit non reçu / remboursement", anchor: "remboursement" },
 ];
 
-export function SupportForm({ shop, known: liveKnown }: { shop?: string; known?: KnownUser | null }) {
+export function SupportForm({ shop, order, known: liveKnown }: { shop?: string; order?: string; known?: KnownUser | null }) {
   const demo = useDemo();
   const router = useRouter();
   const [pending, start] = useTransition();
@@ -31,9 +32,11 @@ export function SupportForm({ shop, known: liveKnown }: { shop?: string; known?:
     return () => window.removeEventListener("hashchange", sync);
   }, []);
   const [contact, setContact] = useState({ name: "", email: "" });
-  const [orderId, setOrderId] = useState("");
+  // Commande déjà choisie depuis « Signaler le retard » / « Pas reçu ».
+  const [orderId, setOrderId] = useState(order && /^[0-9a-fA-F-]{6,40}$/.test(order) ? order : "");
   const [shopName, setShopName] = useState(shop ?? "");
   const [message, setMessage] = useState("");
+  const [photos, setPhotos] = useState<string[]>([]);
   const [sent, setSent] = useState<string | null>(null);
 
   // Déjà identifié : on ne redemande ni nom ni e-mail.
@@ -48,7 +51,7 @@ export function SupportForm({ shop, known: liveKnown }: { shop?: string; known?:
       if (kind !== "contact" && !known) return router.push(`/connexion?next=${encodeURIComponent("/support#" + kinds.find((k) => k.id === kind)!.anchor)}`);
       const isUuid = /^[0-9a-f-]{36}$/.test(orderId);
       start(async () => {
-        const res = await createTicket({ kind, message, orderId: isUuid ? orderId : undefined, shopSlug: shop, contact: known ? undefined : contact });
+        const res = await createTicket({ kind, message, orderId: isUuid ? orderId : undefined, shopSlug: shop, contact: known ? undefined : contact, photos: known ? photos : [] });
         if (res.ok) { setSent(res.data ?? ""); setMessage(""); }
         else if (res.login) router.push("/connexion?next=/support");
         else setError(res.error);
@@ -113,6 +116,9 @@ export function SupportForm({ shop, known: liveKnown }: { shop?: string; known?:
         <label className="label" htmlFor="s-msg">{kind === "contact" ? "Votre question" : "Que s'est-il passé ?"}</label>
         <textarea id="s-msg" required rows={5} maxLength={2000} className="input" value={message} onChange={(e) => setMessage(e.target.value)} />
       </div>
+      {kind !== "contact" && known && supabaseEnabled && (
+        <PhotoPicker bucket="ticket-photos" label="Photos (produit abîmé, colis, capture de la conversation…)" value={photos} onChange={setPhotos} />
+      )}
       {kind === "signalement" && (
         <p className="rounded-[14px] bg-[#fff6e5] px-3 py-2 text-xs leading-relaxed text-[#8a5a00]">Dès votre signalement, la boutique est <strong>suspendue</strong> : elle n&apos;est plus visible ni joignable jusqu&apos;à ce que NEXORA vérifie et l&apos;autorise de nouveau. Signalez seulement un vrai problème (arnaque, produit faux, comportement grave).</p>
       )}

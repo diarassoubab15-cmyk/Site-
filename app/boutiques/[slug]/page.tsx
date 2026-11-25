@@ -13,7 +13,8 @@ import { ShopMap } from "@/components/ShopMap";
 import { getShopType } from "@/lib/shop-types";
 import { mapsEmbedUrl, telLink } from "@/lib/maps";
 import { WhatsAppOrder } from "@/components/WhatsAppOrder";
-import { allSlugs, getShopCreations, getShopPage, getShopTier, resolveShopSlug } from "@/lib/catalog";
+import { allSlugs, getShopCreations, getShopPage, getShopReliability, getShopTier, resolveShopSlug } from "@/lib/catalog";
+import { ShopReliability } from "@/components/ShopReliability";
 import { ShopHero } from "@/components/ShopHero";
 import type { Signature } from "@/lib/shop-theme";
 import { formatDate, formatPrice } from "@/lib/format";
@@ -47,7 +48,7 @@ export default async function ShopPage({ params }: Props) {
   const type = shop.category ? getShopType(shop.category) : undefined;
   const place = [shop.district, shop.city, shop.country].filter(Boolean).join(", ");
   // Boutique animée (Pro) et Vitrine Ultra : couleur de la marque, à défaut celle de son type de boutique.
-  const tier = await getShopTier(shop.slug);
+  const [tier, reliability] = await Promise.all([getShopTier(shop.slug), getShopReliability(shop.slug)]);
   const animated = tier === "pro" || tier === "business";
   const creations = tier === "business" ? await getShopCreations(shop.slug) : [];
   const brand = shop.brandColor ?? type?.color ?? "#5433eb";
@@ -88,6 +89,7 @@ export default async function ShopPage({ params }: Props) {
               ))}
             </ul>
           )}
+          {reliability && <div className="mt-6 max-w-2xl"><ShopReliability r={reliability} /></div>}
           <div className="mt-6"><PaymentMethods methods={shop.payments} /></div>
           {shop.isPhysical && (
             <div className="mt-6">

@@ -40,7 +40,9 @@ export function AdminView({ live }: { live?: LiveAdmin | null }) {
   const [openPlan, setOpenPlan] = useState<string | null>(null);
   const [planDraft, setPlanDraft] = useState<{ plan: PlanId; months: number }>({ plan: "pro", months: 1 });
   const sellers = supabaseEnabled ? live?.sellers ?? [] : demo.sellers;
-  const tickets: AdminTicket[] = supabaseEnabled ? live?.tickets ?? [] : demo.tickets;
+  // Réclamations dont le délai du vendeur est dépassé : en tête, « à trancher » par l'admin.
+  const overdue = (t: AdminTicket) => t.status !== "résolu" && !!t.deadline && new Date(t.deadline).getTime() < Date.now();
+  const tickets: AdminTicket[] = [...(supabaseEnabled ? live?.tickets ?? [] : demo.tickets)].sort((a, b) => Number(overdue(b)) - Number(overdue(a)));
   const needle = search.trim().toLowerCase();
   const list = sellers.filter((s) => (tab === "tous" || s.status === tab) && (!needle || [s.shopName, s.owner, s.email, s.phone, s.city].some((v) => v?.toLowerCase().includes(needle))));
   const count = (st: SellerStatus) => sellers.filter((s) => s.status === st).length;
@@ -214,9 +216,23 @@ export function AdminView({ live }: { live?: LiveAdmin | null }) {
             <li key={t.id} className="rounded-[6px] border border-line p-4">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <p className="text-sm text-white"><span className="font-mono text-xs text-iris">{t.id}</span> {t.subject}{t.shop && <span className="text-ash"> · {t.shop}</span>}{t.orderId && <span className="font-mono text-xs text-ash"> · {t.orderId}</span>}</p>
-                <span className="badge">{t.status}</span>
+                <span className="flex items-center gap-2">
+                  {overdue(t) && <span className="rounded-full bg-[#fdecec] px-2.5 py-0.5 text-xs font-medium text-alarm">Délai vendeur dépassé · à trancher</span>}
+                  {!overdue(t) && t.status !== "résolu" && t.deadline && <span className="text-xs text-ash">vendeur : jusqu&apos;au {new Date(t.deadline).toLocaleString("fr-FR", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}</span>}
+                  <span className="badge">{t.status}</span>
+                </span>
               </div>
               <p className="mt-2 text-sm text-ash">{t.message}</p>
+              {(t.photos?.length ?? 0) > 0 && (
+                <ul className="mt-3 flex flex-wrap gap-2" aria-label="Photos jointes">
+                  {t.photos!.map((src, i) => (
+                    <li key={i}><a href={src} target="_blank" rel="noopener noreferrer" className="block h-20 w-20 overflow-hidden rounded-[12px] bg-lift">
+                      {/* eslint-disable-next-line @next/next/no-img-element -- lien temporaire signé */}
+                      <img src={src} alt={`Photo ${i + 1} de la réclamation`} className="h-full w-full object-cover" />
+                    </a></li>
+                  ))}
+                </ul>
+              )}
               {t.status !== "résolu" && (
                 <div className="mt-4 flex flex-wrap gap-2">
                   {t.kind === "remboursement" && t.orderId && (

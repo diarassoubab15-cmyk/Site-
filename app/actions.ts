@@ -96,11 +96,11 @@ export const sellerUpdateOrder = action(z.object({ id: z.string().uuid(), status
 
 // ------------------------------------------------------------------ avis
 export const addReview = action(
-  z.object({ orderId: z.string().uuid(), rating: z.number().int().min(1).max(5), title: z.string().trim().min(2).max(80), body: z.string().trim().min(5).max(1000) }),
+  z.object({ orderId: z.string().uuid(), rating: z.number().int().min(1).max(5), title: z.string().trim().min(2).max(80), body: z.string().trim().min(5).max(1000), photos: z.array(z.string().regex(/^[0-9a-f-]{36}\/[a-z0-9-]{8,64}\.(jpg|jpeg|webp|png)$/)).max(4).default([]) }),
   async (input, { user, sb }) => {
     const { data: order } = await sb.from("orders").select("product_id, product_slug").eq("id", input.orderId).single();
     if (!order?.product_id) return fail("Commande introuvable");
-    const { error } = await sb.from("reviews").insert({ order_id: input.orderId, product_id: order.product_id, author_id: user.id, rating: input.rating, title: input.title, body: input.body });
+    const { error } = await sb.from("reviews").insert({ order_id: input.orderId, product_id: order.product_id, author_id: user.id, rating: input.rating, title: input.title, body: input.body, photos: input.photos });
     if (error) return fail(error.code === "23505" ? "Vous avez déjà laissé un avis pour cette commande." : "Seuls les acheteurs ayant reçu ce produit peuvent laisser un avis.");
     revalidatePath(`/produits/${order.product_slug}`);
     return { ok: true };
@@ -114,6 +114,7 @@ const ticketSchema = z.object({
   orderId: z.string().uuid().optional(),
   shopSlug: z.string().max(80).optional(),
   contact: z.object({ name: z.string().trim().min(2).max(80), email: z.string().trim().email() }).optional(),
+  photos: z.array(z.string().regex(/^[0-9a-f-]{36}\/[a-z0-9-]{8,64}\.(jpg|jpeg|webp|png)$/)).max(4).default([]),
 });
 
 export async function createTicket(raw: unknown): Promise<ActionResult<string>> {
@@ -137,7 +138,7 @@ export async function createTicket(raw: unknown): Promise<ActionResult<string>> 
   if (!shopId && t.orderId) shopId = (await u.sb.from("orders").select("shop_id").eq("id", t.orderId).maybeSingle()).data?.shop_id ?? null;
   const { data, error } = await u.sb
     .from("tickets")
-    .insert({ author_id: u.user.id, kind: ticketKindDb[t.kind], message: t.message, order_id: t.orderId ?? null, shop_id: shopId })
+    .insert({ author_id: u.user.id, kind: ticketKindDb[t.kind], message: t.message, order_id: t.orderId ?? null, shop_id: shopId, photos: t.photos })
     .select("id")
     .single();
   if (error) return dbError(error);
@@ -504,6 +505,8 @@ const productSchema = z.object({
   wholesaleMin: z.number().int().min(2).nullable(),
   wholesalePrice: z.number().int().positive().nullable(),
   published: z.boolean(),
+  madeInMali: z.boolean(),
+  handmade: z.boolean(),
 });
 
 async function myApprovedShop(sb: Awaited<ReturnType<typeof requireUser>>["sb"], userId: string) {
@@ -519,6 +522,7 @@ export const saveProduct = action<z.infer<typeof productSchema>, { id: string; s
   const row = {
     name: p.name, category: p.category, subcategory: p.category === "electronique" ? p.subcategory ?? null : null, price: p.price, price_unit: p.priceUnit, compare_at: p.compareAt, stock: p.stock,
     short: p.short || null, description: p.description || null, specs: p.specs, wholesale_min: p.wholesaleMin, wholesale_price: p.wholesalePrice, published: p.published,
+    made_in_mali: p.category !== "immobilier" && p.madeInMali, handmade: p.category !== "immobilier" && p.handmade,
   };
   if (p.id) {
     const { data, error } = await sb.from("products").update(row).eq("id", p.id).eq("shop_id", shop.id).select("id, slug").single();
@@ -998,7 +1002,7 @@ export async function getOrderPayInfo(ref: string): Promise<OrderPayInfo | null>
 export async function payOrderByCard(ref: string): Promise<ActionResult<string>> {
   const u = await currentUser();
   if (!u) return fail("Connectez-vous pour payer.", true);
-  const { data: o } = await u.sb.from("orders").select("ref, total, method, status, product_name, shop_name")
+  const { data: o } = await u.sb.from("orders").select("id, ref, total, method, status, product_name, shop_name, card_tx_id")
     .eq("ref", ref).eq("buyer_id", u.user.id).maybeSingle();
   if (!o || o.method !== "card") return fail("Commande introuvable");
   if (o.status !== "pending_payment") return fail("Cette commande est déjà payée.");
@@ -1010,8 +1014,15 @@ export async function payOrderByCard(ref: string): Promise<ActionResult<string>>
     ref: o.ref, amount: o.total, description: `${o.product_name ?? "Commande"} - ${o.shop_name ?? "NEXORA"} (réf. ${o.ref})`,
     // FedaPay ajoute ?id=…&status=… à cette adresse au retour du client.
     returnUrl: `${base}/compte?paiement=${encodeURIComponent(o.ref)}`,
+    existingTxId: o.card_tx_id,
   });
-  return r.ok ? { ok: true, data: r.url } : fail(r.error);
+  if (!r.ok) {
+    if (r.alreadyPaid && o.card_tx_id) await (await import("@/lib/card-settle")).settleCardPayment(o.card_tx_id);
+    return fail(r.error);
+  }
+  // Transaction mémorisée (par le serveur seul) : un nouveau toucher reprendra la même.
+  if (r.txId !== o.card_tx_id) await supabaseService().from("orders").update({ card_tx_id: r.txId }).eq("id", o.id);
+  return { ok: true, data: r.url };
 }
 
 /** Le paiement par carte est-il branché ? (pour l'afficher comme disponible ou « bientôt »). */
@@ -1064,12 +1075,15 @@ export async function logWhatsAppLead(shopSlug: string, productSlug?: string): P
 
 // ------------------------------------------------------------------ zones et frais de livraison du vendeur
 export const addDeliveryZone = action(
-  z.object({ name: z.string().trim().min(2, "Nom de la zone trop court").max(60), fee: z.number().int().min(0).max(1_000_000), delay: z.string().trim().max(40) }),
-  async ({ name, fee, delay }, { user, sb }) => {
+  z.object({ name: z.string().trim().min(2, "Nom de la zone trop court").max(60), fee: z.number().int().min(0).max(1_000_000), delay: z.string().trim().max(40),
+    daysMin: z.number().int().min(0).max(60).nullable().default(null), daysMax: z.number().int().min(0).max(60).nullable().default(null) }),
+  async ({ name, fee, delay, daysMin, daysMax }, { user, sb }) => {
     const { data: shop } = await sb.from("shops").select("id, slug").eq("owner_id", user.id).neq("status", "closed").maybeSingle();
     if (!shop) return fail("Aucune boutique active");
     const { count } = await sb.from("shop_delivery_zones").select("id", { count: "exact", head: true }).eq("shop_id", shop.id);
-    const { error } = await sb.from("shop_delivery_zones").insert({ shop_id: shop.id, name, fee, delay: delay || null, position: count ?? 0 });
+    const lo = daysMin ?? null;
+    const hi = daysMax == null ? null : lo === null ? daysMax : Math.max(daysMax, lo);
+    const { error } = await sb.from("shop_delivery_zones").insert({ shop_id: shop.id, name, fee, delay: delay || null, position: count ?? 0, days_min: lo, days_max: hi });
     if (error) return dbError(error);
     revalidatePath("/vendeur");
     revalidatePath(`/boutiques/${shop.slug}`);
@@ -1087,12 +1101,12 @@ export const deleteDeliveryZone = action(z.object({ id: z.string().uuid() }), as
 });
 
 /** Zones de la boutique du vendeur connecté (espace vendeur). */
-export async function myDeliveryZones(): Promise<{ id: string; name: string; fee: number; delay: string | null }[]> {
+export async function myDeliveryZones(): Promise<{ id: string; name: string; fee: number; delay: string | null; days_min: number | null; days_max: number | null }[]> {
   const u = await currentUser();
   if (!u) return [];
   const { data: shop } = await u.sb.from("shops").select("id").eq("owner_id", u.user.id).neq("status", "closed").maybeSingle();
   if (!shop) return [];
-  const { data } = await u.sb.from("shop_delivery_zones").select("id, name, fee, delay").eq("shop_id", shop.id).order("position").order("created_at");
+  const { data } = await u.sb.from("shop_delivery_zones").select("id, name, fee, delay, days_min, days_max").eq("shop_id", shop.id).order("position").order("created_at");
   return data ?? [];
 }
 
@@ -1173,6 +1187,19 @@ export const setShopPixels = action(
     if (error) return dbError(error);
     revalidatePath("/vendeur");
     revalidatePath(`/boutiques/${shop.slug}`);
+    revalidatePath("/produits/[slug]", "page");
+    return { ok: true };
+  },
+);
+
+/** Délai d'expédition (jours) et règle de retour de la boutique, affichés sur chaque fiche produit. */
+export const setShopPolicies = action(
+  z.object({ shipDays: z.number().int().min(0).max(30), returnPolicy: z.enum(["7j", "14j", "echange", "aucun"]).nullable() }),
+  async ({ shipDays, returnPolicy }, { user, sb }) => {
+    const { data, error } = await sb.from("shops").update({ ship_days: shipDays, return_policy: returnPolicy }).eq("owner_id", user.id).neq("status", "closed").select("slug").maybeSingle();
+    if (error) return dbError(error);
+    revalidatePath("/vendeur");
+    if (data) revalidatePath(`/boutiques/${data.slug}`);
     revalidatePath("/produits/[slug]", "page");
     return { ok: true };
   },

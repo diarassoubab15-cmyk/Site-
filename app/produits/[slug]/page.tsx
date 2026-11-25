@@ -81,6 +81,12 @@ export default async function ProductPage({ params }: Props) {
         <div className="space-y-6 lg:col-start-2 lg:row-span-2 lg:row-start-1 lg:sticky lg:top-24 lg:self-start">
           <div>
             <h1 className="text-3xl font-medium tracking-tight text-white sm:text-4xl">{product.name}</h1>
+            {(product.madeInMali || product.handmade) && (
+              <p className="mt-2 flex flex-wrap gap-1.5 text-xs">
+                {product.madeInMali && <Link href="/artisans" className="rounded-full bg-[#e9f8ef] px-2.5 py-1 text-[#0f6b3f]">🇲🇱 Fabriqué au Mali</Link>}
+                {product.handmade && <Link href="/artisans" className="rounded-full bg-[#fff6e5] px-2.5 py-1 text-[#8a5a00]">✋ Fait main</Link>}
+              </p>
+            )}
             <p className="mt-3 text-ash">{product.short}</p>
             {rating.count > 0 && (
               <a href="#avis" className="mt-3 flex items-center gap-2 text-sm text-ash hover:text-white">
@@ -155,6 +161,18 @@ export default async function ProductPage({ params }: Props) {
                 {r.verified && <span className="badge text-pulse">achat vérifié</span>}
               </div>
               <p className="mt-3 text-bone">{r.body}</p>
+              {(r.photos?.length ?? 0) > 0 && (
+                <ul className="mt-3 flex flex-wrap gap-2" aria-label="Photos de l'acheteur">
+                  {r.photos!.map((src) => (
+                    <li key={src}>
+                      <a href={src} target="_blank" rel="noopener noreferrer" className="block h-20 w-20 overflow-hidden rounded-[12px] bg-lift">
+                        {/* eslint-disable-next-line @next/next/no-img-element -- photos d'acheteurs, déjà réduites */}
+                        <img src={src} alt="Photo du produit reçu" loading="lazy" decoding="async" className="h-full w-full object-cover" />
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              )}
               <p className="mt-3 text-xs text-iron">{r.author}, {r.city} · {formatDate(r.date)}</p>
               {r.sellerReply && (
                 <p className="mt-4 border-l border-iris pl-4 text-sm text-ash"><span className="text-bone">Réponse du vendeur :</span> {r.sellerReply}</p>

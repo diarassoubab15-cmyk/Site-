@@ -28,6 +28,9 @@ export type Shop = {
   lat?: number;
   lng?: number;
   whatsapp?: string;
+  /** Expédition sous N jours et règle de retour choisies par le vendeur. */
+  shipDays?: number;
+  returnPolicy?: "7j" | "14j" | "echange" | "aucun" | null;
   /** Pixels publicitaires (forfaits Pro et Ultra seulement : vérifié à l'affichage). */
   pixels?: { fb: string | null; tiktok: string | null };
   callPhone?: string;
@@ -45,6 +48,9 @@ export type Product = {
   category: string; // slug de la catégorie
   /** Sous-partie (Technologie : ordinateurs, téléviseurs…), choisie par le vendeur. */
   subcategory?: string;
+  /** Badges d'origine choisis par le vendeur. */
+  madeInMali?: boolean;
+  handmade?: boolean;
   price: number;
   compareAt?: number;
   stock: number;
@@ -75,6 +81,8 @@ export type Review = {
   date: string;
   verified: boolean;
   sellerReply?: string;
+  /** Photos du produit reçu, ajoutées par l'acheteur. */
+  photos?: string[];
 };
 
 export const categories: Category[] = [
