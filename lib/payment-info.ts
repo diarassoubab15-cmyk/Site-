@@ -8,12 +8,12 @@ import "server-only";
  *   ADMIN_WAVE_NUMBER         / ADMIN_WAVE_NAME
  *   ADMIN_MTN_MOMO_NUMBER     / ADMIN_MTN_MOMO_NAME
  *   ADMIN_MOOV_MONEY_NUMBER   / ADMIN_MOOV_MONEY_NAME
- * Un opérateur sans numéro configuré n'est pas proposé aux vendeurs.
+ * Un opérateur sans numéro configuré n'est pas proposé aux vendeurs (Wave en premier : compte au nom du fondateur).
  */
 export type SubMethod = "orange_money" | "wave" | "mtn_momo" | "moov_money";
 const ENV: Record<SubMethod, string> = { orange_money: "ORANGE_MONEY", wave: "WAVE", mtn_momo: "MTN_MOMO", moov_money: "MOOV_MONEY" };
 
-export function adminPaymentInfo(method: SubMethod = "orange_money") {
+export function adminPaymentInfo(method: SubMethod = "wave") {
   const key = ENV[method];
   return {
     number: process.env[`ADMIN_${key}_NUMBER`] ?? "+223 70 00 00 00 (à configurer)",
@@ -21,7 +21,12 @@ export function adminPaymentInfo(method: SubMethod = "orange_money") {
   };
 }
 
-/** Opérateurs proposés au vendeur : Orange Money toujours, les autres seulement si l'admin a configuré un numéro. */
+/**
+ * Opérateurs proposés au vendeur pour payer son forfait : seulement ceux dont l'admin a configuré un numéro
+ * À SON NOM, Wave en premier. Rien de configuré : Wave seul est affiché (« à configurer »).
+ */
 export function subscriptionMethods(): SubMethod[] {
-  return (Object.keys(ENV) as SubMethod[]).filter((m) => m === "orange_money" || process.env[`ADMIN_${ENV[m]}_NUMBER`]);
+  const order: SubMethod[] = ["wave", "orange_money", "mtn_momo", "moov_money"];
+  const set = order.filter((m) => process.env[`ADMIN_${ENV[m]}_NUMBER`]);
+  return set.length ? set : ["wave"];
 }

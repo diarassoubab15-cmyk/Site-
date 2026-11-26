@@ -338,7 +338,7 @@ async function myShopId(sb: Awaited<ReturnType<typeof requireUser>>["sb"], userI
 /** Étape 1 : le vendeur demande à payer. Il devra ensuite contacter l'admin (WhatsApp ou appel). */
 const SUB_METHOD = z.enum(["orange_money", "wave", "mtn_momo", "moov_money"]);
 export const requestSubscriptionPayment = action<{ plan: "essentiel" | "pro" | "business"; annual: boolean; method?: z.infer<typeof SUB_METHOD> }, string>(
-  z.object({ plan: PLAN, annual: z.boolean(), method: SUB_METHOD.default("orange_money") }),
+  z.object({ plan: PLAN, annual: z.boolean(), method: SUB_METHOD.default("wave") }),
   async ({ plan, annual, method }, { user, sb }) => {
     const shopId = await myShopId(sb, user.id);
     if (!shopId) return fail("Aucune boutique active");
@@ -1204,3 +1204,38 @@ export const setShopPolicies = action(
     return { ok: true };
   },
 );
+
+// ------------------------------------------------------------------ inscription immédiate (sans e-mail de confirmation)
+const signupSchema = z.object({
+  name: z.string().trim().min(2, "Indiquez votre nom.").max(80),
+  email: z.string().trim().toLowerCase().email("Adresse e-mail invalide"),
+  password: z.string().min(8, "Le mot de passe doit contenir au moins 8 caractères.").max(72),
+});
+
+/**
+ * Crée le compte côté serveur, adresse déjà confirmée, puis ouvre la session : le client (ou le vendeur)
+ * commence tout de suite, sans attendre d'e-mail (et sans dépendre de la limite d'envoi d'e-mails).
+ * Garde-fou : 5 inscriptions par heure au plus depuis une même connexion internet.
+ */
+export async function signupAccount(raw: unknown): Promise<{ ok: true } | { ok: false; error: string; exists?: boolean }> {
+  const parsed = signupSchema.safeParse(raw);
+  if (!parsed.success) return { ok: false, error: parsed.error.issues[0]?.message ?? "Données invalides" };
+  const { name, email, password } = parsed.data;
+  const { signupLocked, recordSignup } = await import("@/lib/login-guard");
+  try {
+    if (await signupLocked()) return { ok: false, error: "Trop d'inscriptions depuis cette connexion internet. Réessayez dans une heure." };
+  } catch { /* limite indisponible : on continue */ }
+  const admin = supabaseService();
+  const { data, error } = await admin.auth.admin.createUser({ email, password, email_confirm: true, user_metadata: { full_name: name } });
+  if (error) {
+    if (/already|registered|exists/i.test(error.message)) return { ok: false, error: "Un compte existe déjà avec cet e-mail : connectez-vous.", exists: true };
+    if (/password/i.test(error.message)) return { ok: false, error: "Mot de passe trop simple : mélangez lettres et chiffres." };
+    console.error("inscription :", error.message);
+    return { ok: false, error: "Inscription impossible pour le moment. Réessayez." };
+  }
+  await recordSignup().catch(() => {});
+  if (data.user) await admin.from("profiles").update({ full_name: name }).eq("id", data.user.id);
+  const { error: e2 } = await (await supabaseServer()).auth.signInWithPassword({ email, password });
+  if (e2) return { ok: false, error: "Compte créé : connectez-vous avec votre e-mail et votre mot de passe." };
+  return { ok: true };
+}

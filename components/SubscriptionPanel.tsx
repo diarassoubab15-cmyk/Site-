@@ -48,8 +48,9 @@ export function SubscriptionPanel({
   const isFree = (subscription?.plan ?? shop.plan) === "decouverte";
   const [plan, setPlan] = useState(shop.plan && shop.plan !== "decouverte" ? shop.plan : "essentiel");
   const [annual, setAnnual] = useState(false);
-  const methods: SubMethod[] = supabaseEnabled ? live?.payMethods ?? ["orange_money"] : ["orange_money", "wave", "mtn_momo", "moov_money"];
-  const [method, setMethod] = useState<SubMethod>("orange_money");
+  const methods: SubMethod[] = supabaseEnabled ? live?.payMethods ?? ["wave"] : ["wave", "orange_money", "mtn_momo", "moov_money"];
+  // Premier opérateur configuré par l'admin (Wave d'abord).
+  const [method, setMethod] = useState<SubMethod>(methods[0] ?? "wave");
   const [operatorRef, setOperatorRef] = useState("");
   const [payerPhone, setPayerPhone] = useState(ownerPhone);
 
