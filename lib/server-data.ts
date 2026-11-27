@@ -129,8 +129,8 @@ export async function loadSeller(): Promise<LiveSeller | null> {
     subscription: sub ? { plan: sub.plan, annual: sub.annual, active: sub.active, until: sub.current_period_end } : null,
     payment,
     // Les coordonnées de paiement ne quittent le serveur qu'après le contact confirmé par l'admin.
-    payInfo: payment?.status === "paiement" ? adminPaymentInfo(payment.method) : null,
-    payMethods: subscriptionMethods(),
+    payInfo: payment?.status === "paiement" ? await adminPaymentInfo(payment.method) : null,
+    payMethods: await subscriptionMethods(),
     shop: { id: shop.id, shopName: shop.name, status: shopStatusFr[shop.status], plan: sub?.plan ?? null },
     payouts: (payouts ?? []).map((p) => ({ id: p.id, type: p.type, label: p.type === "bank" ? "Compte bancaire" : paymentMethods[p.type as PaymentMethodId].label, masked: `•••• ${p.last4}` })),
     orders: (orders ?? []).map((o) => ({
