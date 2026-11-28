@@ -33,7 +33,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const page = await getProductPage((await params).slug);
   if (!page) return {};
   const { product: p, shop } = page;
-  const description = `${p.short} ${formatPrice(p.price)} chez ${shop?.name}, vendeur vérifié. Paiement Mobile Money, carte ou à la livraison.`;
+  const description = `${p.short} ${formatPrice(p.price)} chez ${shop?.name}. Payez à la livraison ou par Mobile Money.`;
   return {
     title: `${p.name} · ${formatPrice(p.price)}`,
     description,
@@ -198,6 +198,8 @@ export default async function ProductPage({ params }: Props) {
           description: product.description,
           sku: product.slug,
           category: cat.name,
+          // Vraies photos du vendeur ; à défaut, l'image d'aperçu du produit (nom + prix), jamais une photo d'ambiance.
+          image: product.images?.length ? product.images : [absoluteUrl(`/produits/${product.slug}/opengraph-image`)],
           url: absoluteUrl(`/produits/${product.slug}`),
           brand: { "@type": "Brand", name: shop.name },
           offers: {
@@ -207,6 +209,17 @@ export default async function ProductPage({ params }: Props) {
             availability: product.stock > 0 ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
             seller: { "@type": "Organization", name: shop.name },
             url: absoluteUrl(`/produits/${product.slug}`),
+            ...(shop.returnPolicy
+              ? {
+                  hasMerchantReturnPolicy: {
+                    "@type": "MerchantReturnPolicy",
+                    applicableCountry: "ML",
+                    ...(shop.returnPolicy === "7j" || shop.returnPolicy === "14j"
+                      ? { returnPolicyCategory: "https://schema.org/MerchantReturnFiniteReturnWindow", merchantReturnDays: shop.returnPolicy === "7j" ? 7 : 14 }
+                      : { returnPolicyCategory: "https://schema.org/MerchantReturnNotPermitted" }),
+                  },
+                }
+              : {}),
           },
           ...(rating.count
             ? {

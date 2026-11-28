@@ -13,6 +13,8 @@ import { SubcategoryNav } from "@/components/SubcategoryNav";
 import { subcategoriesOf } from "@/lib/subcategories";
 import { SHOP_TYPES, getShopType } from "@/lib/shop-types";
 import { siteVideo } from "@/lib/site-videos";
+import { JsonLd } from "@/components/JsonLd";
+import { absoluteUrl } from "@/lib/site";
 
 export const revalidate = 120;
 export const generateStaticParams = () => SHOP_TYPES.map((t) => ({ type: t.slug }));
@@ -132,6 +134,16 @@ export default async function TypePage({ params }: { params: Promise<{ type: str
           )}
         </div>
       </section>
+      {shops.length > 0 && (
+        <JsonLd
+          data={{
+            "@context": "https://schema.org",
+            "@type": "ItemList",
+            name: `${t.name} : boutiques vérifiées sur NEXORA`,
+            itemListElement: shops.map((s, i) => ({ "@type": "ListItem", position: i + 1, url: absoluteUrl(`/boutiques/${s.slug}`), name: s.name })),
+          }}
+        />
+      )}
     </div>
   );
 }
