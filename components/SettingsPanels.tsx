@@ -128,7 +128,7 @@ export function CartBadge() {
   const items = useCart();
   const n = items.reduce((s, i) => s + i.qty, 0);
   return (
-    <Link href="/reglages#panier" className="relative flex h-9 w-9 items-center justify-center rounded-[8px] text-bone hover:text-white" aria-label={`Panier : ${n} article${n > 1 ? "s" : ""}`}>
+    <Link href="/reglages#panier" className="relative flex h-11 w-11 items-center justify-center rounded-[8px] text-bone hover:text-white" aria-label={`Panier : ${n} article${n > 1 ? "s" : ""}`}>
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M3 4h2l2.4 11.2a1 1 0 0 0 1 .8h8.8a1 1 0 0 0 1-.8L20 8H6.2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /><circle cx="9.5" cy="19.5" r="1.3" fill="currentColor" /><circle cx="17" cy="19.5" r="1.3" fill="currentColor" /></svg>
       {n > 0 && <span className="pop absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#1f6fd1] px-1 font-mono text-[10px] text-black">{n}</span>}
     </Link>
