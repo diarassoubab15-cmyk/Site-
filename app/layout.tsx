@@ -11,7 +11,7 @@ import { site, absoluteUrl } from "@/lib/site";
 
 export const metadata: Metadata = {
   metadataBase: new URL(site.url),
-  title: { default: `${site.name} · Marketplace africaine, vendeurs vérifiés`, template: `%s · ${site.name}` },
+  title: { default: `${site.name} · Achetez et vendez au Mali, vendeurs vérifiés`, template: `%s · ${site.name}` },
   description: site.description,
   applicationName: site.name,
   alternates: { canonical: "/" },

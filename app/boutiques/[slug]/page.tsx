@@ -138,7 +138,13 @@ export default async function ShopPage({ params }: Props) {
           name: shop.name,
           url: absoluteUrl(`/boutiques/${shop.slug}`),
           description: shop.description,
-          address: { "@type": "PostalAddress", addressLocality: shop.city, addressCountry: shop.country },
+          image: absoluteUrl("/opengraph-image"),
+          address: { "@type": "PostalAddress", addressLocality: shop.city, addressCountry: shop.country, ...(shop.district ? { streetAddress: shop.district } : {}) },
+          ...(shop.callPhone ? { telephone: shop.callPhone } : {}),
+          ...(shop.lat != null && shop.lng != null ? { geo: { "@type": "GeoCoordinates", latitude: shop.lat, longitude: shop.lng } } : {}),
+          ...(shop.mapsUrl ? { hasMap: shop.mapsUrl } : {}),
+          paymentAccepted: "Mobile Money, carte bancaire, paiement à la livraison",
+          currenciesAccepted: "XOF",
           ...(rating.count ? { aggregateRating: { "@type": "AggregateRating", ratingValue: rating.average, reviewCount: rating.count } } : {}),
         }}
       />

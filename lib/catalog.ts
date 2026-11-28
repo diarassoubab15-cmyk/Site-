@@ -347,3 +347,49 @@ export async function getShopReliability(slug: string): Promise<Reliability | nu
   const r = data?.[0];
   return r ? { orders: r.orders, onTimePct: r.on_time_pct, deliveredPct: r.delivered_pct, refused: r.refused, disputes: r.disputes, replyPct: r.reply_pct } : null;
 }
+
+// ------------------------------------------------------------------ accueil
+export type HomeShop = { slug: string; name: string; city: string; category: string; verified: boolean; average: number; reviews: number; products: number };
+export type HomeReview = { author: string; city: string; rating: number; title: string; body: string; product: { slug: string; name: string } };
+
+/**
+ * Preuves de confiance de l'accueil, tirées des vraies données (jamais inventées) :
+ * les boutiques vérifiées les mieux notées et les derniers avis 4-5 étoiles.
+ */
+export async function getHomeProof(): Promise<{ shops: HomeShop[]; reviews: HomeReview[] }> {
+  const cards = await listCards({ limit: 500 });
+  const by = new Map<string, HomeShop & { sum: number }>();
+  for (const c of cards) {
+    if (!c.shop.verified) continue;
+    const s = by.get(c.shop.slug) ?? { slug: c.shop.slug, name: c.shop.name, city: c.shop.city, category: c.product.category, verified: true, average: 0, reviews: 0, products: 0, sum: 0 };
+    s.sum += c.rating.average * c.rating.count;
+    s.reviews += c.rating.count;
+    s.products += 1;
+    by.set(c.shop.slug, s);
+  }
+  const shops = [...by.values()]
+    .map(({ sum, ...s }) => ({ ...s, average: s.reviews ? Math.round((sum / s.reviews) * 10) / 10 : 0 }))
+    .sort((a, b) => b.average * Math.log2(2 + b.reviews) - a.average * Math.log2(2 + a.reviews) || b.products - a.products)
+    .slice(0, 6);
+
+  let reviews: HomeReview[];
+  if (!supabaseEnabled) {
+    reviews = demo.reviews
+      .filter((r) => r.rating >= 4)
+      .sort((a, b) => b.date.localeCompare(a.date))
+      .slice(0, 3)
+      .map((r) => ({ author: r.author, city: r.city, rating: r.rating, title: r.title, body: r.body, product: { slug: r.product, name: demo.products.find((p) => p.slug === r.product)?.name ?? "" } }));
+  } else {
+    const { data } = await supabasePublic()
+      .from("reviews")
+      .select("rating, title, body, author_name, author_city, products!inner(slug, name)")
+      .gte("rating", 4)
+      .order("created_at", { ascending: false })
+      .limit(3);
+    type Row = { rating: number; title: string | null; body: string | null; author_name: string | null; author_city: string | null; products: { slug: string; name: string } };
+    reviews = ((data ?? []) as unknown as Row[])
+      .filter((r) => r.body)
+      .map((r) => ({ author: r.author_name ?? "Client", city: r.author_city ?? "", rating: r.rating, title: r.title ?? "", body: r.body ?? "", product: r.products }));
+  }
+  return { shops, reviews };
+}

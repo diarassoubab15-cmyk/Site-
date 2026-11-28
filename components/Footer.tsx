@@ -12,30 +12,31 @@ export function Footer() {
           <Logo gid="nx-foot" />
           <p className="max-w-xs text-sm text-ash">{site.tagline}.</p>
         </div>
-        <nav aria-label="Catégories" className="space-y-2 text-sm">
-          <p className="mb-3 font-mono text-xs uppercase tracking-widest text-iron">Acheter</p>
+        <nav aria-label="Catégories" className="space-y-0.5 text-sm">
+          <p className="mb-2 text-sm font-medium text-white">Acheter</p>
           {categories.map((c) => (
-            <Link key={c.slug} href={`/marketplace/${c.slug}`} className="block text-ash hover:text-white">
+            <Link key={c.slug} href={`/marketplace/${c.slug}`} className="block py-1.5 text-ash hover:text-white">
               {c.name}
             </Link>
           ))}
-          <Link href="/trouver" className="block text-ash hover:text-white">Assistant d&apos;achat</Link>
-          <Link href="/amenager" className="block text-ash hover:text-white">Aménager ma maison</Link>
-          <Link href="/artisans" className="block text-ash hover:text-white">Artisans du Mali</Link>
+          <Link href="/trouver" className="block py-1.5 text-ash hover:text-white">Assistant d&apos;achat</Link>
+          <Link href="/amenager" className="block py-1.5 text-ash hover:text-white">Aménager ma maison</Link>
+          <Link href="/artisans" className="block py-1.5 text-ash hover:text-white">Artisans du Mali</Link>
         </nav>
-        <nav aria-label="Vendeurs" className="space-y-2 text-sm">
-          <p className="mb-3 font-mono text-xs uppercase tracking-widest text-iron">Vendre</p>
-          <Link href="/vendre" className="block text-ash hover:text-white">Devenir vendeur</Link>
-          <Link href="/tarifs" className="block text-ash hover:text-white">Tarifs</Link>
-          <Link href="/vendeur" className="block text-ash hover:text-white">Espace vendeur</Link>
-          <Link href="/securite" className="block text-ash hover:text-white">Sécurité des données</Link>
+        <nav aria-label="Vendeurs" className="space-y-0.5 text-sm">
+          <p className="mb-2 text-sm font-medium text-white">Vendre</p>
+          <Link href="/vendre" className="block py-1.5 text-ash hover:text-white">Devenir vendeur</Link>
+          <Link href="/tarifs" className="block py-1.5 text-ash hover:text-white">Tarifs</Link>
+          <Link href="/vendeur" className="block py-1.5 text-ash hover:text-white">Espace vendeur</Link>
+          <Link href="/securite" className="block py-1.5 text-ash hover:text-white">Sécurité des données</Link>
         </nav>
-        <div className="space-y-2 text-sm">
-          <p className="mb-3 font-mono text-xs uppercase tracking-widest text-iron">Service client</p>
-          <Link href="/support" className="block text-ash hover:text-white">Contacter le SAV</Link>
-          <Link href="/support#signaler" className="block text-ash hover:text-white">Signaler un vendeur</Link>
-          <Link href="/support#remboursement" className="block text-ash hover:text-white">Demander un remboursement</Link>
-          <a href={`mailto:${site.support.email}`} className="block font-mono text-xs text-iris">{site.support.email}</a>
+        <div className="space-y-0.5 text-sm">
+          <p className="mb-2 text-sm font-medium text-white">Service client</p>
+          <Link href="/support" className="block py-1.5 text-ash hover:text-white">Contacter le SAV</Link>
+          <Link href="/reglages" className="block py-1.5 text-ash hover:text-white">Réglages et panier</Link>
+          <Link href="/support#signaler" className="block py-1.5 text-ash hover:text-white">Signaler un vendeur</Link>
+          <Link href="/support#remboursement" className="block py-1.5 text-ash hover:text-white">Demander un remboursement</Link>
+          <a href={`mailto:${site.support.email}`} className="block py-1.5 text-sm text-iris">{site.support.email}</a>
           <p className="text-xs text-iron">{site.support.hours}</p>
         </div>
       </div>
